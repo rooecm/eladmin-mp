@@ -21,7 +21,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.utils.CacheKey;
 import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.RedisUtils;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.system.domain.Menu;

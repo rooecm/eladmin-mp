@@ -14,7 +14,6 @@
             <groupId>fun.rooe</groupId>
             <artifactId>admin-common</artifactId>
         </dependency>
-
         <!-- 框架基础设施 -->
         <dependency>
             <groupId>fun.rooe</groupId>
@@ -24,11 +23,6 @@
         <dependency>
             <groupId>fun.rooe</groupId>
             <artifactId>admin-logging</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>fun.rooe</groupId>
-            <artifactId>admin-tools</artifactId>
         </dependency>
 
         <!-- APIs referenced directly by system sources -->

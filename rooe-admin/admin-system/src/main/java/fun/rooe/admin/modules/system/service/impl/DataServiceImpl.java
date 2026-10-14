@@ -24,7 +24,7 @@ import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.utils.CacheKey;
-import fun.rooe.admin.utils.RedisUtils;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.enums.DataScopeEnum;
 import org.springframework.stereotype.Service;
 import java.util.*;

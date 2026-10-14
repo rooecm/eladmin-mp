@@ -19,7 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.annotation.Log;
+import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dict;
 import fun.rooe.admin.modules.system.service.DictService;

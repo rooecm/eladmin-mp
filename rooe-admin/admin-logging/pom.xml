@@ -14,6 +14,11 @@
             <groupId>fun.rooe</groupId>
             <artifactId>admin-common</artifactId>
         </dependency>
+        <!-- 切面与控制器使用 RequestHolder/SecurityUtils 等框架层工具 -->
+        <dependency>
+            <groupId>fun.rooe</groupId>
+            <artifactId>admin-framework</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-extension</artifactId>

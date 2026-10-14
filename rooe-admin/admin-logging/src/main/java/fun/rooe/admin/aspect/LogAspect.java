@@ -18,8 +18,8 @@ package fun.rooe.admin.aspect;
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.domain.SysLog;
 import fun.rooe.admin.service.SysLogService;
-import fun.rooe.admin.utils.RequestHolder;
-import fun.rooe.admin.utils.SecurityUtils;
+import fun.rooe.admin.framework.utils.RequestHolder;
+import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.utils.StringUtils;
 import fun.rooe.admin.utils.ThrowableUtil;
 import org.aspectj.lang.JoinPoint;
@@ -51,7 +51,7 @@ public class LogAspect {
     /**
      * 配置切入点
      */
-    @Pointcut("@annotation(fun.rooe.admin.annotation.Log)")
+    @Pointcut("@annotation(fun.rooe.admin.framework.annotation.Log)")
     public void logPointcut() {
         // 该方法无方法体,主要为了让同类中其他方法使用此切入点
     }

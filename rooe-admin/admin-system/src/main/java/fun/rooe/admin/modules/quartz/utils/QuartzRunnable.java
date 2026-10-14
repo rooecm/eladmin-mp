@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.quartz.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.utils.SpringBeanHolder;
+import fun.rooe.admin.framework.utils.SpringBeanHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Method;

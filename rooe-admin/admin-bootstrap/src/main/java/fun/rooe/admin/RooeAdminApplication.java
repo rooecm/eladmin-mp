@@ -17,7 +17,7 @@ package fun.rooe.admin;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.annotation.rest.AnonymousGetMapping;
+import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;

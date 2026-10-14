@@ -53,7 +53,7 @@
 
 - `rooe-admin-common` 为系统的公共模块，提供注解、基础实体、异常与响应对象、通用工具类
 
-- `rooe-admin-framework` 为框架模块，统一管理 Web、Redis、MyBatis-Plus、异步线程池、权限、JWT、验证码、Quartz 基础配置、限流切面与全局异常处理
+- `admin-framework` 为框架与基础设施模块，通过 `fun.rooe.admin.framework` 和 `fun.rooe.admin.infrastructure` 两个根包分别管理应用运行支撑和外部资源适配
 
 - `rooe-admin-system` 为系统业务模块，提供用户、角色、菜单、登录、在线用户、定时任务等业务能力，以普通 JAR 供启动模块使用
 
@@ -61,33 +61,29 @@
 
 - `rooe-admin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
 
-- `rooe-admin-tools` 为第三方工具模块，包含：邮件、亚马逊S3云存储、本地存储、支付宝
-
 #### 详细结构
 
 ```
 - rooe-admin-common 公共模块
-    - annotation 为系统自定义注解
-    - aspect 限流类型枚举（供 Limit 注解使用）
     - base 提供了 Entity 基类
     - exception 通用异常与 ApiError 响应对象
     - utils 系统通用工具类，列举一些常用的工具类
         - BigDecimaUtils 金额计算工具类
-        - RequestHolder 请求工具类
-        - SecurityUtils 安全工具类
         - StringUtils 字符串工具类
-        - SpringBeanHolder Spring Bean工具类
-        - RedisUtils Redis工具类
         - EncryptUtils 加密工具类
         - FileUtil 文件工具类
 - rooe-admin-framework 框架模块
-    - config 通用配置（Web、Swagger、Redis、Redisson、MyBatis-Plus、异步线程池、文件与 RSA 配置、权限、Spring 上下文、Druid）
-    - aspect 限流切面
-    - exception.handler 全局异常处理
-    - modules.security.config Spring Security、JWT、登录与验证码配置
-    - modules.security.security JWT 签发、过滤器、认证与授权异常处理
-    - modules.security.service 在线会话查询接口 OnlineSessionService
-    - modules.quartz.config Quartz Job 的 Spring Bean 注入配置
+    - fun.rooe.admin.framework 应用运行支撑
+        - annotation、aspect 框架注解与限流切面
+        - config Web、Swagger、异步线程池、RSA、权限与 Spring Security 配置
+        - exception 全局异常处理
+        - utils 请求、安全与 Spring Bean 工具
+    - fun.rooe.admin.infrastructure 外部资源适配
+        - config Redis、Redisson、MyBatis-Plus、Druid、Quartz、S3 与文件路径配置
+        - cache、utils Redis 缓存适配与分页工具
+        - mapper 数据库访问接口与 XML
+        - service 邮件、S3 与本地文件服务
+        - controller 基础设施管理接口
 - rooe-admin-bootstrap 应用启动模块
     - RooeAdminApplication Spring Boot 启动入口（fun.rooe.admin 包）
     - resources/config application.yml 及 dev、prod、quartz 环境配置
@@ -97,20 +93,15 @@
     - sysrunner 程序启动后处理数据
 	- modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
 - rooe-admin-logging 系统日志模块
-- rooe-admin-tools 系统第三方工具模块
-    - email 邮件工具
-    - amazon 亚马逊S3云存储工具
-    - alipay 支付宝支付工具
-    - local-storage 本地存储工具
 ```
 
-框架模块依赖 `rooe-admin-common`，不依赖业务模块。`rooe-admin-system` 和 `rooe-admin-tools` 显式依赖 `rooe-admin-framework`；日志模块继续依赖 `rooe-admin-common`。`rooe-admin-bootstrap` 组装各模块并提供应用运行环境；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各模块。
+框架与基础设施代码统一位于 `admin-framework` 模块，通过根包隔离职责。日志模块依赖该模块提供的框架注解与请求上下文能力；`rooe-admin-system` 依赖 `admin-framework` 和日志模块，`rooe-admin-bootstrap` 负责最终组装；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各包。
 
-用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `rooe-admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`LimitType` 和 `ApiError` 作为共享类型保留在公共模块。
+用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `rooe-admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiError` 作为共享响应类型保留在公共模块。
 
-在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl rooe-admin-bootstrap -am clean package`。仅验证公共模块和框架模块可执行 `mvn -pl rooe-admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
+在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl admin-bootstrap -am clean package`。仅验证框架模块可执行 `mvn -pl admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
 
-部署入口为 `java -jar rooe-admin-bootstrap/target/rooe-admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod` 指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行 `mvn -pl rooe-admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随各业务模块的 JAR 加载，应用配置集中维护在 `rooe-admin-bootstrap/src/main/resources`。
+部署入口为 `java -jar admin-bootstrap/target/admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod` 指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行 `mvn -pl admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随所属模块的 JAR 加载，应用配置集中维护在 `admin-bootstrap/src/main/resources`。
 
 #### 特别鸣谢
 

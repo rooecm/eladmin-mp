@@ -15,12 +15,12 @@
  */
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.config.security.service.OnlineSessionService;
+import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.utils.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.config.security.security.TokenProvider;
-import fun.rooe.admin.config.security.config.SecurityProperties;
+import fun.rooe.admin.framework.config.security.security.TokenProvider;
+import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.modules.security.service.dto.JwtUserDto;
 import fun.rooe.admin.modules.security.service.dto.OnlineUserDto;
 import org.springframework.data.domain.Pageable;

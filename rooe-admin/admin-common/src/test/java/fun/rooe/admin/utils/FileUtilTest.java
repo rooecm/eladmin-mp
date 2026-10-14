@@ -1,18 +1,26 @@
 package fun.rooe.admin.utils;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import static fun.rooe.admin.utils.FileUtil.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FileUtilTest {
 
     @Test
-    public void testToFile() {
-        long retval = toFile(new MockMultipartFile("foo", (byte[]) null)).getTotalSpace();
-        assertTrue(retval > 0);
+    public void testUpload() throws Exception {
+        File dir = Files.createTempDirectory("file-util-test").toFile();
+        File file = upload(new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)), "测试 文件.txt", dir.getPath() + File.separator);
+        assertNotNull(file);
+        assertTrue(file.exists());
+        assertTrue(file.getName().endsWith(".txt"));
     }
 
     @Test

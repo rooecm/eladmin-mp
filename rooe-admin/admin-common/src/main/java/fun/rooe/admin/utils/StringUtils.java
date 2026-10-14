@@ -37,6 +37,15 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     private static final char SEPARATOR = '_';
     private static final String UNKNOWN = "unknown";
 
+    private static Ip2regionSearcher ipSearcher;
+
+    /**
+     * 由框架层在启动时注入 IP 库查询实现, 避免 common 依赖 Spring 容器
+     */
+    public static void setAddressFinder(Ip2regionSearcher searcher) {
+        ipSearcher = searcher;
+    }
+
     /**
      * 驼峰命名法工具
      *
@@ -156,7 +165,9 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      * 根据ip获取详细地址
      */
     public static String getCityInfo(String ip) {
-        Ip2regionSearcher ipSearcher = SpringBeanHolder.getBean(Ip2regionSearcher.class);
+        if (ipSearcher == null) {
+            return null;
+        }
         IpInfo ipInfo = ipSearcher.memorySearch(ip);
         if(ipInfo != null){
             return ipInfo.getAddress();

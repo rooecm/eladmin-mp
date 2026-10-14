@@ -17,8 +17,8 @@ package fun.rooe.admin.modules.system.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import fun.rooe.admin.annotation.Limit;
-import fun.rooe.admin.annotation.rest.AnonymousGetMapping;
+import fun.rooe.admin.framework.annotation.Limit;
+import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

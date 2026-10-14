@@ -19,7 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.config.properties.FileProperties;
+import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
@@ -233,7 +233,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         User user = userMapper.findByUsername(SecurityUtils.getCurrentUsername());
         String oldPath = user.getAvatarPath();
-        File file = FileUtil.upload(multipartFile, properties.getPath().getAvatar());
+        File file;
+        try {
+            file = FileUtil.upload(multipartFile.getInputStream(), multipartFile.getOriginalFilename(), properties.getPath().getAvatar());
+        } catch (IOException e) {
+            throw new BadRequestException("头像上传失败");
+        }
         user.setAvatarPath(Objects.requireNonNull(file).getPath());
         user.setAvatarName(file.getName());
         saveOrUpdate(user);

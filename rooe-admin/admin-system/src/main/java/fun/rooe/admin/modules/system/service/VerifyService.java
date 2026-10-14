@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.modules.system.service;
 
-import fun.rooe.admin.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
 
 /**
  * @author Zheng Jie

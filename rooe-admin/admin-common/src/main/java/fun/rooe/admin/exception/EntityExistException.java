@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.exception;
 
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Zheng Jie

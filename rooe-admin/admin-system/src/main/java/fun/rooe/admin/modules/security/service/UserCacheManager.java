@@ -16,9 +16,9 @@
 package fun.rooe.admin.modules.security.service;
 
 import cn.hutool.core.util.RandomUtil;
-import fun.rooe.admin.config.security.config.LoginProperties;
+import fun.rooe.admin.framework.config.security.config.LoginProperties;
 import fun.rooe.admin.modules.security.service.dto.JwtUserDto;
-import fun.rooe.admin.utils.RedisUtils;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;

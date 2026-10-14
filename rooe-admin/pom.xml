@@ -12,7 +12,6 @@
         <module>admin-framework</module>
         <module>admin-logging</module>
         <module>admin-system</module>
-        <module>admin-tools</module>
         <module>admin-bootstrap</module>
     </modules>
 
@@ -75,11 +74,6 @@
             <dependency>
                 <groupId>fun.rooe</groupId>
                 <artifactId>admin-logging</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>fun.rooe</groupId>
-                <artifactId>admin-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

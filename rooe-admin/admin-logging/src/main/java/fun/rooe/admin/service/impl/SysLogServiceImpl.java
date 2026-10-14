@@ -19,12 +19,12 @@ import cn.hutool.core.lang.Dict;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.annotation.Log;
+import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.utils.FileUtil;
 import fun.rooe.admin.utils.PageResult;
-import fun.rooe.admin.utils.PageUtil;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.domain.SysLog;
@@ -59,7 +59,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
 
     @Override
     public PageResult<SysLog> queryAll(SysLogQueryCriteria criteria, Page<SysLog> page) {
-        return PageUtil.toPage(sysLogMapper.queryAll(criteria, page));
+        IPage<SysLog> result = sysLogMapper.queryAll(criteria, page);
+        return new PageResult<>(result.getRecords(), result.getTotal());
     }
 
     @Override
@@ -69,7 +70,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
 
     @Override
     public PageResult<SysLog> queryAllByUser(SysLogQueryCriteria criteria, Page<SysLog> page) {
-        return PageUtil.toPage(sysLogMapper.queryAllByUser(criteria, page));
+        IPage<SysLog> result = sysLogMapper.queryAllByUser(criteria, page);
+        return new PageResult<>(result.getRecords(), result.getTotal());
     }
 
     @Async

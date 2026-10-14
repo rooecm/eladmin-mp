@@ -23,12 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -81,26 +81,6 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
     public static final String VIDEO = "视频";
     public static final String OTHER = "其他";
 
-
-    /**
-     * MultipartFile转File
-     */
-    public static File toFile(MultipartFile multipartFile) {
-        // 获取文件名
-        String fileName = multipartFile.getOriginalFilename();
-        // 获取文件后缀
-        String prefix = "." + getExtensionName(fileName);
-        File file = null;
-        try {
-            // 用uuid作为文件名，防止生成的临时文件重复
-            file = new File(SYS_TEM_DIR + IdUtil.simpleUUID() + prefix);
-            // MultipartFile to File
-            multipartFile.transferTo(file);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-        return file;
-    }
 
     /**
      * 获取文件扩展名，不带 .
@@ -175,14 +155,18 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
     }
 
     /**
-     * 将文件名解析成文件的上传路径
+     * 将文件流写入上传路径
+     *
+     * @param ins              文件输入流, 由调用方负责获取并最终关闭
+     * @param originalFilename 原始文件名
+     * @param filePath         上传目录
      */
-    public static File upload(MultipartFile file, String filePath) {
+    public static File upload(InputStream ins, String originalFilename, String filePath) {
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddhhmmssS");
         // 过滤非法文件名
-        String name = getFileNameNoEx(verifyFilename(file.getOriginalFilename()));
-        String suffix = getExtensionName(file.getOriginalFilename());
+        String name = getFileNameNoEx(verifyFilename(originalFilename));
+        String suffix = getExtensionName(originalFilename);
         String nowStr = "-" + format.format(date);
         try {
             String fileName = name + nowStr + "." + suffix;
@@ -196,10 +180,12 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
                 }
             }
             // 文件写入
-            file.transferTo(dest);
+            Files.copy(ins, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return dest;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+        } finally {
+            CloseUtil.close(ins);
         }
         return null;
     }
