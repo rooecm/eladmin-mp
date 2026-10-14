@@ -20,12 +20,12 @@ import ${package}.domain.${className};
     <#list columns as column>
         <#if column.columnKey = 'UNI'>
             <#if column_index = 1>
-import fun.rooe.exception.EntityExistException;
+import exception.fun.rooe.admin.EntityExistException;
             </#if>
         </#if>
     </#list>
 </#if>
-import fun.rooe.utils.FileUtil;
+import utils.fun.rooe.admin.FileUtil;
 import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -34,14 +34,14 @@ import ${package}.domain.dto.${className}QueryCriteria;
 import ${package}.mapper.${className}Mapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import fun.rooe.utils.PageUtil;
+import utils.fun.rooe.admin.PageUtil;
 import java.util.List;
 import java.util.Map;
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import fun.rooe.utils.PageResult;
+import utils.fun.rooe.admin.PageResult;
 
 /**
 * @description 服务实现

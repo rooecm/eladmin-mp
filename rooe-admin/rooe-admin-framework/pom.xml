@@ -10,15 +10,10 @@
     <artifactId>rooe-admin-framework</artifactId>
     <name>framework</name>
 
-    <properties>
-        <jjwt.version>0.11.5</jjwt.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>fun.rooe</groupId>
             <artifactId>rooe-admin-common</artifactId>
-            <version>1.1</version>
         </dependency>
 
         <dependency>
@@ -29,18 +24,15 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
     </dependencies>

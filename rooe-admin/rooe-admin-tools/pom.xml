@@ -10,38 +10,29 @@
     <artifactId>rooe-admin-tools</artifactId>
     <name>工具模块</name>
 
-    <properties>
-        <jakarta-mail.version>2.0.1</jakarta-mail.version>
-        <alipay.version>4.38.4.ALL</alipay.version>
-    </properties>
-
     <dependencies>
         <!-- 文件存储配置由框架模块提供 -->
         <dependency>
             <groupId>fun.rooe</groupId>
             <artifactId>rooe-admin-framework</artifactId>
-            <version>1.1</version>
         </dependency>
 
         <!-- 同时需要common模块和logging模块只需要引入logging模块即可 -->
         <dependency>
             <groupId>fun.rooe</groupId>
             <artifactId>rooe-admin-logging</artifactId>
-            <version>1.1</version>
         </dependency>
 
         <!--邮件依赖-->
         <dependency>
             <groupId>com.sun.mail</groupId>
             <artifactId>jakarta.mail</artifactId>
-            <version>${jakarta-mail.version}</version>
         </dependency>
 
         <!--支付宝依赖-->
         <dependency>
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java</artifactId>
-            <version>${alipay.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -54,7 +45,6 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
-            <version>2.30.13</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>

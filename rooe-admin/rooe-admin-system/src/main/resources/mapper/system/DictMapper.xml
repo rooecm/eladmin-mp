@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="fun.rooe.modules.system.mapper.DictMapper">
-    <resultMap id="BaseResultMap" type="fun.rooe.modules.system.domain.Dict">
+<mapper namespace="fun.rooe.admin.modules.system.mapper.DictMapper">
+    <resultMap id="BaseResultMap" type="fun.rooe.admin.modules.system.domain.Dict">
         <id column="dict_id" property="id" jdbcType="BIGINT"/>
         <result column="name" property="name" jdbcType="VARCHAR"/>
         <result column="description" property="description" jdbcType="VARCHAR"/>
