@@ -13,39 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.rest;
+package me.zhengjie.modules.system.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import me.zhengjie.domain.GenConfig;
-import me.zhengjie.service.GenConfigService;
+import me.zhengjie.modules.system.service.MonitorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * @author Zheng Jie
- * @date 2019-01-14
+ * @date 2020-05-02
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/genConfig")
-@Tag(name = "系统：代码生成器配置管理")
-public class GenConfigController {
+@Tag(name = "系统-服务监控管理")
+@RequestMapping("/api/monitor")
+public class MonitorController {
 
-    private final GenConfigService genConfigService;
+    private final MonitorService serverService;
 
-    @Operation(summary = "查询")
-    @GetMapping(value = "/{tableName}")
-    public ResponseEntity<GenConfig> queryGenConfig(@PathVariable String tableName){
-        return new ResponseEntity<>(genConfigService.find(tableName), HttpStatus.OK);
-    }
-
-    @PutMapping
-    @Operation(summary = "修改")
-    public ResponseEntity<GenConfig> updateGenConfig(@Validated @RequestBody GenConfig genConfig){
-        return new ResponseEntity<>(genConfigService.update(genConfig.getTableName(), genConfig),HttpStatus.OK);
+    @GetMapping
+    @Operation(summary = "查询服务监控")
+    @PreAuthorize("@el.check('monitor:list')")
+    public ResponseEntity<Object> queryMonitor(){
+        return new ResponseEntity<>(serverService.getServers(),HttpStatus.OK);
     }
 }

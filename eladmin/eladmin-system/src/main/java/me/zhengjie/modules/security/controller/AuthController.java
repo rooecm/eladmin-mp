@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package me.zhengjie.modules.security.rest;
+package me.zhengjie.modules.security.controller;
 
 import cn.hutool.core.util.IdUtil;
 import com.wf.captcha.base.Captcha;
