@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import cn.hutool.core.collection.CollectionUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.dto.MenuVo;
 import fun.rooe.admin.modules.system.service.MenuService;
 import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Zheng Jie
@@ -97,7 +97,7 @@ public class MenuController {
     @PreAuthorize("@el.check('menu:list')")
     public ResponseEntity<List<Menu>> getMenuSuperior(@RequestBody List<Long> ids) {
         Set<Menu> menus = new LinkedHashSet<>();
-        if(CollectionUtil.isNotEmpty(ids)){
+        if(!CollectionUtils.isEmpty(ids)){
             for (Long id : ids) {
                 Menu menu = menuService.findById(id);
                 List<Menu> menuList = menuService.getSuperior(menu, new ArrayList<>());

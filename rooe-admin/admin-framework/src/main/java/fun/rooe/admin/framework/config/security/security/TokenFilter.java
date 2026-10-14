@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.framework.config.security.security;
 
-import cn.hutool.core.util.StrUtil;
+import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
@@ -56,7 +56,7 @@ public class TokenFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         String token = resolveToken(httpServletRequest);
         // 对于 Token 为空的不需要去查 Redis
-        if(StrUtil.isNotBlank(token)){
+        if(StringUtils.hasText(token)){
             // 获取用户Token的Key
             String loginKey = tokenProvider.loginKey(token);
             // 判断登录会话是否仍然有效

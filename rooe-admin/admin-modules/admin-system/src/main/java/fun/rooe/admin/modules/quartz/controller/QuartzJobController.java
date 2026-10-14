@@ -26,7 +26,7 @@ import fun.rooe.admin.modules.quartz.domain.QuartzJob;
 import fun.rooe.admin.modules.quartz.domain.QuartzLog;
 import fun.rooe.admin.modules.quartz.service.QuartzJobService;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

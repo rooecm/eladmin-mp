@@ -15,9 +15,8 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.RsaUtils;
 import fun.rooe.admin.framework.utils.SecurityUtils;
@@ -94,7 +93,7 @@ public class UserController {
         if (!CollectionUtils.isEmpty(criteria.getDeptIds()) && !CollectionUtils.isEmpty(dataScopes)){
             // 取交集
             criteria.getDeptIds().retainAll(dataScopes);
-            if(!CollectionUtil.isEmpty(criteria.getDeptIds())){
+            if(!CollectionUtils.isEmpty(criteria.getDeptIds())){
                 return new ResponseEntity<>(userService.queryAll(criteria,page),HttpStatus.OK);
             }
         } else {

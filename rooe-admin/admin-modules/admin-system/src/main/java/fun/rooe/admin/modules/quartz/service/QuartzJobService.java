@@ -20,7 +20,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.quartz.domain.QuartzJob;
 import fun.rooe.admin.modules.quartz.domain.QuartzLog;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

@@ -23,10 +23,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
+import fun.rooe.admin.framework.utils.BeanUtils;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -92,6 +91,6 @@ public class LocalStorage implements Serializable {
     }
 
     public void copy(LocalStorage source){
-        BeanUtil.copyProperties(source,this, CopyOptions.create().setIgnoreNullValue(true));
+        BeanUtils.copyNonNullProperties(source, this);
     }
 }

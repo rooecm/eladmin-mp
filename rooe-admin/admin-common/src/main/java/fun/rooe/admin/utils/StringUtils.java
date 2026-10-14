@@ -15,17 +15,16 @@
  */
 package fun.rooe.admin.utils;
 
-import cn.hutool.http.useragent.UserAgent;
-import cn.hutool.http.useragent.UserAgentUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.dreamlu.mica.ip2region.core.Ip2regionSearcher;
 import net.dreamlu.mica.ip2region.core.IpInfo;
 import jakarta.servlet.http.HttpServletRequest;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Zheng Jie
@@ -36,6 +35,14 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
     private static final char SEPARATOR = '_';
     private static final String UNKNOWN = "unknown";
+    private static final String[][] BROWSER_PATTERNS = {
+            {"Microsoft Edge", "(?:Edg|Edge)/([\\d.]+)"},
+            {"Opera", "(?:OPR|Opera)[ /]([\\d.]+)"},
+            {"Chrome", "Chrome/([\\d.]+)"},
+            {"Firefox", "Firefox/([\\d.]+)"},
+            {"Safari", "Version/([\\d.]+).*Safari"},
+            {"Internet Explorer", "MSIE ([\\d.]+)"}
+    };
 
     private static Ip2regionSearcher ipSearcher;
 
@@ -179,9 +186,17 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
      * 获取浏览器
      */
     public static String getBrowser(HttpServletRequest request) {
-        UserAgent ua = UserAgentUtil.parse(request.getHeader("User-Agent"));
-        String browser = ua.getBrowser().toString() + " " + ua.getVersion();
-        return browser.replace(".0.0.0","");
+        String userAgent = request.getHeader("User-Agent");
+        if (isBlank(userAgent)) {
+            return "Unknown";
+        }
+        for (String[] browserPattern : BROWSER_PATTERNS) {
+            Matcher matcher = Pattern.compile(browserPattern[1]).matcher(userAgent);
+            if (matcher.find()) {
+                return (browserPattern[0] + " " + matcher.group(1)).replace(".0.0.0", "");
+            }
+        }
+        return "Unknown";
     }
 
     /**
@@ -237,14 +252,5 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
         } catch (Exception e) {
             return "";
         }
-    }
-
-    @SuppressWarnings({"unchecked","all"})
-    public static List<Field> getAllFields(Class clazz, List<Field> fields) {
-        if (clazz != null) {
-            fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-            getAllFields(clazz.getSuperclass(), fields);
-        }
-        return fields;
     }
 }

@@ -16,7 +16,7 @@
 package fun.rooe.admin.infrastructure.utils;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import java.util.*;
 
 /**
@@ -24,7 +24,7 @@ import java.util.*;
  * @author Zheng Jie
  * @date 2018-12-10
  */
-public class PageUtil extends cn.hutool.core.util.PageUtil {
+public class PageUtil {
 
     /**
      * List 分页

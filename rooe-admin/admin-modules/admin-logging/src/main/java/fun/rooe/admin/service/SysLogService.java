@@ -19,7 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.domain.SysLog;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.aspectj.lang.ProceedingJoinPoint;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

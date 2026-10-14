@@ -1,4 +1,4 @@
-package fun.rooe.admin.utils;
+package fun.rooe.admin.response;
 
 import lombok.*;
 import java.io.Serializable;

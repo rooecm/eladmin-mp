@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.security.controller;
 
-import cn.hutool.core.util.IdUtil;
 import com.wf.captcha.base.Captcha;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,6 +52,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 /**
  * @author Zheng Jie
@@ -128,7 +128,7 @@ public class AuthController {
     public ResponseEntity<Object> getCode() {
         // 获取运算的结果
         Captcha captcha = captchaConfig.getCaptcha();
-        String uuid = properties.getCodeKey() + IdUtil.simpleUUID();
+        String uuid = properties.getCodeKey() + UUID.randomUUID().toString().replace("-", "");
         //当验证码类型为 arithmetic时且长度 >= 2 时，captcha.text()的结果有几率为浮点型
         String captchaValue = captcha.text();
         if (captcha.getCharType() - 1 == LoginCodeEnum.ARITHMETIC.ordinal() && captchaValue.contains(".")) {

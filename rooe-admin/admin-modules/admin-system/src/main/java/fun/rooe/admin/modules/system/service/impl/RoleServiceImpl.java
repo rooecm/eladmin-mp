@@ -15,12 +15,12 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Zheng Jie
@@ -96,7 +97,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         }
         save(resources);
         // 判断是否有部门数据，若有，则需创建关联
-        if (CollectionUtil.isNotEmpty(resources.getDepts())) {
+        if (!CollectionUtils.isEmpty(resources.getDepts())) {
             roleDeptMapper.insertData(resources.getId(), resources.getDepts());
         }
     }
@@ -119,7 +120,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         // 删除关联部门数据
         roleDeptMapper.deleteByRoleId(resources.getId());
         // 判断是否有部门数据，若有，则需更新关联
-        if (CollectionUtil.isNotEmpty(resources.getDepts())) {
+        if (!CollectionUtils.isEmpty(resources.getDepts())) {
             roleDeptMapper.insertData(resources.getId(), resources.getDepts());
         }
         // 更新相关缓存
@@ -132,7 +133,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         // 更新菜单
         roleMenuMapper.deleteByRoleId(role.getId());
         // 判断是否为空
-        if(CollUtil.isNotEmpty(role.getMenus())){
+        if(!CollectionUtils.isEmpty(role.getMenus())){
             roleMenuMapper.insertData(role.getId(), role.getMenus());
         }
         // 更新缓存
@@ -156,7 +157,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public List<Role> findByUsersId(Long userId) {
         String key = CacheKey.ROLE_USER + userId;
         List<Role> roles = redisUtils.getList(key, Role.class);
-        if (CollUtil.isEmpty(roles) || roles.stream().anyMatch(role -> role == null || role.getId() == null)) {
+        if (CollectionUtils.isEmpty(roles) || roles.stream().anyMatch(role -> role == null || role.getId() == null)) {
             roles = roleMapper.findByUserId(userId);
             redisUtils.set(key, roles, 1, TimeUnit.DAYS);
         }
@@ -165,7 +166,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public Integer findByRoles(Set<Role> roles) {
-        if (CollUtil.isEmpty(roles)) {
+        if (CollectionUtils.isEmpty(roles)) {
             return Integer.MAX_VALUE;
         }
         Set<Role> roleSet = new HashSet<>();
@@ -179,7 +180,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public List<AuthorityDto> buildPermissions(User user) {
         String key = CacheKey.ROLE_AUTH + user.getId();
         List<AuthorityDto> authorityDtos = redisUtils.getList(key, AuthorityDto.class);
-        if (CollUtil.isEmpty(authorityDtos)) {
+        if (CollectionUtils.isEmpty(authorityDtos)) {
             Set<String> permissions = new HashSet<>();
             // 如果是管理员直接返回
             if (user.getIsAdmin()) {
@@ -229,8 +230,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
      * @param id /
      */
     public void delCaches(Long id, List<User> users) {
-        users = CollectionUtil.isEmpty(users) ? userMapper.findByRoleId(id) : users;
-        if (CollectionUtil.isNotEmpty(users)) {
+        users = CollectionUtils.isEmpty(users) ? userMapper.findByRoleId(id) : users;
+        if (!CollectionUtils.isEmpty(users)) {
             users.forEach(item -> userCacheManager.cleanUserCache(item.getUsername()));
             Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
             redisUtils.delByKeys(CacheKey.DATA_USER, userIds);

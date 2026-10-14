@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.infrastructure.utils;
 
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -274,7 +273,7 @@ public class RedisUtils {
      * @return 值
      */
     public String getStr(String key) {
-        if(StrUtil.isBlank(key)){
+        if(!org.springframework.util.StringUtils.hasText(key)){
             return null;
         }
         Object value = redisTemplate.opsForValue().get(key);

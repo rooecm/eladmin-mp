@@ -15,8 +15,6 @@
 */
 package fun.rooe.admin.infrastructure.service.impl;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3Storage;
@@ -36,7 +34,7 @@ import fun.rooe.admin.infrastructure.utils.PageUtil;
 import java.util.*;
 import java.io.IOException;
 import jakarta.servlet.http.HttpServletResponse;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -44,6 +42,7 @@ import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
+import java.text.SimpleDateFormat;
 
 /**
 * @description 服务实现
@@ -119,8 +118,8 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             throw new IllegalArgumentException("文件名不能为空");
         }
         // 生成存储路径和文件名
-        String folder = DateUtil.format(new Date(), amzS3Config.getTimeformat());
-        String fileName = IdUtil.simpleUUID() + "." + FileUtil.getExtensionName(originalName);
+        String folder = new SimpleDateFormat(amzS3Config.getTimeformat()).format(new Date());
+        String fileName = UUID.randomUUID().toString().replace("-", "") + "." + FileUtil.getExtensionName(originalName);
         String filePath = folder + "/" + fileName;
         // 构建上传请求
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()

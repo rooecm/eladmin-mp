@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.service.impl;
 
-import cn.hutool.core.lang.Dict;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -24,7 +23,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.domain.SysLog;
@@ -158,7 +157,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
     @Override
     public Object findByErrDetail(Long id) {
         String details = sysLogMapper.getExceptionDetails(id);
-        return Dict.create().set("exception", details);
+        return Map.of("exception", details);
     }
 
     @Override

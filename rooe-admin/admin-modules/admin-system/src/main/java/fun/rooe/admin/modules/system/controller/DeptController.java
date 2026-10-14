@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import cn.hutool.core.collection.CollectionUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
 * @author Zheng Jie
@@ -115,7 +115,7 @@ public class DeptController {
         for (Long id : ids) {
             List<Dept> deptList = deptService.findByPid(id);
             depts.add(deptService.findById(id));
-            if(CollectionUtil.isNotEmpty(deptList)){
+            if(!CollectionUtils.isEmpty(deptList)){
                 depts = deptService.getDeleteDepts(deptList, depts);
             }
         }

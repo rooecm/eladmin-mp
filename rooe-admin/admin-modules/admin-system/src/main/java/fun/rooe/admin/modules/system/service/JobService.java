@@ -19,7 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.Job;
 import fun.rooe.admin.modules.system.domain.dto.JobQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

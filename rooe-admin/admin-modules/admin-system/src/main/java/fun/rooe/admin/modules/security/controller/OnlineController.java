@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.dto.OnlineUserDto;
 import fun.rooe.admin.utils.EncryptUtils;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

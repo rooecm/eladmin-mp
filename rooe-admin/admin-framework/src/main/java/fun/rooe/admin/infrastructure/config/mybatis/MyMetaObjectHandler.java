@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.infrastructure.config.mybatis;
 
-import cn.hutool.core.date.DateTime;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.apache.ibatis.reflection.MetaObject;
@@ -33,8 +32,8 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         /* 创建时间 */
-        this.strictInsertFill(metaObject, "createTime", Timestamp.class, DateTime.now().toTimestamp());
-        this.strictInsertFill(metaObject, "updateTime", Timestamp.class, DateTime.now().toTimestamp());
+        this.strictInsertFill(metaObject, "createTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
+        this.strictInsertFill(metaObject, "updateTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
         /* 操作人 */
         String username = "System";
         try {username = SecurityUtils.getCurrentUsername();}catch (Exception ignored){}
@@ -45,7 +44,7 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         /* 更新时间 */
-        this.strictUpdateFill(metaObject, "updateTime", Timestamp.class, DateTime.now().toTimestamp());
+        this.strictUpdateFill(metaObject, "updateTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
         /* 操作人 */
         String username = "System";
         try {username = SecurityUtils.getCurrentUsername();}catch (Exception ignored){}

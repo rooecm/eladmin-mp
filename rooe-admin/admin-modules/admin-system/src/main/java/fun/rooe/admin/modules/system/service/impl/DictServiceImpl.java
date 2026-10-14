@@ -15,12 +15,13 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.system.domain.Dict;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import org.springframework.util.CollectionUtils;
 
 /**
 * @author Zheng Jie
@@ -95,7 +97,7 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
         List<Map<String, Object>> list = new ArrayList<>();
         for (Dict dict : dicts) {
             List<DictDetail> dictDetails = dictDetailMapper.findByDictName(dict.getName());
-            if(CollectionUtil.isNotEmpty(dictDetails)){
+            if(!CollectionUtils.isEmpty(dictDetails)){
                 for (DictDetail dictDetail : dictDetails) {
                     Map<String,Object> map = new LinkedHashMap<>();
                     map.put("字典名称", dict.getName());

@@ -15,9 +15,6 @@
  */
 package fun.rooe.admin.framework.config.security.security;
 
-import cn.hutool.core.date.DateField;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.IdUtil;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -32,6 +29,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +72,7 @@ public class TokenProvider implements InitializingBean {
         // 设置用户ID
         claims.put(AUTHORITIES_UID_KEY, userId);
         // 设置UUID，确保每次Token不一样
-        claims.put(AUTHORITIES_UUID_KEY, IdUtil.simpleUUID());
+        claims.put(AUTHORITIES_UUID_KEY, UUID.randomUUID().toString().replace("-", ""));
         // 直接调用 Jwts.builder() 创建新实例
         return Jwts.builder()
                 // 设置自定义 Claims
@@ -111,7 +109,7 @@ public class TokenProvider implements InitializingBean {
         // 判断是否续期token,计算token的过期时间
         String loginKey = loginKey(token);
         long time = tokenCache.getExpire(loginKey) * 1000;
-        Date expireDate = DateUtil.offset(new Date(), DateField.MILLISECOND, (int) time);
+        Date expireDate = Date.from(Instant.now().plusMillis(time));
         // 判断当前时间与过期时间的时间差
         long differ = expireDate.getTime() - System.currentTimeMillis();
         // 如果在续期检查的范围内，则续期

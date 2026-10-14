@@ -15,10 +15,7 @@
  */
 package fun.rooe.admin.modules.quartz.utils;
 
-import cn.hutool.extra.template.Template;
-import cn.hutool.extra.template.TemplateConfig;
-import cn.hutool.extra.template.TemplateEngine;
-import cn.hutool.extra.template.TemplateUtil;
+import fun.rooe.admin.modules.system.utils.TemplateUtils;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
 import fun.rooe.admin.modules.quartz.domain.QuartzJob;
 import fun.rooe.admin.modules.quartz.domain.QuartzLog;
@@ -28,7 +25,7 @@ import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
 import fun.rooe.admin.utils.StringUtils;
-import fun.rooe.admin.utils.ThrowableUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +92,7 @@ public class ExecutionJob extends QuartzJobBean {
             log.setTime(times);
             // 任务状态 0：成功 1：失败
             log.setIsSuccess(false);
-            log.setExceptionDetail(ThrowableUtil.getStackTrace(e));
+            log.setExceptionDetail(ExceptionUtils.getStackTrace(e));
             // 任务如果失败了则暂停
             if(quartzJob.getPauseAfterFailure() != null && quartzJob.getPauseAfterFailure()){
                 quartzJob.setIsPause(false);
@@ -106,7 +103,7 @@ public class ExecutionJob extends QuartzJobBean {
                 EmailService emailService = SpringBeanHolder.getBean(EmailService.class);
                 // 邮箱报警
                 if(StringUtils.isNoneBlank(quartzJob.getEmail())){
-                    EmailDto emailDto = taskAlarm(quartzJob, ThrowableUtil.getStackTrace(e));
+                    EmailDto emailDto = taskAlarm(quartzJob, ExceptionUtils.getStackTrace(e));
                     emailService.send(emailDto, emailService.find());
                 }
             }
@@ -121,9 +118,7 @@ public class ExecutionJob extends QuartzJobBean {
         Map<String, Object> data = new HashMap<>(16);
         data.put("task", quartzJob);
         data.put("msg", msg);
-        TemplateEngine engine = TemplateUtil.createEngine(new TemplateConfig("template", TemplateConfig.ResourceMode.CLASSPATH));
-        Template template = engine.getTemplate("taskAlarm.ftl");
-        emailDto.setContent(template.render(data));
+        emailDto.setContent(TemplateUtils.render("taskAlarm.ftl", data));
         List<String> emails = Arrays.asList(quartzJob.getEmail().split("[,，]"));
         emailDto.setTos(emails);
         return emailDto;

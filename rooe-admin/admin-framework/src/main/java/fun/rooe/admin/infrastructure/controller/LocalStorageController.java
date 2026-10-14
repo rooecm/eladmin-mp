@@ -23,7 +23,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.infrastructure.service.LocalStorageService;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

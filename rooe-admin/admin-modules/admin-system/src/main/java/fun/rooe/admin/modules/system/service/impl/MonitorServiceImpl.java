@@ -15,11 +15,9 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.date.BetweenFormatter.Level;
-import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.modules.system.service.MonitorService;
-import fun.rooe.admin.utils.ElConstant;
+import fun.rooe.admin.constant.ElConstant;
 import fun.rooe.admin.utils.FileUtil;
 import fun.rooe.admin.utils.StringUtils;
 import org.springframework.stereotype.Service;
@@ -33,6 +31,8 @@ import oshi.util.Util;
 import java.lang.management.ManagementFactory;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 
 /**
 * @author Zheng Jie
@@ -61,7 +61,7 @@ public class MonitorServiceImpl implements MonitorService {
             resultMap.put("swap", getSwapInfo(hal.getMemory()));
             // 磁盘
             resultMap.put("disk", getDiskInfo(os));
-            resultMap.put("time", DateUtil.format(new Date(), "HH:mm:ss"));
+            resultMap.put("time", new SimpleDateFormat("HH:mm:ss").format(new Date()));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -184,11 +184,21 @@ public class MonitorServiceImpl implements MonitorService {
         long time = ManagementFactory.getRuntimeMXBean().getStartTime();
         Date date = new Date(time);
         // 计算项目运行时间
-        String formatBetween = DateUtil.formatBetween(date, new Date(), Level.HOUR);
+        String formatBetween = formatBetween(date, new Date());
         // 系统信息
         systemInfo.put("os", os.toString());
         systemInfo.put("day", formatBetween);
         systemInfo.put("ip", StringUtils.getLocalIp());
         return systemInfo;
+    }
+
+    private String formatBetween(Date start, Date end) {
+        Duration duration = Duration.between(start.toInstant(), end.toInstant());
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        if (days > 0) {
+            return days + "天" + hours + "小时";
+        }
+        return hours + "小时";
     }
 }

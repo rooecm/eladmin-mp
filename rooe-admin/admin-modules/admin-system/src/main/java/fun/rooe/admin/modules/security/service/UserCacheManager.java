@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.security.service;
 
-import cn.hutool.core.util.RandomUtil;
 import fun.rooe.admin.framework.config.security.config.LoginProperties;
 import fun.rooe.admin.modules.security.service.dto.JwtUserDto;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
@@ -24,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Zheng Jie
@@ -63,7 +63,7 @@ public class UserCacheManager {
         userName = StringUtils.lowerCase(userName);
         if (StringUtils.isNotEmpty(userName)) {
             // 添加数据, 避免数据同时过期
-            long time = idleTime + RandomUtil.randomInt(900, 1800);
+            long time = idleTime + ThreadLocalRandom.current().nextInt(900, 1800);
             redisUtils.set(LoginProperties.cacheKey + userName, user, time);
         }
     }

@@ -21,7 +21,7 @@ import fun.rooe.admin.service.SysLogService;
 import fun.rooe.admin.framework.utils.RequestHolder;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.utils.StringUtils;
-import fun.rooe.admin.utils.ThrowableUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -83,7 +83,7 @@ public class LogAspect {
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         SysLog sysLog = new SysLog("ERROR",System.currentTimeMillis() - currentTime.get());
         currentTime.remove();
-        sysLog.setExceptionDetail(new String(ThrowableUtil.getStackTrace(e).getBytes()));
+        sysLog.setExceptionDetail(new String(ExceptionUtils.getStackTrace(e).getBytes()));
         HttpServletRequest request = RequestHolder.getHttpServletRequest();
         sysLogService.save(getUsername(), StringUtils.getBrowser(request), StringUtils.getIp(request), (ProceedingJoinPoint)joinPoint, sysLog);
     }

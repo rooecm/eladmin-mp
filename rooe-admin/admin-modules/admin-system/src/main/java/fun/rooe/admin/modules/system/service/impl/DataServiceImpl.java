@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.domain.Role;
@@ -23,12 +22,13 @@ import fun.rooe.admin.modules.system.domain.User;
 import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.utils.CacheKey;
+import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.enums.DataScopeEnum;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Zheng Jie
@@ -52,7 +52,7 @@ public class DataServiceImpl implements DataService {
     public List<Long> getDeptIds(User user) {
         String key = CacheKey.DATA_USER + user.getId();
         List<Long> ids = redisUtils.getList(key, Long.class);
-        if (CollUtil.isEmpty(ids)) {
+        if (CollectionUtils.isEmpty(ids)) {
             Set<Long> deptIds = new HashSet<>();
             // 查询用户角色
             List<Role> roleList = roleService.findByUsersId(user.getId());
@@ -87,7 +87,7 @@ public class DataServiceImpl implements DataService {
         for (Dept dept : depts) {
             deptIds.add(dept.getId());
             List<Dept> deptChildren = deptService.findByPid(dept.getId());
-            if (CollUtil.isNotEmpty(deptChildren)) {
+            if (!CollectionUtils.isEmpty(deptChildren)) {
                 deptIds.addAll(deptService.getDeptChildren(deptChildren));
             }
         }

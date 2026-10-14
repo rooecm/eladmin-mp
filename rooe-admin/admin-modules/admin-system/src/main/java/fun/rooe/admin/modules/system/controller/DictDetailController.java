@@ -24,7 +24,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.DictDetail;
 import fun.rooe.admin.modules.system.service.DictDetailService;
 import fun.rooe.admin.modules.system.domain.dto.DictDetailQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

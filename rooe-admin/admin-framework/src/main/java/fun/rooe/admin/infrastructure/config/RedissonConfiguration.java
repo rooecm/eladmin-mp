@@ -1,6 +1,5 @@
 package fun.rooe.admin.infrastructure.config;
 
-import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -46,7 +45,7 @@ public class RedissonConfiguration {
                 .setTimeout(timeout)
                 .setConnectionPoolSize(connectionPoolSize)
                 .setConnectionMinimumIdleSize(connectionMinimumIdleSize);
-        if(StrUtil.isNotBlank(redisPassword)){
+        if(org.springframework.util.StringUtils.hasText(redisPassword)){
             config.useSingleServer().setPassword(redisPassword);
         }
         return Redisson.create(config);

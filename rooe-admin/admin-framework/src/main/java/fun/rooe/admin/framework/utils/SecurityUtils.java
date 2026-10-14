@@ -15,9 +15,6 @@
  */
 package fun.rooe.admin.framework.utils;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.jwt.JWT;
-import cn.hutool.jwt.JWTUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -30,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -83,7 +81,7 @@ public class SecurityUtils {
      */
     public static String getDataScopeType() {
         List<Long> dataScopes = getCurrentUserDataScope();
-        if(CollUtil.isEmpty(dataScopes)){
+        if(dataScopes == null || dataScopes.isEmpty()){
             return "";
         }
         return DataScopeEnum.ALL.getValue();
@@ -102,8 +100,7 @@ public class SecurityUtils {
      * @return 系统用户ID
      */
     public static Long getCurrentUserId(String token) {
-        JWT jwt = JWTUtil.parseToken(token);
-        return Long.valueOf(jwt.getPayload("userId").toString());
+        return getClaims(token).getLong("userId");
     }
 
     /**
@@ -121,8 +118,7 @@ public class SecurityUtils {
      * @return 系统用户名称
      */
     public static String getCurrentUsername(String token) {
-        JWT jwt = JWTUtil.parseToken(token);
-        return jwt.getPayload("sub").toString();
+        return getClaims(token).getString("sub");
     }
 
     /**
@@ -140,5 +136,11 @@ public class SecurityUtils {
             log.debug("非法Token：{}", bearerToken);
         }
         return null;
+    }
+
+    private static JSONObject getClaims(String token) {
+        String[] tokenParts = token.split("\\.");
+        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]));
+        return JSON.parseObject(payload);
     }
 }

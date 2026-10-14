@@ -23,7 +23,7 @@ import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.domain.SysLog;
 import fun.rooe.admin.service.SysLogService;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

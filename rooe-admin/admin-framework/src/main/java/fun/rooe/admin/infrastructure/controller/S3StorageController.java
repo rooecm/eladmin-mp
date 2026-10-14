@@ -25,7 +25,7 @@ import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3Storage;
 import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
 import fun.rooe.admin.infrastructure.service.S3StorageService;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

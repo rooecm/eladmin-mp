@@ -20,7 +20,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.exception.EntityNotFoundException;
 import fun.rooe.admin.response.ApiResult;
-import fun.rooe.admin.utils.ThrowableUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ApiResult<Void>> handleException(Throwable e){
         // 打印堆栈信息
-        log.error(ThrowableUtil.getStackTrace(e));
+        log.error(ExceptionUtils.getStackTrace(e));
         return buildResponseEntity(ApiResult.error(e.getMessage()));
     }
 
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(value = BadRequestException.class)
 	public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
         // 打印堆栈信息
-        log.error(ThrowableUtil.getStackTrace(e));
+        log.error(ExceptionUtils.getStackTrace(e));
         return buildResponseEntity(ApiResult.error(e.getStatus(),e.getMessage()));
 	}
 
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = EntityExistException.class)
     public ResponseEntity<ApiResult<Void>> entityExistException(EntityExistException e) {
         // 打印堆栈信息
-        log.error(ThrowableUtil.getStackTrace(e));
+        log.error(ExceptionUtils.getStackTrace(e));
         return buildResponseEntity(ApiResult.error(e.getMessage()));
     }
 
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = EntityNotFoundException.class)
     public ResponseEntity<ApiResult<Void>> entityNotFoundException(EntityNotFoundException e) {
         // 打印堆栈信息
-        log.error(ThrowableUtil.getStackTrace(e));
+        log.error(ExceptionUtils.getStackTrace(e));
         return buildResponseEntity(ApiResult.error(NOT_FOUND.value(),e.getMessage()));
     }
 
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
         // 打印堆栈信息
-        log.error(ThrowableUtil.getStackTrace(e));
+        log.error(ExceptionUtils.getStackTrace(e));
         ObjectError objectError = e.getBindingResult().getAllErrors().get(0);
         String message = objectError.getDefaultMessage();
         if (objectError instanceof FieldError) {

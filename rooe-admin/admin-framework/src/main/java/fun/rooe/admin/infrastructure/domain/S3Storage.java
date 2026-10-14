@@ -19,10 +19,8 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-import cn.hutool.core.bean.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import cn.hutool.core.bean.copier.CopyOptions;
 import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -31,6 +29,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
+import fun.rooe.admin.framework.utils.BeanUtils;
 
 /**
 * @description /
@@ -90,6 +89,6 @@ public class S3Storage implements Serializable {
     private String filePath;
 
     public void copy(S3Storage source){
-        BeanUtil.copyProperties(source,this, CopyOptions.create().setIgnoreNullValue(true));
+        BeanUtils.copyNonNullProperties(source, this);
     }
 }

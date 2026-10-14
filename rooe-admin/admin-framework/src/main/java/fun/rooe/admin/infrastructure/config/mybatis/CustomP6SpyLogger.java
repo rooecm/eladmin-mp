@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.infrastructure.config.mybatis;
 
-import cn.hutool.core.util.StrUtil;
 import com.p6spy.engine.spy.appender.MessageFormattingStrategy;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +47,7 @@ public class CustomP6SpyLogger implements MessageFormattingStrategy {
     @Override
     public String formatMessage(int connectionId, String now, long elapsed, String category, String prepared, String sql, String url) {
         // 去掉换行和多余空格
-        if(StrUtil.isNotBlank(sql)){
+        if(org.springframework.util.StringUtils.hasText(sql)){
             sql = sql.replaceAll("\\s+", " ").trim();
         }
 

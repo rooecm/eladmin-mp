@@ -15,11 +15,8 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.utils.CacheKey;
+import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.utils.FileUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.utils.StringUtils;
@@ -42,9 +39,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Zheng Jie
@@ -69,7 +68,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     public List<Menu> queryAll(MenuQueryCriteria criteria, Boolean isQuery) throws Exception {
         if(Boolean.TRUE.equals(isQuery)){
             criteria.setPidIsNull(true);
-            List<Field> fields = StringUtils.getAllFields(criteria.getClass(), new ArrayList<>());
+            List<Field> fields = List.of(FieldUtils.getAllFields(criteria.getClass()));
             for (Field field : fields) {
                 //设置对象的访问权限，保证对private的属性的访问
                 field.setAccessible(true);
@@ -78,7 +77,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                     continue;
                 }
                 // 如果有查询条件，则不指定pidIsNull
-                if (ObjectUtil.isNotNull(val)) {
+                if (Objects.nonNull(val)) {
                     criteria.setPidIsNull(null);
                     break;
                 }
@@ -107,7 +106,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     public List<Menu> findByUser(Long currentUserId) {
         String key = CacheKey.MENU_USER + currentUserId;
         List<Menu> menus = redisUtils.getList(key, Menu.class);
-        if (CollUtil.isEmpty(menus)){
+        if (CollectionUtils.isEmpty(menus)){
             List<Role> roles = roleService.findByUsersId(currentUserId);
             Set<Long> roleIds = roles.stream().map(Role::getId).collect(Collectors.toSet());
             menus = new ArrayList<>(menuMapper.findByRoleIdsAndTypeNot(roleIds, 2));
@@ -199,7 +198,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         for (Menu menu : menuList) {
             menuSet.add(menu);
             List<Menu> menus = menuMapper.findByPidOrderByMenuSort(menu.getId());
-            if(CollUtil.isNotEmpty(menus)){
+            if(!CollectionUtils.isEmpty(menus)){
                 getChildMenus(menus, menuSet);
             }
         }
@@ -257,7 +256,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                 }
             }
         }
-        if(CollUtil.isNotEmpty(trees)){
+        if(!CollectionUtils.isEmpty(trees)){
             trees = menus.stream().filter(s -> !ids.contains(s.getId())).collect(Collectors.toList());
         }
         return trees;
@@ -270,7 +269,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                     if (menu!=null){
                         List<Menu> menuList = menu.getChildren();
                         MenuVo menuVo = new MenuVo();
-                        menuVo.setName(ObjectUtil.isNotEmpty(menu.getComponentName())  ? menu.getComponentName() : menu.getTitle());
+                        menuVo.setName(org.springframework.util.StringUtils.hasText(menu.getComponentName())  ? menu.getComponentName() : menu.getTitle());
                         // 一级目录需要加斜杠，不然会报警告
                         menuVo.setPath(menu.getPid() == null ? "/" + menu.getPath() :menu.getPath());
                         menuVo.setHidden(menu.getHidden());
@@ -286,7 +285,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                             }
                         }
                         menuVo.setMeta(new MenuMetaVo(menu.getTitle(),menu.getIcon(),!menu.getCache()));
-                        if(CollectionUtil.isNotEmpty(menuList)){
+                        if(!CollectionUtils.isEmpty(menuList)){
                             menuVo.setAlwaysShow(true);
                             menuVo.setRedirect("noredirect");
                             menuVo.setChildren(buildMenus(menuList));

@@ -16,7 +16,7 @@
 package fun.rooe.admin.infrastructure.config.properties;
 
 import lombok.Data;
-import fun.rooe.admin.utils.ElConstant;
+import fun.rooe.admin.constant.ElConstant;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**

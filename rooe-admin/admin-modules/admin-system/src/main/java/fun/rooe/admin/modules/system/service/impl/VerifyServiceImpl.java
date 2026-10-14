@@ -15,12 +15,7 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.lang.Dict;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.extra.template.Template;
-import cn.hutool.extra.template.TemplateConfig;
-import cn.hutool.extra.template.TemplateEngine;
-import cn.hutool.extra.template.TemplateUtil;
+import fun.rooe.admin.modules.system.utils.TemplateUtils;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
 import fun.rooe.admin.exception.BadRequestException;
@@ -30,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
+import java.security.SecureRandom;
+import java.util.Map;
 
 /**
  * @author Zheng Jie
@@ -50,19 +47,17 @@ public class VerifyServiceImpl implements VerifyService {
         String content;
         String redisKey = key + email;
         // 如果不存在有效的验证码，就创建一个新的
-        TemplateEngine engine = TemplateUtil.createEngine(new TemplateConfig("template", TemplateConfig.ResourceMode.CLASSPATH));
-        Template template = engine.getTemplate("email.ftl");
         String oldCode =  redisUtils.get(redisKey, String.class);
         if(oldCode == null){
-            String code = RandomUtil.randomNumbers (6);
+            String code = String.format("%06d", new SecureRandom().nextInt(1_000_000));
             // 存入缓存
             if(!redisUtils.set(redisKey, code, expiration)){
                 throw new BadRequestException("服务异常，请联系网站负责人");
             }
-            content = template.render(Dict.create().set("code",code));
+            content = TemplateUtils.render("email.ftl", Map.of("code", code));
             // 存在就再次发送原来的验证码
         } else {
-            content = template.render(Dict.create().set("code",oldCode));
+            content = TemplateUtils.render("email.ftl", Map.of("code", oldCode));
         }
         emailDto = new EmailDto(Collections.singletonList(email),"ROOE ADMIN后台管理系统",content);
         return emailDto;

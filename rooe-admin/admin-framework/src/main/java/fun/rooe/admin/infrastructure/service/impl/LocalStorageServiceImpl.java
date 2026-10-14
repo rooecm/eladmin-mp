@@ -15,11 +15,10 @@
  */
 package fun.rooe.admin.infrastructure.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
 * @author Zheng Jie
@@ -73,7 +73,7 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
         } catch (IOException e) {
             throw new BadRequestException("上传失败");
         }
-        if(ObjectUtil.isNull(file)){
+        if(Objects.isNull(file)){
             throw new BadRequestException("上传失败");
         }
         try {

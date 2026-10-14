@@ -15,7 +15,6 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import cn.hutool.core.lang.Dict;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +24,7 @@ import fun.rooe.admin.modules.system.domain.Role;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
  * @author Zheng Jie
@@ -85,7 +85,7 @@ public class RoleController {
     @Operation(summary = "获取用户级别")
     @GetMapping(value = "/level")
     public ResponseEntity<Object> getRoleLevel(){
-        return new ResponseEntity<>(Dict.create().set("level", getLevels()),HttpStatus.OK);
+        return new ResponseEntity<>(Map.of("level", getLevels()),HttpStatus.OK);
     }
 
     @Log("新增角色")

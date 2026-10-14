@@ -15,76 +15,45 @@
  */
 package fun.rooe.admin.utils;
 
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.poi.excel.BigExcelWriter;
-import cn.hutool.poi.excel.ExcelUtil;
-import lombok.extern.slf4j.Slf4j;
+import cn.idev.excel.FastExcel;
+import cn.idev.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import fun.rooe.admin.exception.BadRequestException;
-import org.apache.poi.util.IOUtils;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * File工具类，扩展 hutool 工具包
- *
- * @author Zheng Jie
- * @date 2018-12-27
- */
 @Slf4j
-public class FileUtil extends cn.hutool.core.io.FileUtil {
+public class FileUtil {
 
-    /**
-     * 系统临时目录
-     * <br>
-     * windows 包含路径分割符，但Linux 不包含,
-     * 在windows \\==\ 前提下，
-     * 为安全起见 同意拼装 路径分割符，
-     * <pre>
-     *       java.io.tmpdir
-     *       windows : C:\Users/xxx\AppData\Local\Temp\
-     *       linux: /temp
-     * </pre>
-     */
     public static final String SYS_TEM_DIR = System.getProperty("java.io.tmpdir") + File.separator;
-    /**
-     * 定义GB的计算常量
-     */
     private static final int GB = 1024 * 1024 * 1024;
-    /**
-     * 定义MB的计算常量
-     */
     private static final int MB = 1024 * 1024;
-    /**
-     * 定义KB的计算常量
-     */
     private static final int KB = 1024;
-
-    /**
-     * 格式化小数
-     */
     private static final DecimalFormat DF = new DecimalFormat("0.00");
-
     public static final String IMAGE = "图片";
     public static final String TXT = "文档";
     public static final String MUSIC = "音乐";
     public static final String VIDEO = "视频";
     public static final String OTHER = "其他";
 
-
-    /**
-     * 获取文件扩展名，不带 .
-     */
     public static String getExtensionName(String filename) {
         if ((filename != null) && (!filename.isEmpty())) {
             int dot = filename.lastIndexOf('.');
@@ -95,9 +64,6 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
         return filename;
     }
 
-    /**
-     * Java文件操作 获取不带扩展名的文件名
-     */
     public static String getFileNameNoEx(String filename) {
         if ((filename != null) && (!filename.isEmpty())) {
             int dot = filename.lastIndexOf('.');
@@ -108,19 +74,13 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
         return filename;
     }
 
-    /**
-     * 文件大小转换
-     */
     public static String getSize(long size) {
         String resultSize;
         if (size / GB >= 1) {
-            //如果当前Byte的值大于等于1GB
             resultSize = DF.format(size / (float) GB) + "GB";
         } else if (size / MB >= 1) {
-            //如果当前Byte的值大于等于1MB
             resultSize = DF.format(size / (float) MB) + "MB";
         } else if (size / KB >= 1) {
-            //如果当前Byte的值大于等于1KB
             resultSize = DF.format(size / (float) KB) + "KB";
         } else {
             resultSize = size + "B";
@@ -128,109 +88,54 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
         return resultSize;
     }
 
-    /**
-     * inputStream 转 File
-     */
-    static File inputStreamToFile(InputStream ins, String name){
-        File file = new File(SYS_TEM_DIR + name);
-        if (file.exists()) {
-            return file;
-        }
-        OutputStream os = null;
-        try {
-            os = Files.newOutputStream(file.toPath());
-            int bytesRead;
-            int len = 8192;
-            byte[] buffer = new byte[len];
-            while ((bytesRead = ins.read(buffer, 0, len)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        } finally {
-            CloseUtil.close(os);
-            CloseUtil.close(ins);
-        }
-        return file;
-    }
-
-    /**
-     * 将文件流写入上传路径
-     *
-     * @param ins              文件输入流, 由调用方负责获取并最终关闭
-     * @param originalFilename 原始文件名
-     * @param filePath         上传目录
-     */
     public static File upload(InputStream ins, String originalFilename, String filePath) {
-        Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddhhmmssS");
-        // 过滤非法文件名
         String name = getFileNameNoEx(verifyFilename(originalFilename));
         String suffix = getExtensionName(originalFilename);
-        String nowStr = "-" + format.format(date);
-        try {
+        String nowStr = "-" + format.format(new Date());
+        try (InputStream source = ins) {
             String fileName = name + nowStr + "." + suffix;
-            String path = filePath + fileName;
-            // getCanonicalFile 可解析正确各种路径
-            File dest = new File(path).getCanonicalFile();
-            // 检测是否存在目录
-            if (!dest.getParentFile().exists()) {
-                if (!dest.getParentFile().mkdirs()) {
-                    System.out.println("was not successful.");
-                }
+            File dest = new File(filePath + fileName).getCanonicalFile();
+            File parent = dest.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                log.error("创建上传目录失败: {}", parent);
             }
-            // 文件写入
-            Files.copy(ins, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(source, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return dest;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-        } finally {
-            CloseUtil.close(ins);
         }
         return null;
     }
 
-    /**
-     * 导出excel
-     */
     public static void downloadExcel(List<Map<String, Object>> list, HttpServletResponse response) throws IOException {
-        String tempPath = SYS_TEM_DIR + IdUtil.fastSimpleUUID() + ".xlsx";
-        File file = new File(tempPath);
-        BigExcelWriter writer = ExcelUtil.getBigWriter(file);
-        // 处理数据以防止CSV注入
         List<Map<String, Object>> sanitizedList = list.parallelStream().map(map -> {
             Map<String, Object> sanitizedMap = new LinkedHashMap<>();
             map.forEach((key, value) -> {
-                if (value instanceof String) {
-                    String strValue = (String) value;
-                    // 检查并处理以特殊字符开头的值
-                    if (strValue.startsWith("=") || strValue.startsWith("+") || strValue.startsWith("-") || strValue.startsWith("@")) {
-                        strValue = "'" + strValue; // 添加单引号前缀
-                    }
-                    sanitizedMap.put(key, strValue);
-                } else {
-                    sanitizedMap.put(key, value);
+                if (value instanceof String strValue
+                        && (strValue.startsWith("=") || strValue.startsWith("+")
+                        || strValue.startsWith("-") || strValue.startsWith("@"))) {
+                    strValue = "'" + strValue;
                 }
+                sanitizedMap.put(key, value);
             });
             return sanitizedMap;
         }).collect(Collectors.toList());
-        // 一次性写出内容，使用默认样式，强制输出标题
-        writer.write(sanitizedList, true);
-        SXSSFSheet sheet = (SXSSFSheet)writer.getSheet();
-        //上面需要强转SXSSFSheet  不然没有trackAllColumnsForAutoSizing方法
-        sheet.trackAllColumnsForAutoSizing();
-        //列宽自适应
-        writer.autoSizeColumnAll();
-        //response为HttpServletResponse对象
+        Set<String> headers = new LinkedHashSet<>();
+        sanitizedList.forEach(map -> headers.addAll(map.keySet()));
+        List<List<String>> head = headers.stream().map(List::of).toList();
+        List<List<Object>> rows = sanitizedList.stream()
+                .map(data -> headers.stream()
+                        .map(header -> data.get(header) == null ? "" : data.get(header))
+                        .toList())
+                .toList();
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
-        //test.xls是弹出下载对话框的文件名，不能为中文，中文请自行编码
         response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        ServletOutputStream out = response.getOutputStream();
-        // 终止后删除临时文件
-        file.deleteOnExit();
-        writer.flush(out, true);
-        //此处记得关闭输出Servlet流
-        IoUtil.close(out);
+        FastExcel.write(response.getOutputStream())
+                .head(head)
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .sheet("Sheet1")
+                .doWrite(rows);
     }
 
     public static String getFileType(String type) {
@@ -246,150 +151,57 @@ public class FileUtil extends cn.hutool.core.io.FileUtil {
             return MUSIC;
         } else if (video.contains(type)) {
             return VIDEO;
-        } else {
-            return OTHER;
         }
+        return OTHER;
     }
 
     public static void checkSize(long maxSize, long size) {
-        // 1M
-        int len = 1024 * 1024;
-        if (size > (maxSize * len)) {
+        if (size > (maxSize * 1024 * 1024)) {
             throw new BadRequestException("文件超出规定大小:" + maxSize + "MB");
         }
     }
 
-    /**
-     * 判断两个文件是否相同
-     */
-    public static boolean check(File file1, File file2) {
-        String img1Md5 = getMd5(file1);
-        String img2Md5 = getMd5(file2);
-        if(img1Md5 != null){
-            return img1Md5.equals(img2Md5);
-        }
-        return false;
-    }
-
-    /**
-     * 判断两个文件是否相同
-     */
-    public static boolean check(String file1Md5, String file2Md5) {
-        return file1Md5.equals(file2Md5);
-    }
-
-    private static byte[] getByte(File file) {
-        // 得到文件长度
-        byte[] b = new byte[(int) file.length()];
-        InputStream in = null;
-        try {
-            in = Files.newInputStream(file.toPath());
-            try {
-                System.out.println(in.read(b));
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return null;
-        } finally {
-            CloseUtil.close(in);
-        }
-        return b;
-    }
-
-    private static String getMd5(byte[] bytes) {
-        // 16进制字符
-        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-        try {
-            MessageDigest mdTemp = MessageDigest.getInstance("MD5");
-            mdTemp.update(bytes);
-            byte[] md = mdTemp.digest();
-            int j = md.length;
-            char[] str = new char[j * 2];
-            int k = 0;
-            // 移位 输出字符串
-            for (byte byte0 : md) {
-                str[k++] = hexDigits[byte0 >>> 4 & 0xf];
-                str[k++] = hexDigits[byte0 & 0xf];
-            }
-            return new String(str);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
-    /**
-     * 下载文件
-     *
-     * @param request  /
-     * @param response /
-     * @param file     /
-     */
-    public static void downloadFile(HttpServletRequest request, HttpServletResponse response, File file, boolean deleteOnExit) {
-        response.setCharacterEncoding(request.getCharacterEncoding());
-        response.setContentType("application/octet-stream");
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            response.setHeader("Content-Disposition", "attachment; filename=" + file.getName());
-            IOUtils.copy(fis, response.getOutputStream());
-            response.flushBuffer();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                    if (deleteOnExit) {
-                        file.deleteOnExit();
-                    }
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        }
-    }
-
-    /**
-     * 验证并过滤非法的文件名
-     * @param fileName 文件名
-     * @return 文件名
-     */
-    public static String verifyFilename(String fileName) {
-        // 过滤掉特殊字符
+    private static String verifyFilename(String fileName) {
         fileName = fileName.replaceAll("[\\\\/:*?\"<>|~\\s]", "");
-
-        // 去掉文件名开头和结尾的空格和点
         fileName = fileName.trim().replaceAll("^[. ]+|[. ]+$", "");
-
-        // 不允许文件名超过255（在Mac和Linux中）或260（在Windows中）个字符
-        int maxFileNameLength = 255;
-        if (System.getProperty("os.name").startsWith("Windows")) {
-            maxFileNameLength = 260;
-        }
+        int maxFileNameLength = System.getProperty("os.name").startsWith("Windows") ? 260 : 255;
         if (fileName.length() > maxFileNameLength) {
             fileName = fileName.substring(0, maxFileNameLength);
         }
-
-        // 过滤掉控制字符
         fileName = fileName.replaceAll("[\\p{Cntrl}]", "");
-
-        // 过滤掉 ".." 路径
         fileName = fileName.replaceAll("\\.{2,}", "");
-
-        // 去掉文件名开头的 ".."
         fileName = fileName.replaceAll("^\\.+/", "");
-
-        // 保留文件名中最后一个 "." 字符，过滤掉其他 "."
-        fileName = fileName.replaceAll("^(.*)(\\.[^.]*)$", "$1").replaceAll("\\.", "") +
+        return fileName.replaceAll("^(.*)(\\.[^.]*)$", "$1").replaceAll("\\.", "") +
                 fileName.replaceAll("^(.*)(\\.[^.]*)$", "$2");
-
-        return fileName;
     }
 
-    public static String getMd5(File file) {
-        return getMd5(getByte(file));
+    public static void del(String path) {
+        Path target = Paths.get(path);
+        try {
+            if (Files.isDirectory(target)) {
+                try (var paths = Files.walk(target)) {
+                    paths.sorted(Comparator.reverseOrder()).forEach(current -> {
+                        try {
+                            Files.delete(current);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                }
+            } else {
+                Files.deleteIfExists(target);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void del(File file) {
+        del(file.getAbsolutePath());
+    }
+
+    public static String getMimeType(String filename) {
+        String mimeType = URLConnection.guessContentTypeFromName(filename);
+        return mimeType == null ? "application/octet-stream" : mimeType;
     }
 }

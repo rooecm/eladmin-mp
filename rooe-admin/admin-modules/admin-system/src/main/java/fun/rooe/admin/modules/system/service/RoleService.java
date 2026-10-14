@@ -21,7 +21,7 @@ import fun.rooe.admin.modules.security.service.dto.AuthorityDto;
 import fun.rooe.admin.modules.system.domain.Role;
 import fun.rooe.admin.modules.system.domain.User;
 import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.response.PageResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

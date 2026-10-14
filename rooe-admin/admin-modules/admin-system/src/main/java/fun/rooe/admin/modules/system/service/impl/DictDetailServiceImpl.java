@@ -15,11 +15,10 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.utils.CacheKey;
-import fun.rooe.admin.utils.PageResult;
+import fun.rooe.admin.constant.CacheKey;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.springframework.util.CollectionUtils;
 
 /**
 * @author Zheng Jie
@@ -75,7 +75,7 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
     public List<DictDetail> getDictByName(String name) {
         String key = CacheKey.DICT_NAME + name;
         List<DictDetail> dictDetails = redisUtils.getList(key, DictDetail.class);
-        if(CollUtil.isEmpty(dictDetails)){
+        if(CollectionUtils.isEmpty(dictDetails)){
             dictDetails = dictDetailMapper.findByDictName(name);
             redisUtils.set(key, dictDetails, 1 , TimeUnit.DAYS);
         }

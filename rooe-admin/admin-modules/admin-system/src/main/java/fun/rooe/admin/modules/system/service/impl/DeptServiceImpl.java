@@ -15,10 +15,8 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.utils.*;
@@ -37,9 +35,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
 * @author Zheng Jie
@@ -61,7 +61,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
             if(dataScopeType.equals(DataScopeEnum.ALL.getValue())){
                 criteria.setPidIsNull(true);
             }
-            List<Field> fields = StringUtils.getAllFields(criteria.getClass(), new ArrayList<>());
+            List<Field> fields = List.of(FieldUtils.getAllFields(criteria.getClass()));
             List<String> fieldNames = new ArrayList<String>(){{ add("pidIsNull");add("enabled");}};
             for (Field field : fields) {
                 //设置对象的访问权限，保证对private的属性的访问
@@ -70,7 +70,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 if(fieldNames.contains(field.getName())){
                     continue;
                 }
-                if (ObjectUtil.isNotNull(val)) {
+                if (Objects.nonNull(val)) {
                     criteria.setPidIsNull(null);
                     break;
                 }
@@ -165,7 +165,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         for (Dept dept : menuList) {
             deptSet.add(dept);
             List<Dept> depts = deptMapper.findByPid(dept.getId());
-            if(CollUtil.isNotEmpty(depts)){
+            if(!CollectionUtils.isEmpty(depts)){
                 getDeleteDepts(depts, deptSet);
             }
         }
@@ -178,7 +178,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         deptList.forEach(dept -> {
                     if (dept!=null && dept.getEnabled()) {
                         List<Dept> depts = deptMapper.findByPid(dept.getId());
-                        if (CollUtil.isNotEmpty(depts)) {
+                        if (!CollectionUtils.isEmpty(depts)) {
                             list.addAll(getDeptChildren(depts));
                         }
                         list.add(dept.getId());
@@ -225,12 +225,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
             }
         }
 
-        if (CollectionUtil.isEmpty(trees)) {
+        if (CollectionUtils.isEmpty(trees)) {
             trees = depts;
         }
         Map<String,Object> map = new HashMap<>(2);
         map.put("totalElements",depts.size());
-        map.put("content",CollectionUtil.isEmpty(trees)? depts :trees);
+        map.put("content",CollectionUtils.isEmpty(trees)? depts :trees);
         return map;
     }
 

@@ -15,12 +15,11 @@
  */
 package fun.rooe.admin.modules.quartz.service.impl;
 
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
@@ -130,13 +129,13 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     @Transactional(rollbackFor = Exception.class)
     public void executionSubJob(String[] tasks) throws InterruptedException {
         for (String id : tasks) {
-            if (StrUtil.isBlank(id)) {
+            if (!org.springframework.util.StringUtils.hasText(id)) {
                 // 如果是手动清除子任务id，会出现id为空字符串的问题
                 continue;
             }
             QuartzJob quartzJob = getById(Long.parseLong(id));
             // 执行任务
-            String uuid = IdUtil.simpleUUID();
+            String uuid = UUID.randomUUID().toString().replace("-", "");
             quartzJob.setUuid(uuid);
             // 执行任务
             execution(quartzJob);
