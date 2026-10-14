@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>rooe-admin</artifactId>
+        <groupId>fun.rooe</groupId>
+        <version>1.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>rooe-admin-tools</artifactId>
+    <name>工具模块</name>
+
+    <properties>
+        <jakarta-mail.version>2.0.1</jakarta-mail.version>
+        <alipay.version>4.38.4.ALL</alipay.version>
+    </properties>
+
+    <dependencies>
+        <!-- 文件存储配置由框架模块提供 -->
+        <dependency>
+            <groupId>fun.rooe</groupId>
+            <artifactId>rooe-admin-framework</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+        <!-- 同时需要common模块和logging模块只需要引入logging模块即可 -->
+        <dependency>
+            <groupId>fun.rooe</groupId>
+            <artifactId>rooe-admin-logging</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+        <!--邮件依赖-->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>${jakarta-mail.version}</version>
+        </dependency>
+
+        <!--支付宝依赖-->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>${alipay.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--amazon s3 依赖-->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.30.13</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+    </dependencies>
+</project>

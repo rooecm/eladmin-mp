@@ -1,11 +1,11 @@
-<h1 style="text-align: center">ELADMIN 后台管理系统</h1>
+<h1 style="text-align: center">ROOE ADMIN 后台管理系统</h1>
 
 #### 项目简介
 一个基于 Spring Boot 2.7.18 、 Mybatis-Plus、 JWT、Spring Security、Redis、Vue的前后端分离的后台管理系统
 
-**开发文档：**  [https://eladmin.vip](https://eladmin.vip)
+**开发文档：**  [https://rooe-admin.vip](https://rooe-admin.vip)
 
-**体验地址：**  [https://eladmin.vip/demo](https://eladmin.vip/demo)
+**体验地址：**  [https://rooe-admin.vip/demo](https://rooe-admin.vip/demo)
 
 **账号密码：** `admin / 123456`
 
@@ -13,14 +13,14 @@
 
 | github                                 |   gitee  |
 |--------------------------------------| --- |
-| https://github.com/elunez/eladmin-mp |  https://gitee.com/elunez/eladmin-mp   |
+| https://github.com/elunez/rooe-admin-mp |  https://gitee.com/elunez/rooe-admin-mp   |
 
 #### VPS推荐
 <a href="https://bwh81.net/aff.php?aff=70876" target="_blank">
-<img src="https://eladmin.vip/images/banner/side.jpeg" style="width: 435px;border-radius: 2px;" alt="帮瓦工">
+<img src="https://rooe-admin.vip/images/banner/side.jpeg" style="width: 435px;border-radius: 2px;" alt="帮瓦工">
 </a>
 
-使用优惠码: `BWHNCXNVXV`，可获得 6.81% 的折扣， [查看介绍](https://eladmin.vip/pages/040101/)
+使用优惠码: `BWHNCXNVXV`，可获得 6.81% 的折扣， [查看介绍](https://rooe-admin.vip/pages/040101/)
 #### 主要特性
 - 使用最新技术栈，社区资源丰富。
 - 高效率开发，代码生成器可一键生成前后端代码
@@ -53,22 +53,22 @@
 #### 项目结构
 项目采用按功能分模块的开发方式，结构如下
 
-- `eladmin-common` 为系统的公共模块，提供注解、基础实体、异常与响应对象、通用工具类
+- `rooe-admin-common` 为系统的公共模块，提供注解、基础实体、异常与响应对象、通用工具类
 
-- `eladmin-framework` 为框架模块，统一管理 Web、Redis、MyBatis-Plus、异步线程池、权限、JWT、验证码、Quartz 基础配置、限流切面与全局异常处理
+- `rooe-admin-framework` 为框架模块，统一管理 Web、Redis、MyBatis-Plus、异步线程池、权限、JWT、验证码、Quartz 基础配置、限流切面与全局异常处理
 
-- `eladmin-system` 为系统核心模块也是项目入口模块，也是最终需要打包部署的模块
+- `rooe-admin-system` 为系统核心模块也是项目入口模块，也是最终需要打包部署的模块
 
-- `eladmin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
+- `rooe-admin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
 
-- `eladmin-tools` 为第三方工具模块，包含：邮件、亚马逊S3云存储、本地存储、支付宝
+- `rooe-admin-tools` 为第三方工具模块，包含：邮件、亚马逊S3云存储、本地存储、支付宝
 
-- `eladmin-generator` 为系统的代码生成模块，支持生成前后端CRUD代码
+- `rooe-admin-generator` 为系统的代码生成模块，支持生成前后端CRUD代码
 
 #### 详细结构
 
 ```
-- eladmin-common 公共模块
+- rooe-admin-common 公共模块
     - annotation 为系统自定义注解
     - aspect 限流类型枚举（供 Limit 注解使用）
     - base 提供了 Entity 基类
@@ -82,7 +82,7 @@
         - RedisUtils Redis工具类
         - EncryptUtils 加密工具类
         - FileUtil 文件工具类
-- eladmin-framework 框架模块
+- rooe-admin-framework 框架模块
     - config 通用配置（Web、Swagger、Redis、Redisson、MyBatis-Plus、异步线程池、文件与 RSA 配置、权限、Spring 上下文、Druid）
     - aspect 限流切面
     - exception.handler 全局异常处理
@@ -90,23 +90,23 @@
     - modules.security.security JWT 签发、过滤器、认证与授权异常处理
     - modules.security.service 在线会话查询接口 OnlineSessionService
     - modules.quartz.config Quartz Job 的 Spring Bean 注入配置
-- eladmin-system 系统核心模块（系统启动入口）
+- rooe-admin-system 系统核心模块（系统启动入口）
     - sysrunner 程序启动后处理数据
 	- modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
-- eladmin-logging 系统日志模块
-- eladmin-tools 系统第三方工具模块
+- rooe-admin-logging 系统日志模块
+- rooe-admin-tools 系统第三方工具模块
     - email 邮件工具
     - amazon 亚马逊S3云存储工具
     - alipay 支付宝支付工具
     - local-storage 本地存储工具
-- eladmin-generator 系统代码生成模块
+- rooe-admin-generator 系统代码生成模块
 ```
 
-框架模块依赖 `eladmin-common`，不依赖业务模块。`eladmin-system` 和 `eladmin-tools` 显式依赖 `eladmin-framework`；日志与代码生成模块继续依赖 `eladmin-common`。迁移保留原有 Java 包名和配置项，启动类的 `fun.rooe` 组件扫描可直接加载框架 Bean。
+框架模块依赖 `rooe-admin-common`，不依赖业务模块。`rooe-admin-system` 和 `rooe-admin-tools` 显式依赖 `rooe-admin-framework`；日志与代码生成模块继续依赖 `rooe-admin-common`。迁移保留原有 Java 包名和配置项，启动类的 `fun.rooe` 组件扫描可直接加载框架 Bean。
 
-用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `eladmin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`LimitType` 和 `ApiError` 作为共享类型保留在公共模块。
+用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `rooe-admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`LimitType` 和 `ApiError` 作为共享类型保留在公共模块。
 
-在 `eladmin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅验证公共模块和框架模块可执行 `mvn -pl eladmin-framework -am test`。系统上下文测试需要可用的数据库与 Redis。
+在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅验证公共模块和框架模块可执行 `mvn -pl rooe-admin-framework -am test`。系统上下文测试需要可用的数据库与 Redis。
 
 #### 特别鸣谢
 
@@ -119,7 +119,7 @@
 - 感谢 [j.yao.SUSE](https://github.com/everhopingandwaiting) 大佬提供的匿名接口与Redis限流等功能
 
 #### 项目捐赠
-项目的发展离不开你的支持，请作者喝杯咖啡吧☕  [Donate](https://eladmin.vip/pages/030101/)
+项目的发展离不开你的支持，请作者喝杯咖啡吧☕  [Donate](https://rooe-admin.vip/pages/030101/)
 
 #### 反馈交流
 - QQ交流群：891137268 、947578238、659622532
