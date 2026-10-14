@@ -55,11 +55,13 @@
 
 - `admin-framework` 为框架与基础设施模块，通过 `fun.rooe.admin.framework` 和 `fun.rooe.admin.infrastructure` 两个根包分别管理应用运行支撑和外部资源适配
 
-- `rooe-admin-system` 为系统业务模块，提供用户、角色、菜单、登录、在线用户、定时任务等业务能力，以普通 JAR 供启动模块使用
+- `admin-modules` 为功能模块聚合模块，统一管理 `admin-system` 与 `admin-logging`
+
+- `admin-modules/admin-system` 为系统业务模块，提供用户、角色、菜单、登录、在线用户、定时任务等业务能力，以普通 JAR 供启动模块使用
 
 - `rooe-admin-bootstrap` 为应用启动模块，包含启动类、环境配置、日志配置与应用组装依赖，是最终打包部署的模块
 
-- `rooe-admin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
+- `admin-modules/admin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
 
 #### 详细结构
 
@@ -89,15 +91,16 @@
     - resources/config application.yml 及 dev、prod、quartz 环境配置
     - resources 日志配置 logback.xml、SQL 日志配置 spy.properties、启动 banner
     - test 应用启动及首页接口集成测试
-- rooe-admin-system 系统业务模块
-    - sysrunner 程序启动后处理数据
-	- modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
-- rooe-admin-logging 系统日志模块
+- admin-modules 功能模块聚合
+    - admin-system 系统业务模块
+        - sysrunner 程序启动后处理数据
+        - modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
+    - admin-logging 系统日志模块
 ```
 
 框架与基础设施代码统一位于 `admin-framework` 模块，通过根包隔离职责。日志模块依赖该模块提供的框架注解与请求上下文能力；`rooe-admin-system` 依赖 `admin-framework` 和日志模块，`rooe-admin-bootstrap` 负责最终组装；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各包。
 
-用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `rooe-admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiError` 作为共享响应类型保留在公共模块。
+用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `admin-modules/admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiError` 作为共享响应类型保留在公共模块。
 
 在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl admin-bootstrap -am clean package`。仅验证框架模块可执行 `mvn -pl admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
 

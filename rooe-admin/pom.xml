@@ -10,8 +10,7 @@
     <modules>
         <module>admin-common</module>
         <module>admin-framework</module>
-        <module>admin-logging</module>
-        <module>admin-system</module>
+        <module>admin-modules</module>
         <module>admin-bootstrap</module>
     </modules>
 
