@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.exception.EntityNotFoundException;
-import fun.rooe.admin.exception.handler.ApiError;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.utils.ThrowableUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,58 +43,58 @@ public class GlobalExceptionHandler {
      * 处理所有不可知的异常
      */
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ApiError> handleException(Throwable e){
+    public ResponseEntity<ApiResult<Void>> handleException(Throwable e){
         // 打印堆栈信息
         log.error(ThrowableUtil.getStackTrace(e));
-        return buildResponseEntity(ApiError.error(e.getMessage()));
+        return buildResponseEntity(ApiResult.error(e.getMessage()));
     }
 
     /**
      * BadCredentialsException
      */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiError> badCredentialsException(BadCredentialsException e){
+    public ResponseEntity<ApiResult<Void>> badCredentialsException(BadCredentialsException e){
         // 打印堆栈信息
         String message = "坏的凭证".equals(e.getMessage()) ? "用户名或密码不正确" : e.getMessage();
         log.error(message);
-        return buildResponseEntity(ApiError.error(message));
+        return buildResponseEntity(ApiResult.error(message));
     }
 
     /**
      * 处理自定义异常
      */
 	@ExceptionHandler(value = BadRequestException.class)
-	public ResponseEntity<ApiError> badRequestException(BadRequestException e) {
+	public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
         // 打印堆栈信息
         log.error(ThrowableUtil.getStackTrace(e));
-        return buildResponseEntity(ApiError.error(e.getStatus(),e.getMessage()));
+        return buildResponseEntity(ApiResult.error(e.getStatus(),e.getMessage()));
 	}
 
     /**
      * 处理 EntityExist
      */
     @ExceptionHandler(value = EntityExistException.class)
-    public ResponseEntity<ApiError> entityExistException(EntityExistException e) {
+    public ResponseEntity<ApiResult<Void>> entityExistException(EntityExistException e) {
         // 打印堆栈信息
         log.error(ThrowableUtil.getStackTrace(e));
-        return buildResponseEntity(ApiError.error(e.getMessage()));
+        return buildResponseEntity(ApiResult.error(e.getMessage()));
     }
 
     /**
      * 处理 EntityNotFound
      */
     @ExceptionHandler(value = EntityNotFoundException.class)
-    public ResponseEntity<ApiError> entityNotFoundException(EntityNotFoundException e) {
+    public ResponseEntity<ApiResult<Void>> entityNotFoundException(EntityNotFoundException e) {
         // 打印堆栈信息
         log.error(ThrowableUtil.getStackTrace(e));
-        return buildResponseEntity(ApiError.error(NOT_FOUND.value(),e.getMessage()));
+        return buildResponseEntity(ApiResult.error(NOT_FOUND.value(),e.getMessage()));
     }
 
     /**
      * 处理所有接口数据验证异常
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
+    public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
         // 打印堆栈信息
         log.error(ThrowableUtil.getStackTrace(e));
         ObjectError objectError = e.getBindingResult().getAllErrors().get(0);
@@ -102,13 +102,13 @@ public class GlobalExceptionHandler {
         if (objectError instanceof FieldError) {
             message = ((FieldError) objectError).getField() + ": " + message;
         }
-        return buildResponseEntity(ApiError.error(message));
+        return buildResponseEntity(ApiResult.error(message));
     }
 
     /**
      * 统一返回
      */
-    private ResponseEntity<ApiError> buildResponseEntity(ApiError apiError) {
-        return new ResponseEntity<>(apiError, HttpStatus.valueOf(apiError.getStatus()));
+    private ResponseEntity<ApiResult<Void>> buildResponseEntity(ApiResult<Void> apiResult) {
+        return new ResponseEntity<>(apiResult, HttpStatus.valueOf(apiResult.status()));
     }
 }

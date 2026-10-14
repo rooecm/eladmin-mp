@@ -16,7 +16,7 @@
 package fun.rooe.admin.framework.config.security.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fun.rooe.admin.exception.handler.ApiError;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -37,7 +37,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
       response.setStatus(HttpStatus.FORBIDDEN.value());
       response.setContentType("application/json;charset=UTF-8");
       ObjectMapper objectMapper = new ObjectMapper();
-      String jsonResponse = objectMapper.writeValueAsString(ApiError.error(HttpStatus.FORBIDDEN.value(), "禁止访问，您没有权限访问此资源"));
+      String jsonResponse = objectMapper.writeValueAsString(ApiResult.error(HttpStatus.FORBIDDEN.value(), "禁止访问，您没有权限访问此资源"));
       response.getWriter().write(jsonResponse);
    }
 }

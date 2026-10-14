@@ -68,7 +68,8 @@
 ```
 - rooe-admin-common 公共模块
     - base 提供了 Entity 基类
-    - exception 通用异常与 ApiError 响应对象
+    - exception 通用异常
+    - response 统一 ApiResult 响应对象
     - utils 系统通用工具类，列举一些常用的工具类
         - BigDecimaUtils 金额计算工具类
         - StringUtils 字符串工具类
@@ -100,7 +101,7 @@
 
 框架与基础设施代码统一位于 `admin-framework` 模块，通过根包隔离职责。日志模块依赖该模块提供的框架注解与请求上下文能力；`rooe-admin-system` 依赖 `admin-framework` 和日志模块，`rooe-admin-bootstrap` 负责最终组装；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各包。
 
-用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `admin-modules/admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiError` 作为共享响应类型保留在公共模块。
+用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `admin-modules/admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiResult` 作为共享响应类型保留在公共模块。
 
 在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl admin-bootstrap -am clean package`。仅验证框架模块可执行 `mvn -pl admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
 

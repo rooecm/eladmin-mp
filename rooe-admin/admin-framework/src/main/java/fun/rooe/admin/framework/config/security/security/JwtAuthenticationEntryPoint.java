@@ -17,7 +17,7 @@ package fun.rooe.admin.framework.config.security.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.exception.handler.ApiError;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -40,7 +40,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(code);
         response.setContentType("application/json;charset=UTF-8");
         ObjectMapper objectMapper = new ObjectMapper();
-        String jsonResponse = objectMapper.writeValueAsString(ApiError.error(HttpStatus.UNAUTHORIZED.value(), "登录状态已过期，请重新登录"));
+        String jsonResponse = objectMapper.writeValueAsString(ApiResult.error(HttpStatus.UNAUTHORIZED.value(), "登录状态已过期，请重新登录"));
         response.getWriter().write(jsonResponse);
     }
 }
