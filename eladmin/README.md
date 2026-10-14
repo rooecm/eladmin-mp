@@ -53,7 +53,9 @@
 #### 项目结构
 项目采用按功能分模块的开发方式，结构如下
 
-- `eladmin-common` 为系统的公共模块，各种工具类，公共配置存在该模块
+- `eladmin-common` 为系统的公共模块，提供注解、基础实体、异常与响应对象、通用工具类
+
+- `eladmin-framework` 为框架模块，统一管理 Web、Redis、MyBatis-Plus、异步线程池、权限、JWT、验证码、Quartz 基础配置、限流切面与全局异常处理
 
 - `eladmin-system` 为系统核心模块也是项目入口模块，也是最终需要打包部署的模块
 
@@ -68,14 +70,9 @@
 ```
 - eladmin-common 公共模块
     - annotation 为系统自定义注解
-    - aspect 自定义注解的切面
+    - aspect 限流类型枚举（供 Limit 注解使用）
     - base 提供了 Entity 基类
-    - config 项目通用配置
-        - Mybatis-Plus 配置
-        - Web配置跨域与静态资源映射、Swagger配置，文件上传临时路径配置
-        - Redis配置，Redission配置, 异步线程池配置
-        - 权限拦截配置：AuthorityConfig、Druid 删除广告配置
-    - exception 项目统一异常的处理
+    - exception 通用异常与 ApiError 响应对象
     - utils 系统通用工具类，列举一些常用的工具类
         - BigDecimaUtils 金额计算工具类
         - RequestHolder 请求工具类
@@ -85,6 +82,14 @@
         - RedisUtils Redis工具类
         - EncryptUtils 加密工具类
         - FileUtil 文件工具类
+- eladmin-framework 框架模块
+    - config 通用配置（Web、Swagger、Redis、Redisson、MyBatis-Plus、异步线程池、文件与 RSA 配置、权限、Spring 上下文、Druid）
+    - aspect 限流切面
+    - exception.handler 全局异常处理
+    - modules.security.config Spring Security、JWT、登录与验证码配置
+    - modules.security.security JWT 签发、过滤器、认证与授权异常处理
+    - modules.security.service 在线会话查询接口 OnlineSessionService
+    - modules.quartz.config Quartz Job 的 Spring Bean 注入配置
 - eladmin-system 系统核心模块（系统启动入口）
     - sysrunner 程序启动后处理数据
 	- modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
@@ -96,6 +101,12 @@
     - local-storage 本地存储工具
 - eladmin-generator 系统代码生成模块
 ```
+
+框架模块依赖 `eladmin-common`，不依赖业务模块。`eladmin-system` 和 `eladmin-tools` 显式依赖 `eladmin-framework`；日志与代码生成模块继续依赖 `eladmin-common`。迁移保留原有 Java 包名和配置项，启动类的 `fun.rooe` 组件扫描可直接加载框架 Bean。
+
+用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `eladmin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`LimitType` 和 `ApiError` 作为共享类型保留在公共模块。
+
+在 `eladmin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅验证公共模块和框架模块可执行 `mvn -pl eladmin-framework -am test`。系统上下文测试需要可用的数据库与 Redis。
 
 #### 特别鸣谢
 

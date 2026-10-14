@@ -20,12 +20,12 @@ import ${package}.domain.${className};
     <#list columns as column>
         <#if column.columnKey = 'UNI'>
             <#if column_index = 1>
-import me.zhengjie.exception.EntityExistException;
+import fun.rooe.exception.EntityExistException;
             </#if>
         </#if>
     </#list>
 </#if>
-import me.zhengjie.utils.FileUtil;
+import fun.rooe.utils.FileUtil;
 import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -34,14 +34,14 @@ import ${package}.domain.dto.${className}QueryCriteria;
 import ${package}.mapper.${className}Mapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import me.zhengjie.utils.PageUtil;
+import fun.rooe.utils.PageUtil;
 import java.util.List;
 import java.util.Map;
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import me.zhengjie.utils.PageResult;
+import fun.rooe.utils.PageResult;
 
 /**
 * @description 服务实现

@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>eladmin</artifactId>
-        <groupId>me.zhengjie</groupId>
+        <groupId>fun.rooe</groupId>
         <version>1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -16,9 +16,16 @@
     </properties>
 
     <dependencies>
+        <!-- 文件存储配置由框架模块提供 -->
+        <dependency>
+            <groupId>fun.rooe</groupId>
+            <artifactId>eladmin-framework</artifactId>
+            <version>1.1</version>
+        </dependency>
+
         <!-- 同时需要common模块和logging模块只需要引入logging模块即可 -->
         <dependency>
-            <groupId>me.zhengjie</groupId>
+            <groupId>fun.rooe</groupId>
             <artifactId>eladmin-logging</artifactId>
             <version>1.1</version>
         </dependency>

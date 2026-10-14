@@ -151,7 +151,7 @@
             </el-form-item>
             <el-form-item label="项目包名" prop="pack">
               <el-input v-model="form.pack" style="width: 40%" />
-              <span style="color: #C0C0C0;margin-left: 10px;">项目包的名称，如：me.zhengjie</span>
+              <span style="color: #C0C0C0;margin-left: 10px;">项目包的名称，如：fun.rooe</span>
             </el-form-item>
             <el-form-item label="接口名称" prop="apiAlias">
               <el-input v-model="form.apiAlias" style="width: 40%" />
