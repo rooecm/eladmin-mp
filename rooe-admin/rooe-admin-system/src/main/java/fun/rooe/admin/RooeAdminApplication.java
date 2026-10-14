@@ -16,11 +16,12 @@
 package fun.rooe.admin;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.annotation.rest.AnonymousGetMapping;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.ApplicationPidFileWriter;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,13 +33,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Hidden
 @RestController
 @SpringBootApplication
-public class AppRun {
+public class RooeAdminApplication {
 
     public static void main(String[] args) {
-        SpringApplication springApplication = new SpringApplication(AppRun.class);
-        // 监控应用的PID，启动时可指定PID路径：--spring.pid.file=/home/rooe-admin/app.pid
-        // 或者在 application.yml 添加文件路径，方便 kill，kill `cat /home/rooe-admin/app.pid`
-        springApplication.addListeners(new ApplicationPidFileWriter());
+        SpringApplication springApplication = new SpringApplication(RooeAdminApplication.class);
         ConfigurableApplicationContext context = springApplication.run(args);
         String port = context.getEnvironment().getProperty("server.port");
         log.info("---------------------------------------------");

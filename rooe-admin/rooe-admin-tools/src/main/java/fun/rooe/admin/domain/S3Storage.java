@@ -15,17 +15,22 @@
 */
 package fun.rooe.admin.domain;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import cn.hutool.core.bean.BeanUtil;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import cn.hutool.core.bean.copier.CopyOptions;
 import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.EqualsAndHashCode;
-import fun.rooe.admin.base.BaseEntity;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 
 /**
 * @description /
@@ -34,8 +39,27 @@ import fun.rooe.admin.base.BaseEntity;
 **/
 @Data
 @TableName("tool_s3_storage")
-@EqualsAndHashCode(callSuper = true)
-public class S3Storage extends BaseEntity implements Serializable {
+public class S3Storage implements Serializable {
+
+    @CreatedBy
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建人", hidden = true)
+    private String createBy;
+
+    @LastModifiedBy
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新人", hidden = true)
+    private String updateBy;
+
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp createTime;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp updateTime;
 
     @TableId(value = "storage_id", type = IdType.AUTO)
     @Schema(description = "主键")

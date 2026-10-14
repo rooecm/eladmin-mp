@@ -15,15 +15,20 @@
  */
 package fun.rooe.admin.domain;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import fun.rooe.admin.base.BaseEntity;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 /**
 * @author Zheng Jie
@@ -33,7 +38,27 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 @TableName("tool_local_storage")
-public class LocalStorage extends BaseEntity implements Serializable {
+public class LocalStorage implements Serializable {
+
+    @CreatedBy
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建人", hidden = true)
+    private String createBy;
+
+    @LastModifiedBy
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新人", hidden = true)
+    private String updateBy;
+
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp createTime;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp updateTime;
 
     @TableId(value = "storage_id", type = IdType.AUTO)
     @Schema(description = "ID", hidden = true)
