@@ -3,7 +3,7 @@
 ~/*
 .idea/*
 *.iml
-*/target/*
+target/
 */*.iml
 /.gradle/
 /application.pid
