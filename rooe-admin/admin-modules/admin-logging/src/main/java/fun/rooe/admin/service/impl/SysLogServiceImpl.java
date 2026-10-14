@@ -22,7 +22,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.utils.FileUtil;
+import fun.rooe.admin.utils.ExcelUtil;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -175,7 +175,9 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
             map.put("创建日期", sysLog.getCreateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 
     @Override

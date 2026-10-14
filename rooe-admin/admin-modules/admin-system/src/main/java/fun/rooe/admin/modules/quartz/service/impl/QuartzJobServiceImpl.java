@@ -168,7 +168,9 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
             map.put("创建日期", quartzJob.getCreateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 
     @Override
@@ -187,6 +189,8 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
             map.put("创建日期", quartzLog.getCreateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 }

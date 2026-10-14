@@ -20,6 +20,7 @@ import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3Storage;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.utils.FileUtil;
+import fun.rooe.admin.utils.ExcelUtil;
 import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -164,7 +165,9 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             map.put("更新时间", s3Storage.getUpdateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 
     public Map<String, String> privateDownload(Long id) {

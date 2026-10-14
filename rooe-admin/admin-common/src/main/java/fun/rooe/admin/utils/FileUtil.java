@@ -15,11 +15,8 @@
  */
 package fun.rooe.admin.utils;
 
-import cn.idev.excel.FastExcel;
-import cn.idev.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import fun.rooe.admin.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
@@ -33,12 +30,8 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class FileUtil {
@@ -106,36 +99,6 @@ public class FileUtil {
             log.error(e.getMessage(), e);
         }
         return null;
-    }
-
-    public static void downloadExcel(List<Map<String, Object>> list, HttpServletResponse response) throws IOException {
-        List<Map<String, Object>> sanitizedList = list.parallelStream().map(map -> {
-            Map<String, Object> sanitizedMap = new LinkedHashMap<>();
-            map.forEach((key, value) -> {
-                if (value instanceof String strValue
-                        && (strValue.startsWith("=") || strValue.startsWith("+")
-                        || strValue.startsWith("-") || strValue.startsWith("@"))) {
-                    strValue = "'" + strValue;
-                }
-                sanitizedMap.put(key, value);
-            });
-            return sanitizedMap;
-        }).collect(Collectors.toList());
-        Set<String> headers = new LinkedHashSet<>();
-        sanitizedList.forEach(map -> headers.addAll(map.keySet()));
-        List<List<String>> head = headers.stream().map(List::of).toList();
-        List<List<Object>> rows = sanitizedList.stream()
-                .map(data -> headers.stream()
-                        .map(header -> data.get(header) == null ? "" : data.get(header))
-                        .toList())
-                .toList();
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        FastExcel.write(response.getOutputStream())
-                .head(head)
-                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
-                .sheet("Sheet1")
-                .doWrite(rows);
     }
 
     public static String getFileType(String type) {

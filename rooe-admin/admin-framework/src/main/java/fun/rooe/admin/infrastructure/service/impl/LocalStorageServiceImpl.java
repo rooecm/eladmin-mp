@@ -18,6 +18,7 @@ package fun.rooe.admin.infrastructure.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.utils.FileUtil;
+import fun.rooe.admin.utils.ExcelUtil;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.StringUtils;
@@ -125,6 +126,8 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
             map.put("创建日期", localStorage.getCreateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 }

@@ -112,7 +112,9 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
             map.put("创建日期", job.getCreateTime());
             list.add(map);
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 
     @Override

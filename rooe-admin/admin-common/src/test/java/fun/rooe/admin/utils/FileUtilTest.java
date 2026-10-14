@@ -1,12 +1,8 @@
 package fun.rooe.admin.utils;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletResponse;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -24,14 +20,6 @@ public class FileUtilTest {
         assertNotNull(file);
         assertTrue(file.exists());
         assertTrue(file.getName().endsWith(".txt"));
-    }
-
-    @Test
-    public void testDownloadExcel() throws Exception {
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        downloadExcel(List.of(Map.of("name", "=test", "age", 18)), response);
-        assertEquals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8", response.getContentType());
-        assertTrue(response.getContentAsByteArray().length > 0);
     }
 
     @Test

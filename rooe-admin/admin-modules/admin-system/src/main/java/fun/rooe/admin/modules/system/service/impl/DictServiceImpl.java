@@ -117,7 +117,9 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
                 list.add(map);
             }
         }
-        FileUtil.downloadExcel(list, response);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
+        ExcelUtil.write(list, response.getOutputStream());
     }
 
     public void delCaches(Dict dict){
