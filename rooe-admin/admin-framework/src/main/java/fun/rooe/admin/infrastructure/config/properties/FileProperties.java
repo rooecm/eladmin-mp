@@ -17,6 +17,7 @@ package fun.rooe.admin.infrastructure.config.properties;
 
 import lombok.Data;
 import fun.rooe.admin.utils.ElConstant;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * 文件配置模型, 绑定注册见 admin-framework ConfigurerAdapter
@@ -24,6 +25,7 @@ import fun.rooe.admin.utils.ElConstant;
  * @author Zheng Jie
  */
 @Data
+@ConfigurationProperties(prefix = "file")
 public class FileProperties {
 
     /** 文件大小限制 */
