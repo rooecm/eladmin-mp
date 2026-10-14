@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import me.zhengjie.utils.PageUtil;
 import java.util.*;
 import java.io.IOException;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import me.zhengjie.utils.PageResult;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;

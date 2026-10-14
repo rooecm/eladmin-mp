@@ -53,25 +53,25 @@ public class AnonTagUtils {
             if (null != anonymousAccess) {
                 List<RequestMethod> requestMethods = new ArrayList<>(infoEntry.getKey().getMethodsCondition().getMethods());
                 RequestMethodEnum request = RequestMethodEnum.find(requestMethods.isEmpty() ? RequestMethodEnum.ALL.getType() : requestMethods.get(0).name());
-                if (infoEntry.getKey().getPatternsCondition()!=null) {
+                if (infoEntry.getKey().getPathPatternsCondition() != null) {
                     switch (Objects.requireNonNull(request)) {
                         case GET:
-                            get.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            get.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                         case POST:
-                            post.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            post.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                         case PUT:
-                            put.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            put.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                         case PATCH:
-                            patch.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            patch.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                         case DELETE:
-                            delete.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            delete.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                         default:
-                            all.addAll(infoEntry.getKey().getPatternsCondition().getPatterns());
+                            all.addAll(infoEntry.getKey().getPathPatternsCondition().getPatterns().stream().map(Object::toString).toList());
                             break;
                     }
                 }

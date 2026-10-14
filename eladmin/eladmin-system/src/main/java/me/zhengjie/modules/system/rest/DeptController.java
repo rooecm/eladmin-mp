@@ -16,8 +16,8 @@
 package me.zhengjie.modules.system.rest;
 
 import cn.hutool.core.collection.CollectionUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.exception.BadRequestException;
@@ -31,7 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,21 +41,21 @@ import java.util.stream.Collectors;
 */
 @RestController
 @RequiredArgsConstructor
-@Api(tags = "系统：部门管理")
+@Tag(name = "系统：部门管理")
 @RequestMapping("/api/dept")
 public class DeptController {
 
     private final DeptService deptService;
     private static final String ENTITY_NAME = "dept";
 
-    @ApiOperation("导出部门数据")
+    @Operation(summary = "导出部门数据")
     @GetMapping(value = "/download")
     @PreAuthorize("@el.check('dept:list')")
     public void exportDept(HttpServletResponse response, DeptQueryCriteria criteria) throws Exception {
         deptService.download(deptService.queryAll(criteria, false), response);
     }
 
-    @ApiOperation("查询部门")
+    @Operation(summary = "查询部门")
     @GetMapping
     @PreAuthorize("@el.check('user:list','dept:list')")
     public ResponseEntity<PageResult<Dept>> queryDept(DeptQueryCriteria criteria) throws Exception {
@@ -63,7 +63,7 @@ public class DeptController {
         return new ResponseEntity<>(PageUtil.toPage(depts),HttpStatus.OK);
     }
 
-    @ApiOperation("查询部门:根据ID获取同级与上级数据")
+    @Operation(summary = "查询部门:根据ID获取同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('user:list','dept:list')")
     public ResponseEntity<Object> getDeptSuperior(@RequestBody List<Long> ids, @RequestParam(defaultValue = "false") Boolean exclude) {
@@ -86,7 +86,7 @@ public class DeptController {
     }
 
     @Log("新增部门")
-    @ApiOperation("新增部门")
+    @Operation(summary = "新增部门")
     @PostMapping
     @PreAuthorize("@el.check('dept:add')")
     public ResponseEntity<Object> createDept(@Validated @RequestBody Dept resources){
@@ -98,7 +98,7 @@ public class DeptController {
     }
 
     @Log("修改部门")
-    @ApiOperation("修改部门")
+    @Operation(summary = "修改部门")
     @PutMapping
     @PreAuthorize("@el.check('dept:edit')")
     public ResponseEntity<Object> updateDept(@Validated(Dept.Update.class) @RequestBody Dept resources){
@@ -107,7 +107,7 @@ public class DeptController {
     }
 
     @Log("删除部门")
-    @ApiOperation("删除部门")
+    @Operation(summary = "删除部门")
     @DeleteMapping
     @PreAuthorize("@el.check('dept:del')")
     public ResponseEntity<Object> deleteDept(@RequestBody Set<Long> ids){

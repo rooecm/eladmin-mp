@@ -15,12 +15,12 @@
  */
 package me.zhengjie.domain.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -34,14 +34,14 @@ import java.util.List;
 public class EmailDto {
 
     @NotEmpty
-    @ApiModelProperty(value = "收件人")
+    @Schema(description = "收件人")
     private List<String> tos;
 
     @NotBlank
-    @ApiModelProperty(value = "主题")
+    @Schema(description = "主题")
     private String subject;
 
     @NotBlank
-    @ApiModelProperty(value = "内容")
+    @Schema(description = "内容")
     private String content;
 }

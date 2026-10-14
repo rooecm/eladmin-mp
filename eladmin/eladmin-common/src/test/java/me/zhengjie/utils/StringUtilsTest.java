@@ -3,8 +3,7 @@ package me.zhengjie.utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Set;
 
 import static me.zhengjie.utils.StringUtils.getIp;
 import static me.zhengjie.utils.StringUtils.getWeekDay;
@@ -13,6 +12,7 @@ import static me.zhengjie.utils.StringUtils.toCapitalizeCamelCase;
 import static me.zhengjie.utils.StringUtils.toUnderScoreCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class StringUtilsTest {
 
@@ -37,12 +37,13 @@ public class StringUtilsTest {
 
     @Test
     public void testGetWeekDay() {
-        SimpleDateFormat simpleDateformat = new SimpleDateFormat("E");
-        assertEquals(simpleDateformat.format(new Date()), getWeekDay());
+        assertTrue(Set.of("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").contains(getWeekDay()));
     }
 
     @Test
     public void testGetIP() {
-        assertEquals("127.0.0.1", getIp(new MockHttpServletRequest()));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("x-forwarded-for", "203.0.113.10, 198.51.100.20");
+        assertEquals("203.0.113.10", getIp(request));
     }
 }

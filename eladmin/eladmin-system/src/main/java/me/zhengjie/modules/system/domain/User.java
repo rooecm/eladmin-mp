@@ -20,13 +20,13 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.alibaba.fastjson2.annotation.JSONField;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseEntity;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
@@ -43,63 +43,63 @@ public class User extends BaseEntity implements Serializable {
 
     @NotNull(groups = Update.class)
     @TableId(value="user_id", type = IdType.AUTO)
-    @ApiModelProperty(value = "ID", hidden = true)
+    @Schema(description = "ID", hidden = true)
     private Long id;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "用户角色")
+    @Schema(description = "用户角色")
     private Set<Role> roles;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "用户岗位")
+    @Schema(description = "用户岗位")
     private Set<Job> jobs;
 
     @TableField(value = "dept_id")
-    @ApiModelProperty(hidden = true)
+    @Schema(hidden = true)
     private Long deptId;
 
-    @ApiModelProperty(value = "用户部门")
+    @Schema(description = "用户部门")
     @TableField(exist = false)
     private Dept dept;
 
     @NotBlank
-    @ApiModelProperty(value = "用户名称")
+    @Schema(description = "用户名称")
     private String username;
 
     @NotBlank
-    @ApiModelProperty(value = "用户昵称")
+    @Schema(description = "用户昵称")
     private String nickName;
 
     @Email
     @NotBlank
-    @ApiModelProperty(value = "邮箱")
+    @Schema(description = "邮箱")
     private String email;
 
     @NotBlank
-    @ApiModelProperty(value = "电话号码")
+    @Schema(description = "电话号码")
     private String phone;
 
-    @ApiModelProperty(value = "用户性别")
+    @Schema(description = "用户性别")
     private String gender;
 
-    @ApiModelProperty(value = "头像真实名称",hidden = true)
+    @Schema(description = "头像真实名称",hidden = true)
     private String avatarName;
 
-    @ApiModelProperty(value = "头像存储的路径", hidden = true)
+    @Schema(description = "头像存储的路径", hidden = true)
     private String avatarPath;
 
-    @ApiModelProperty(value = "密码")
+    @Schema(description = "密码")
     private String password;
 
     @NotNull
-    @ApiModelProperty(value = "是否启用")
+    @Schema(description = "是否启用")
     private Boolean enabled;
 
     @JSONField(deserialize = false)
-    @ApiModelProperty(value = "是否为admin账号", hidden = true)
+    @Schema(description = "是否为admin账号", hidden = true)
     private Boolean isAdmin = false;
 
-    @ApiModelProperty(value = "最后修改密码的时间", hidden = true)
+    @Schema(description = "最后修改密码的时间", hidden = true)
     private Date pwdResetTime;
 
     @Override

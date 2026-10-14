@@ -18,7 +18,7 @@ package me.zhengjie.base;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -39,21 +39,21 @@ public class BaseEntity implements Serializable {
 
     @CreatedBy
     @TableField(fill = FieldFill.INSERT)
-    @ApiModelProperty(value = "创建人", hidden = true)
+    @Schema(description = "创建人", hidden = true)
     private String createBy;
 
     @LastModifiedBy
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    @ApiModelProperty(value = "更新人", hidden = true)
+    @Schema(description = "更新人", hidden = true)
     private String updateBy;
 
     @TableField(fill = FieldFill.INSERT)
-    @ApiModelProperty(value = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp createTime;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    @ApiModelProperty(value = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
+    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp updateTime;
 

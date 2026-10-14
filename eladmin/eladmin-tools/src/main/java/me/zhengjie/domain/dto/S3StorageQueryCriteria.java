@@ -16,7 +16,7 @@
 package me.zhengjie.domain.dto;
 
 import lombok.Data;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -28,16 +28,16 @@ import java.util.List;
 @Data
 public class S3StorageQueryCriteria{
 
-    @ApiModelProperty(value = "页码", example = "1")
+    @Schema(description = "页码", example = "1")
     private Integer page = 1;
 
-    @ApiModelProperty(value = "每页数据量", example = "10")
+    @Schema(description = "每页数据量", example = "10")
     private Integer size = 10;
 
-    @ApiModelProperty(value = "文件名称")
+    @Schema(description = "文件名称")
     private String fileName;
 
-    @ApiModelProperty(value = "创建时间")
+    @Schema(description = "创建时间")
     private List<Timestamp> createTime;
 
 }

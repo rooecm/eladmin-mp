@@ -15,9 +15,9 @@
  */
 package me.zhengjie.domain.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.sql.Date;
 import java.sql.Timestamp;
 
@@ -30,29 +30,29 @@ import java.sql.Timestamp;
 public class TradeDto {
 
     @NotBlank
-    @ApiModelProperty(value = "商品描述")
+    @Schema(description = "商品描述")
     private String body;
 
     @NotBlank
-    @ApiModelProperty(value = "商品名称")
+    @Schema(description = "商品名称")
     private String subject;
 
-    @ApiModelProperty(value = "商户订单号", hidden = true)
+    @Schema(description = "商户订单号", hidden = true)
     private String outTradeNo;
 
-    @ApiModelProperty(value = "第三方订单号", hidden = true)
+    @Schema(description = "第三方订单号", hidden = true)
     private String tradeNo;
 
     @NotBlank
-    @ApiModelProperty(value = "价格")
+    @Schema(description = "价格")
     private String totalAmount;
 
-    @ApiModelProperty(value = "订单状态,已支付，未支付，作废", hidden = true)
+    @Schema(description = "订单状态,已支付，未支付，作废", hidden = true)
     private String state;
 
-    @ApiModelProperty(value = "创建时间", hidden = true)
+    @Schema(description = "创建时间", hidden = true)
     private Timestamp createTime;
 
-    @ApiModelProperty(value = "作废时间", hidden = true)
+    @Schema(description = "作废时间", hidden = true)
     private Date cancelTime;
 }

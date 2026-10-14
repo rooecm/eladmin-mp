@@ -20,7 +20,7 @@ import me.zhengjie.modules.system.domain.Menu;
 import me.zhengjie.modules.system.domain.dto.MenuQueryCriteria;
 import me.zhengjie.modules.system.domain.dto.MenuVo;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;

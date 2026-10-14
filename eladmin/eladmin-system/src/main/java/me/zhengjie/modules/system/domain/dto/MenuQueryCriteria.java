@@ -15,7 +15,7 @@
  */
 package me.zhengjie.modules.system.domain.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import java.sql.Timestamp;
 import java.util.List;
@@ -27,15 +27,15 @@ import java.util.List;
 @Data
 public class MenuQueryCriteria {
 
-    @ApiModelProperty(value = "模糊查询")
+    @Schema(description = "模糊查询")
     private String blurry;
 
-    @ApiModelProperty(value = "创建时间")
+    @Schema(description = "创建时间")
     private List<Timestamp> createTime;
 
-    @ApiModelProperty(value = "PID为空查询")
+    @Schema(description = "PID为空查询")
     private Boolean pidIsNull;
 
-    @ApiModelProperty(value = "PID")
+    @Schema(description = "PID")
     private Long pid;
 }

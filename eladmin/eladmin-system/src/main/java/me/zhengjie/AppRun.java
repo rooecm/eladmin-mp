@@ -15,7 +15,7 @@
  */
 package me.zhengjie;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.rest.AnonymousGetMapping;
 import me.zhengjie.utils.SpringBeanHolder;
@@ -32,8 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
  * @date 2018/11/15 9:20:19
  */
 @Slf4j
+@Hidden
 @RestController
-@Api(hidden = true)
 @SpringBootApplication
 @EnableTransactionManagement
 public class AppRun {

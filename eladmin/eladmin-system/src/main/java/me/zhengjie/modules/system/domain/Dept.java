@@ -20,12 +20,12 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseEntity;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
@@ -42,33 +42,33 @@ public class Dept extends BaseEntity implements Serializable {
 
     @NotNull(groups = Update.class)
     @TableId(value="dept_id", type = IdType.AUTO)
-    @ApiModelProperty(value = "ID", hidden = true)
+    @Schema(description = "ID", hidden = true)
     private Long id;
 
     @TableField(exist = false)
     @JSONField(serialize = false)
-    @ApiModelProperty(value = "角色")
+    @Schema(description = "角色")
     private Set<Role> roles;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "子部门")
+    @Schema(description = "子部门")
     private List<Dept> children;
 
-    @ApiModelProperty(value = "排序")
+    @Schema(description = "排序")
     private Integer deptSort;
 
     @NotBlank
-    @ApiModelProperty(value = "部门名称")
+    @Schema(description = "部门名称")
     private String name;
 
     @NotNull
-    @ApiModelProperty(value = "是否启用")
+    @Schema(description = "是否启用")
     private Boolean enabled;
 
-    @ApiModelProperty(value = "上级部门")
+    @Schema(description = "上级部门")
     private Long pid;
 
-    @ApiModelProperty(value = "子节点数目", hidden = true)
+    @Schema(description = "子节点数目", hidden = true)
     private Integer subCount = 0;
 
     @Override
@@ -89,18 +89,18 @@ public class Dept extends BaseEntity implements Serializable {
         return Objects.hash(id, name);
     }
 
-    @ApiModelProperty(value = "是否有子节点")
+    @Schema(description = "是否有子节点")
     public Boolean getHasChildren() {
         return subCount > 0;
     }
 
 
-    @ApiModelProperty(value = "是否为叶子")
+    @Schema(description = "是否为叶子")
     public Boolean getLeaf() {
         return subCount <= 0;
     }
 
-    @ApiModelProperty(value = "标签名称")
+    @Schema(description = "标签名称")
     public String getLabel() {
         return name;
     }

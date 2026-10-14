@@ -16,8 +16,8 @@
 package me.zhengjie.rest;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.Log;
@@ -31,7 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -46,13 +46,13 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/s3Storage")
-@Api(tags = "工具：S3协议云存储管理")
+@Tag(name = "工具：S3协议云存储管理")
 public class S3StorageController {
 
     private final AmzS3Config amzS3Config;
     private final S3StorageService s3StorageService;
 
-    @ApiOperation("导出数据")
+    @Operation(summary = "导出数据")
     @GetMapping(value = "/download")
     @PreAuthorize("@el.check('storage:list')")
     public void exportS3Storage(HttpServletResponse response, S3StorageQueryCriteria criteria) throws IOException {
@@ -60,7 +60,7 @@ public class S3StorageController {
     }
 
     @GetMapping
-    @ApiOperation("查询文件")
+    @Operation(summary = "查询文件")
     @PreAuthorize("@el.check('storage:list')")
     public ResponseEntity<PageResult<S3Storage>> queryS3Storage(S3StorageQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
@@ -68,7 +68,7 @@ public class S3StorageController {
     }
 
     @PostMapping
-    @ApiOperation("上传文件")
+    @Operation(summary = "上传文件")
     public ResponseEntity<Object> uploadS3Storage(@RequestParam MultipartFile file){
         S3Storage storage = s3StorageService.upload(file);
         Map<String,Object> map = new HashMap<>(3);
@@ -79,7 +79,7 @@ public class S3StorageController {
     }
 
     @Log("下载文件")
-    @ApiOperation("下载文件")
+    @Operation(summary = "下载文件")
     @GetMapping(value = "/download/{id}")
     public ResponseEntity<Object> downloadS3Storage(@PathVariable Long id){
         Map<String,Object> map = new HashMap<>(1);
@@ -96,7 +96,7 @@ public class S3StorageController {
 
     @Log("删除多个文件")
     @DeleteMapping
-    @ApiOperation("删除多个文件")
+    @Operation(summary = "删除多个文件")
     @PreAuthorize("@el.check('storage:del')")
     public ResponseEntity<Object> deleteAllS3Storage(@RequestBody List<Long> ids) {
         s3StorageService.deleteAll(ids);

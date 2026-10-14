@@ -19,11 +19,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseEntity;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -36,24 +36,24 @@ import java.io.Serializable;
 public class DictDetail extends BaseEntity implements Serializable {
 
     @NotNull(groups = Update.class)
-    @ApiModelProperty(value = "ID", hidden = true)
+    @Schema(description = "ID", hidden = true)
     @TableId(value = "detail_id", type = IdType.AUTO)
     private Long id;
 
     @TableField(value = "dict_id")
-    @ApiModelProperty(hidden = true)
+    @Schema(hidden = true)
     private Long dictId;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "字典")
+    @Schema(description = "字典")
     private Dict dict;
 
-    @ApiModelProperty(value = "字典标签")
+    @Schema(description = "字典标签")
     private String label;
 
-    @ApiModelProperty(value = "字典值")
+    @Schema(description = "字典值")
     private String value;
 
-    @ApiModelProperty(value = "排序")
+    @Schema(description = "排序")
     private Integer dictSort = 999;
 }

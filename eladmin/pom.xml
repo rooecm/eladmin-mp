@@ -15,23 +15,23 @@
         <module>eladmin-generator</module>
     </modules>
 
-    <name>ELADMIN 后台管理</name>
+    <name>ELADMIN</name>
     <url>https://eladmin.vip</url>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>3.5.1</version>
     </parent>
 
     <properties>
-        <logback.version>1.2.9</logback.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <fastjson2.version>2.0.54</fastjson2.version>
-        <druid.version>1.2.19</druid.version>
-        <commons-pool2.version>2.11.1</commons-pool2.version>
+        <druid.version>1.2.24</druid.version>
+        <commons-pool2.version>2.12.0</commons-pool2.version>
+        <springdoc.version>2.8.17</springdoc.version>
     </properties>
 
     <dependencies>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
-            <version>3.17.1</version>
+            <version>3.37.0</version>
         </dependency>
 
         <!-- Spring boot websocket -->
@@ -95,8 +95,8 @@
         <!-- mybatis -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.3.1</version>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.7</version>
         </dependency>
 
         <!--spring boot 集成redis所需common-pool2-->
@@ -118,25 +118,16 @@
             <version>3.9.1</version>
         </dependency>
 
-        <!-- Swagger UI 相关 -->
+        <!-- Swagger UI 相关 (Spring Boot 3 使用 knife4j-openapi3) -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
-            <artifactId>knife4j-spring-boot-starter</artifactId>
-            <version>3.0.3</version>
-            <exclusions>
-                <!-- 去掉 swagger-annotations 依赖，避免冲突 -->
-                <exclusion>
-                    <groupId>io.swagger</groupId>
-                    <artifactId>swagger-annotations</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>knife4j-openapi3-ui</artifactId>
+            <version>4.5.0</version>
         </dependency>
-
-        <!-- 添加swagger-annotations依赖 -->
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>1.5.22</version>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!--Mysql依赖包-->
@@ -151,7 +142,7 @@
         <!-- druid数据源驱动 -->
         <dependency>
             <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
             <version>${druid.version}</version>
         </dependency>
 
@@ -165,12 +156,10 @@
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
-            <version>1.9.7</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
-            <version>1.9.7</version>
         </dependency>
 
         <!--lombok插件-->
@@ -206,7 +195,7 @@
 
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2-extension-spring5</artifactId>
+            <artifactId>fastjson2-extension-spring6</artifactId>
             <version>${fastjson2.version}</version>
         </dependency>
 
@@ -222,17 +211,37 @@
             <artifactId>commons-text</artifactId>
             <version>1.13.0</version>
         </dependency>
+
+        <!-- Google Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.4.0-jre</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- 打包时跳过测试 -->
+            <!-- 构建环境检查 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[17,)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -28,28 +28,32 @@ spring:
     redis:
       repositories:
         enabled: false
+      #数据库索引
+      database: ${REDIS_DB:1}
+      host: ${REDIS_HOST:192.168.2.10}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PWD:123456}
+      #连接超时时间
+      timeout: 5000
+      # 连接池配置
+      lettuce:
+        pool:
+          # 连接池最大连接数
+          max-active: 30
+          # 连接池最大阻塞等待时间（毫秒），负值表示没有限制
+          max-wait: -1
+          # 连接池中的最大空闲连接数
+          max-idle: 20
+          # 连接池中的最小空闲连接数
+          min-idle: 1
 #  pid:
 #    file: /自行指定位置/eladmin.pid
 
-  redis:
-    #数据库索引
-    database: ${REDIS_DB:1}
-    host: ${REDIS_HOST:127.0.0.1}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PWD:}
-    #连接超时时间
-    timeout: 5000
-    # 连接池配置
-    lettuce:
-      pool:
-        # 连接池最大连接数
-        max-active: 30
-        # 连接池最大阻塞等待时间（毫秒），负值表示没有限制
-        max-wait: -1
-        # 连接池中的最大空闲连接数
-        max-idle: 20
-        # 连接池中的最小空闲连接数
-        min-idle: 1
+springdoc:
+  api-docs:
+    enabled: ${swagger.enabled:true}
+  swagger-ui:
+    enabled: ${swagger.enabled:true}
 
 task:
   pool:

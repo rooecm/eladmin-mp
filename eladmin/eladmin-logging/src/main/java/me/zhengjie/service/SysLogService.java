@@ -21,7 +21,7 @@ import me.zhengjie.domain.SysLog;
 import me.zhengjie.domain.dto.SysLogQueryCriteria;
 import me.zhengjie.utils.PageResult;
 import org.aspectj.lang.ProceedingJoinPoint;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 

@@ -21,7 +21,7 @@ import me.zhengjie.modules.system.domain.User;
 import me.zhengjie.modules.system.domain.dto.UserQueryCriteria;
 import me.zhengjie.utils.PageResult;
 import org.springframework.web.multipart.MultipartFile;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

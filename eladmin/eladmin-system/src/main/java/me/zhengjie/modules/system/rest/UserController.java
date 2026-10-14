@@ -17,8 +17,8 @@ package me.zhengjie.modules.system.rest;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.config.properties.RsaProperties;
@@ -44,7 +44,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  * @author Zheng Jie
  * @date 2018-11-23
  */
-@Api(tags = "系统：用户管理")
+@Tag(name = "系统：用户管理")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -66,14 +66,14 @@ public class UserController {
     private final RoleService roleService;
     private final VerifyService verificationCodeService;
 
-    @ApiOperation("导出用户数据")
+    @Operation(summary = "导出用户数据")
     @GetMapping(value = "/download")
     @PreAuthorize("@el.check('user:list')")
     public void exportUser(HttpServletResponse response, UserQueryCriteria criteria) throws IOException {
         userService.download(userService.queryAll(criteria), response);
     }
 
-    @ApiOperation("查询用户")
+    @Operation(summary = "查询用户")
     @GetMapping
     @PreAuthorize("@el.check('user:list')")
     public ResponseEntity<PageResult<User>> queryUser(UserQueryCriteria criteria){
@@ -103,7 +103,7 @@ public class UserController {
     }
 
     @Log("新增用户")
-    @ApiOperation("新增用户")
+    @Operation(summary = "新增用户")
     @PostMapping
     @PreAuthorize("@el.check('user:add')")
     public ResponseEntity<Object> createUser(@Validated @RequestBody User resources){
@@ -115,7 +115,7 @@ public class UserController {
     }
 
     @Log("修改用户")
-    @ApiOperation("修改用户")
+    @Operation(summary = "修改用户")
     @PutMapping
     @PreAuthorize("@el.check('user:edit')")
     public ResponseEntity<Object> updateUser(@Validated(User.Update.class) @RequestBody User resources) throws Exception {
@@ -125,7 +125,7 @@ public class UserController {
     }
 
     @Log("修改用户：个人中心")
-    @ApiOperation("修改用户：个人中心")
+    @Operation(summary = "修改用户：个人中心")
     @PutMapping(value = "center")
     public ResponseEntity<Object> centerUser(@Validated(User.Update.class) @RequestBody User resources){
         if(!resources.getId().equals(SecurityUtils.getCurrentUserId())){
@@ -136,7 +136,7 @@ public class UserController {
     }
 
     @Log("删除用户")
-    @ApiOperation("删除用户")
+    @Operation(summary = "删除用户")
     @DeleteMapping
     @PreAuthorize("@el.check('user:del')")
     public ResponseEntity<Object> deleteUser(@RequestBody Set<Long> ids){
@@ -151,7 +151,7 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ApiOperation("修改密码")
+    @Operation(summary = "修改密码")
     @PostMapping(value = "/updatePass")
     public ResponseEntity<Object> updateUserPass(@RequestBody UserPassVo passVo) throws Exception {
         String oldPass = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,passVo.getOldPass());
@@ -167,7 +167,7 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ApiOperation("重置密码")
+    @Operation(summary = "重置密码")
     @PutMapping(value = "/resetPwd")
     public ResponseEntity<Object> resetPwd(@RequestBody Set<Long> ids) {
         String pwd = passwordEncoder.encode("123456");
@@ -175,14 +175,14 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ApiOperation("修改头像")
+    @Operation(summary = "修改头像")
     @PostMapping(value = "/updateAvatar")
     public ResponseEntity<Object> updateUserAvatar(@RequestParam MultipartFile avatar){
         return new ResponseEntity<>(userService.updateAvatar(avatar), HttpStatus.OK);
     }
 
     @Log("修改邮箱")
-    @ApiOperation("修改邮箱")
+    @Operation(summary = "修改邮箱")
     @PostMapping(value = "/updateEmail/{code}")
     public ResponseEntity<Object> updateUserEmail(@PathVariable String code, @RequestBody User resources) throws Exception {
         String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,resources.getPassword());

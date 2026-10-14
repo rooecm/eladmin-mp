@@ -15,7 +15,7 @@
  */
 package me.zhengjie.modules.security.service.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,30 +30,30 @@ import java.util.Date;
 @NoArgsConstructor
 public class OnlineUserDto {
 
-    @ApiModelProperty(value = "Token编号")
+    @Schema(description = "Token编号")
     private String uid;
 
-    @ApiModelProperty(value = "用户名")
+    @Schema(description = "用户名")
     private String userName;
 
-    @ApiModelProperty(value = "昵称")
+    @Schema(description = "昵称")
     private String nickName;
 
-    @ApiModelProperty(value = "岗位")
+    @Schema(description = "岗位")
     private String dept;
 
-    @ApiModelProperty(value = "浏览器")
+    @Schema(description = "浏览器")
     private String browser;
 
-    @ApiModelProperty(value = "IP")
+    @Schema(description = "IP")
     private String ip;
 
-    @ApiModelProperty(value = "地址")
+    @Schema(description = "地址")
     private String address;
 
-    @ApiModelProperty(value = "token")
+    @Schema(description = "token")
     private String key;
 
-    @ApiModelProperty(value = "登录时间")
+    @Schema(description = "登录时间")
     private Date loginTime;
 }

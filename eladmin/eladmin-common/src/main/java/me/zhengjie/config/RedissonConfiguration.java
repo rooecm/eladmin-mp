@@ -16,25 +16,25 @@ import org.springframework.context.annotation.Configuration;
 @AutoConfigureBefore(RedisAutoConfiguration.class)
 public class RedissonConfiguration {
 
-    @Value("${spring.redis.host}")
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
-    @Value("${spring.redis.port}")
+    @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.redis.database}")
+    @Value("${spring.data.redis.database}")
     private int redisDatabase;
 
-    @Value("${spring.redis.password:}")
+    @Value("${spring.data.redis.password:}")
     private String redisPassword;
 
-    @Value("${spring.redis.timeout:5000}")
+    @Value("${spring.data.redis.timeout:5000}")
     private int timeout;
 
-    @Value("${spring.redis.lettuce.pool.max-active:64}")
+    @Value("${spring.data.redis.lettuce.pool.max-active:64}")
     private int connectionPoolSize;
 
-    @Value("${spring.redis.lettuce.pool.min-idle:16}")
+    @Value("${spring.data.redis.lettuce.pool.min-idle:16}")
     private int connectionMinimumIdleSize;
 
     @Bean

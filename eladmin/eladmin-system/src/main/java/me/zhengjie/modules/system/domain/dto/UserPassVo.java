@@ -15,7 +15,7 @@
  */
 package me.zhengjie.modules.system.domain.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -26,9 +26,9 @@ import lombok.Data;
 @Data
 public class UserPassVo {
 
-    @ApiModelProperty(value = "旧密码")
+    @Schema(description = "旧密码")
     private String oldPass;
 
-    @ApiModelProperty(value = "新密码")
+    @Schema(description = "新密码")
     private String newPass;
 }

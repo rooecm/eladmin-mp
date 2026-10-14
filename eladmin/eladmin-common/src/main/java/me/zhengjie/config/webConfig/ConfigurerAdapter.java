@@ -17,7 +17,7 @@ package me.zhengjie.config.webConfig;
 
 import com.alibaba.fastjson2.JSONWriter;
 import com.alibaba.fastjson2.support.config.FastJsonConfig;
-import com.alibaba.fastjson2.support.spring.http.converter.FastJsonHttpMessageConverter;
+import com.alibaba.fastjson2.support.spring6.http.converter.FastJsonHttpMessageConverter;
 import me.zhengjie.config.properties.FileProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

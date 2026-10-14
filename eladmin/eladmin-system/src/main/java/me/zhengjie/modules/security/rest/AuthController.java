@@ -17,8 +17,8 @@ package me.zhengjie.modules.security.rest;
 
 import cn.hutool.core.util.IdUtil;
 import com.wf.captcha.base.Captcha;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.Log;
@@ -49,7 +49,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Api(tags = "系统：系统授权接口")
+@Tag(name = "系统：系统授权接口")
 public class AuthController {
 
     private final SecurityProperties properties;
@@ -76,7 +76,7 @@ public class AuthController {
     private final UserDetailsServiceImpl userDetailsService;
 
     @Log("用户登录")
-    @ApiOperation("登录授权")
+    @Operation(summary = "登录授权")
     @AnonymousPostMapping(value = "/login")
     public ResponseEntity<Object> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
         // 密码解密
@@ -116,14 +116,14 @@ public class AuthController {
         return ResponseEntity.ok(authInfo);
     }
 
-    @ApiOperation("获取用户信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping(value = "/info")
     public ResponseEntity<UserDetails> getUserInfo() {
         JwtUserDto jwtUser = (JwtUserDto) SecurityUtils.getCurrentUser();
         return ResponseEntity.ok(jwtUser);
     }
 
-    @ApiOperation("获取验证码")
+    @Operation(summary = "获取验证码")
     @AnonymousGetMapping(value = "/code")
     public ResponseEntity<Object> getCode() {
         // 获取运算的结果
@@ -144,7 +144,7 @@ public class AuthController {
         return ResponseEntity.ok(imgResult);
     }
 
-    @ApiOperation("退出登录")
+    @Operation(summary = "退出登录")
     @AnonymousDeleteMapping(value = "/logout")
     public ResponseEntity<Object> logout(HttpServletRequest request) {
         String token = tokenProvider.getToken(request);

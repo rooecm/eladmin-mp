@@ -18,7 +18,7 @@ package me.zhengjie.domain;
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,39 +38,39 @@ public class SysLog  implements Serializable {
     @TableId(value = "log_id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "操作用户")
+    @Schema(description = "操作用户")
     private String username;
 
-    @ApiModelProperty(value = "描述")
+    @Schema(description = "描述")
     private String description;
 
-    @ApiModelProperty(value = "方法名")
+    @Schema(description = "方法名")
     private String method;
 
-    @ApiModelProperty(value = "参数")
+    @Schema(description = "参数")
     private String params;
 
-    @ApiModelProperty(value = "日志类型")
+    @Schema(description = "日志类型")
     private String logType;
 
-    @ApiModelProperty(value = "请求ip")
+    @Schema(description = "请求ip")
     private String requestIp;
 
-    @ApiModelProperty(value = "地址")
+    @Schema(description = "地址")
     private String address;
 
-    @ApiModelProperty(value = "浏览器")
+    @Schema(description = "浏览器")
     private String browser;
 
-    @ApiModelProperty(value = "请求耗时")
+    @Schema(description = "请求耗时")
     private Long time;
 
-    @ApiModelProperty(value = "异常详细")
+    @Schema(description = "异常详细")
     @JSONField(serialize = false)
     private String exceptionDetail;
 
     @TableField(fill = FieldFill.INSERT)
-    @ApiModelProperty(value = "创建日期：yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "创建日期：yyyy-MM-dd HH:mm:ss")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp createTime;
 

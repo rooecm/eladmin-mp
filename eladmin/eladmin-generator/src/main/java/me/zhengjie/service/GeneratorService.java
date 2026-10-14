@@ -22,8 +22,8 @@ import me.zhengjie.domain.ColumnInfo;
 import me.zhengjie.domain.dto.TableInfo;
 import me.zhengjie.utils.PageResult;
 import org.springframework.http.ResponseEntity;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**

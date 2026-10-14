@@ -19,13 +19,13 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseEntity;
 import me.zhengjie.utils.enums.DataScopeEnum;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.Set;
@@ -42,32 +42,32 @@ public class Role extends BaseEntity implements Serializable {
 
     @NotNull(groups = {Update.class})
     @TableId(value="role_id", type = IdType.AUTO)
-    @ApiModelProperty(value = "ID", hidden = true)
+    @Schema(description = "ID", hidden = true)
     private Long id;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "用户", hidden = true)
+    @Schema(description = "用户", hidden = true)
     private Set<User> users;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "菜单", hidden = true)
+    @Schema(description = "菜单", hidden = true)
     private Set<Menu> menus;
 
     @TableField(exist = false)
-    @ApiModelProperty(value = "部门", hidden = true)
+    @Schema(description = "部门", hidden = true)
     private Set<Dept> depts;
 
     @NotBlank
-    @ApiModelProperty(value = "名称", hidden = true)
+    @Schema(description = "名称", hidden = true)
     private String name;
 
-    @ApiModelProperty(value = "数据权限，全部 、 本级 、 自定义")
+    @Schema(description = "数据权限，全部 、 本级 、 自定义")
     private String dataScope = DataScopeEnum.THIS_LEVEL.getValue();
 
-    @ApiModelProperty(value = "级别，数值越小，级别越大")
+    @Schema(description = "级别，数值越小，级别越大")
     private Integer level = 3;
 
-    @ApiModelProperty(value = "描述")
+    @Schema(description = "描述")
     private String description;
 
     @Override

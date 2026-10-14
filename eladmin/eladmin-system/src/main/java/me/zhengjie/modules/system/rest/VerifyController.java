@@ -15,8 +15,8 @@
  */
 package me.zhengjie.modules.system.rest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.domain.dto.EmailDto;
 import me.zhengjie.service.EmailService;
@@ -35,14 +35,14 @@ import java.util.Objects;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/code")
-@Api(tags = "系统：验证码管理")
+@Tag(name = "系统：验证码管理")
 public class VerifyController {
 
     private final VerifyService verificationCodeService;
     private final EmailService emailService;
 
     @PostMapping(value = "/resetEmail")
-    @ApiOperation("重置邮箱，发送验证码")
+    @Operation(summary = "重置邮箱，发送验证码")
     public ResponseEntity<Object> resetEmail(@RequestParam String email){
         EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey());
         emailService.send(emailDto,emailService.find());
@@ -50,7 +50,7 @@ public class VerifyController {
     }
 
     @PostMapping(value = "/email/resetPass")
-    @ApiOperation("重置密码，发送验证码")
+    @Operation(summary = "重置密码，发送验证码")
     public ResponseEntity<Object> resetPass(@RequestParam String email){
         EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_PWD_CODE.getKey());
         emailService.send(emailDto,emailService.find());
@@ -58,7 +58,7 @@ public class VerifyController {
     }
 
     @GetMapping(value = "/validated")
-    @ApiOperation("验证码验证")
+    @Operation(summary = "验证码验证")
     public ResponseEntity<Object> validated(@RequestParam String email, @RequestParam String code, @RequestParam Integer codeBi){
         CodeBiEnum biEnum = CodeBiEnum.find(codeBi);
         switch (Objects.requireNonNull(biEnum)){

@@ -18,9 +18,9 @@ package me.zhengjie.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import lombok.Data;
 import cn.hutool.core.bean.BeanUtil;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import cn.hutool.core.bean.copier.CopyOptions;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -38,31 +38,31 @@ import me.zhengjie.base.BaseEntity;
 public class S3Storage extends BaseEntity implements Serializable {
 
     @TableId(value = "storage_id", type = IdType.AUTO)
-    @ApiModelProperty(value = "主键")
+    @Schema(description = "主键")
     private Long id;
 
     @NotBlank
-    @ApiModelProperty(value = "文件名称")
+    @Schema(description = "文件名称")
     private String fileName;
 
     @NotBlank
-    @ApiModelProperty(value = "真实存储的名称")
+    @Schema(description = "真实存储的名称")
     private String fileRealName;
 
     @NotBlank
-    @ApiModelProperty(value = "文件大小")
+    @Schema(description = "文件大小")
     private String fileSize;
 
     @NotBlank
-    @ApiModelProperty(value = "文件MIME 类型")
+    @Schema(description = "文件MIME 类型")
     private String fileMimeType;
 
     @NotBlank
-    @ApiModelProperty(value = "文件类型")
+    @Schema(description = "文件类型")
     private String fileType;
 
     @NotBlank
-    @ApiModelProperty(value = "文件路径")
+    @Schema(description = "文件路径")
     private String filePath;
 
     public void copy(S3Storage source){
