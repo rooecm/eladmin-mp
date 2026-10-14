@@ -8,12 +8,12 @@
     <version>1.1</version>
 
     <modules>
-        <module>rooe-admin-common</module>
-        <module>rooe-admin-framework</module>
-        <module>rooe-admin-logging</module>
-        <module>rooe-admin-system</module>
-        <module>rooe-admin-tools</module>
-        <module>rooe-admin-bootstrap</module>
+        <module>admin-common</module>
+        <module>admin-framework</module>
+        <module>admin-logging</module>
+        <module>admin-system</module>
+        <module>admin-tools</module>
+        <module>admin-bootstrap</module>
     </modules>
 
     <name>rooe-admin</name>
@@ -59,32 +59,32 @@
             <!-- 内部模块 -->
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-bootstrap</artifactId>
+                <artifactId>admin-bootstrap</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-common</artifactId>
+                <artifactId>admin-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-framework</artifactId>
+                <artifactId>admin-framework</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-logging</artifactId>
+                <artifactId>admin-logging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-tools</artifactId>
+                <artifactId>admin-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-system</artifactId>
+                <artifactId>admin-system</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

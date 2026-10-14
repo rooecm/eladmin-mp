@@ -7,13 +7,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rooe-admin-logging</artifactId>
-    <name>日志模块</name>
+    <artifactId>admin-logging</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-common</artifactId>
+            <artifactId>admin-common</artifactId>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>

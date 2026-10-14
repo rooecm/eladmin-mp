@@ -7,30 +7,29 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rooe-admin-bootstrap</artifactId>
-    <name>应用启动模块</name>
+    <artifactId>admin-bootstrap</artifactId>
 
     <dependencies>
         <!-- 应用模块组装 -->
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-common</artifactId>
+            <artifactId>admin-common</artifactId>
         </dependency>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-framework</artifactId>
+            <artifactId>admin-framework</artifactId>
         </dependency>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-system</artifactId>
+            <artifactId>admin-system</artifactId>
         </dependency>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-logging</artifactId>
+            <artifactId>admin-logging</artifactId>
         </dependency>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-tools</artifactId>
+            <artifactId>admin-tools</artifactId>
         </dependency>
 
         <!-- 应用运行环境 -->
@@ -143,9 +142,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>fun.rooe.admin.RooeAdminApplication</mainClass>
-                </configuration>
             </plugin>
         </plugins>
     </build>

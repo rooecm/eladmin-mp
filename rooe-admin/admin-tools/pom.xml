@@ -7,25 +7,24 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rooe-admin-tools</artifactId>
-    <name>工具模块</name>
+    <artifactId>admin-tools</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-common</artifactId>
+            <artifactId>admin-common</artifactId>
         </dependency>
 
         <!-- 文件存储配置由框架模块提供 -->
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-framework</artifactId>
+            <artifactId>admin-framework</artifactId>
         </dependency>
 
         <!-- 同时需要common模块和logging模块只需要引入logging模块即可 -->
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-logging</artifactId>
+            <artifactId>admin-logging</artifactId>
         </dependency>
 
         <dependency>

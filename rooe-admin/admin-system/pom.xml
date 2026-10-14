@@ -7,29 +7,28 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rooe-admin-system</artifactId>
-    <name>核心模块</name>
+    <artifactId>admin-system</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-common</artifactId>
+            <artifactId>admin-common</artifactId>
         </dependency>
 
         <!-- 框架基础设施 -->
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-framework</artifactId>
+            <artifactId>admin-framework</artifactId>
         </dependency>
 
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-logging</artifactId>
+            <artifactId>admin-logging</artifactId>
         </dependency>
 
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>rooe-admin-tools</artifactId>
+            <artifactId>admin-tools</artifactId>
         </dependency>
 
         <!-- APIs referenced directly by system sources -->

@@ -7,8 +7,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rooe-admin-common</artifactId>
-    <name>公共模块</name>
+    <artifactId>admin-common</artifactId>
 
     <dependencies>
         <!-- Spring APIs used by common infrastructure -->
