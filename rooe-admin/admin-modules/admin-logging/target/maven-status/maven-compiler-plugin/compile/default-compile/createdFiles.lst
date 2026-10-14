@@ -1,7 +1,0 @@
-fun\rooe\admin\controller\SysLogController.class
-fun\rooe\admin\service\SysLogService.class
-fun\rooe\admin\domain\SysLog.class
-fun\rooe\admin\mapper\SysLogMapper.class
-fun\rooe\admin\aspect\LogAspect.class
-fun\rooe\admin\domain\dto\SysLogQueryCriteria.class
-fun\rooe\admin\service\impl\SysLogServiceImpl.class
