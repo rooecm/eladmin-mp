@@ -66,7 +66,7 @@ public class DictDetail implements Serializable {
 
     @NotNull(groups = Update.class)
     @Schema(description = "ID", hidden = true)
-    @TableId(value = "detail_id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     @TableField(value = "dict_id")

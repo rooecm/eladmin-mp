@@ -13,7 +13,7 @@
         <module>rooe-admin-logging</module>
         <module>rooe-admin-system</module>
         <module>rooe-admin-tools</module>
-        <module>rooe-admin-generator</module>
+        <module>rooe-admin-bootstrap</module>
     </modules>
 
     <name>rooe-admin</name>
@@ -47,7 +47,6 @@
         <guava.version>33.4.0-jre</guava.version>
         <hutool.version>5.8.35</hutool.version>
         <jjwt.version>0.11.5</jjwt.version>
-        <configuration.version>1.10</configuration.version>
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <aws-s3.version>2.30.13</aws-s3.version>
         <oshi.version>6.6.5</oshi.version>
@@ -58,6 +57,11 @@
     <dependencyManagement>
         <dependencies>
             <!-- 内部模块 -->
+            <dependency>
+                <groupId>fun.rooe</groupId>
+                <artifactId>rooe-admin-bootstrap</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
                 <artifactId>rooe-admin-common</artifactId>
@@ -71,11 +75,6 @@
             <dependency>
                 <groupId>fun.rooe</groupId>
                 <artifactId>rooe-admin-logging</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>fun.rooe</groupId>
-                <artifactId>rooe-admin-generator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -229,11 +228,6 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-configuration</groupId>
-                <artifactId>commons-configuration</artifactId>
-                <version>${configuration.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.mail</groupId>

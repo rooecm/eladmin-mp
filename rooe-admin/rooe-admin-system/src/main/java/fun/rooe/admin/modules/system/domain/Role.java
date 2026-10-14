@@ -70,7 +70,7 @@ public class Role implements Serializable {
     private Timestamp updateTime;
 
     @NotNull(groups = {Update.class})
-    @TableId(value="role_id", type = IdType.AUTO)
+    @TableId(value="id", type = IdType.AUTO)
     @Schema(description = "ID", hidden = true)
     private Long id;
 

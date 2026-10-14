@@ -23,7 +23,6 @@
 使用优惠码: `BWHNCXNVXV`，可获得 6.81% 的折扣， [查看介绍](https://rooe-admin.vip/pages/040101/)
 #### 主要特性
 - 使用最新技术栈，社区资源丰富。
-- 高效率开发，代码生成器可一键生成前后端代码
 - 支持数据字典，可方便地对一些状态进行管理
 - 支持接口限流，避免恶意请求导致服务层压力过大
 - 支持接口级别的功能权限与数据权限，可自定义操作
@@ -43,7 +42,6 @@
 - 系统日志：记录用户操作日志与异常日志，方便开发人员定位排错
 - SQL监控：采用druid 监控数据库访问性能，默认用户名admin，密码123456
 - 定时任务：整合Quartz做定时任务，加入任务日志，任务运行情况一目了然
-- 代码生成：高灵活度生成前后端代码，减少大量重复的工作任务
 - 邮件工具：配合富文本，发送html格式的邮件
 - 亚马逊S3云存储：支持市面上大多数对象存储，兼容亚马逊S3协议，如七牛云，阿里云等
 - 支付宝支付：整合了支付宝支付并且提供了测试账号，可自行测试
@@ -57,13 +55,13 @@
 
 - `rooe-admin-framework` 为框架模块，统一管理 Web、Redis、MyBatis-Plus、异步线程池、权限、JWT、验证码、Quartz 基础配置、限流切面与全局异常处理
 
-- `rooe-admin-system` 为系统核心模块也是项目入口模块，也是最终需要打包部署的模块
+- `rooe-admin-system` 为系统业务模块，提供用户、角色、菜单、登录、在线用户、定时任务等业务能力，以普通 JAR 供启动模块使用
+
+- `rooe-admin-bootstrap` 为应用启动模块，包含启动类、环境配置、日志配置与应用组装依赖，是最终打包部署的模块
 
 - `rooe-admin-logging` 为系统的日志模块，其他模块如果需要记录日志需要引入该模块
 
 - `rooe-admin-tools` 为第三方工具模块，包含：邮件、亚马逊S3云存储、本地存储、支付宝
-
-- `rooe-admin-generator` 为系统的代码生成模块，支持生成前后端CRUD代码
 
 #### 详细结构
 
@@ -90,7 +88,12 @@
     - modules.security.security JWT 签发、过滤器、认证与授权异常处理
     - modules.security.service 在线会话查询接口 OnlineSessionService
     - modules.quartz.config Quartz Job 的 Spring Bean 注入配置
-- rooe-admin-system 系统核心模块（系统启动入口）
+- rooe-admin-bootstrap 应用启动模块
+    - RooeAdminApplication Spring Boot 启动入口（fun.rooe.admin 包）
+    - resources/config application.yml 及 dev、prod、quartz 环境配置
+    - resources 日志配置 logback.xml、SQL 日志配置 spy.properties、启动 banner
+    - test 应用启动及首页接口集成测试
+- rooe-admin-system 系统业务模块
     - sysrunner 程序启动后处理数据
 	- modules 系统相关模块(登录授权、系统监控、定时任务、系统模块、运维模块)
 - rooe-admin-logging 系统日志模块
@@ -99,14 +102,15 @@
     - amazon 亚马逊S3云存储工具
     - alipay 支付宝支付工具
     - local-storage 本地存储工具
-- rooe-admin-generator 系统代码生成模块
 ```
 
-框架模块依赖 `rooe-admin-common`，不依赖业务模块。`rooe-admin-system` 和 `rooe-admin-tools` 显式依赖 `rooe-admin-framework`；日志与代码生成模块继续依赖 `rooe-admin-common`。迁移保留原有 Java 包名和配置项，启动类的 `fun.rooe` 组件扫描可直接加载框架 Bean。
+框架模块依赖 `rooe-admin-common`，不依赖业务模块。`rooe-admin-system` 和 `rooe-admin-tools` 显式依赖 `rooe-admin-framework`；日志模块继续依赖 `rooe-admin-common`。`rooe-admin-bootstrap` 组装各模块并提供应用运行环境；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各模块。
 
 用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `rooe-admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`LimitType` 和 `ApiError` 作为共享类型保留在公共模块。
 
-在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅验证公共模块和框架模块可执行 `mvn -pl rooe-admin-framework -am test`。系统上下文测试需要可用的数据库与 Redis。
+在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl rooe-admin-bootstrap -am clean package`。仅验证公共模块和框架模块可执行 `mvn -pl rooe-admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
+
+部署入口为 `java -jar rooe-admin-bootstrap/target/rooe-admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod` 指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行 `mvn -pl rooe-admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随各业务模块的 JAR 加载，应用配置集中维护在 `rooe-admin-bootstrap/src/main/resources`。
 
 #### 特别鸣谢
 

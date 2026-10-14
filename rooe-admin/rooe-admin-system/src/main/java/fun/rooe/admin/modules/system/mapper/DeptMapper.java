@@ -42,6 +42,6 @@ public interface DeptMapper extends BaseMapper<Dept> {
     @Select("select count(*) from sys_dept where pid = #{pid}")
     int countByPid(@Param("pid") Long pid);
 
-    @Select("update sys_dept set sub_count = #{count} where dept_id = #{id}")
+    @Select("update sys_dept set sub_count = #{count} where id = #{id}")
     void updateSubCntById(@Param("count") Integer count, @Param("id") Long id);
 }

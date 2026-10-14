@@ -35,7 +35,7 @@ import java.sql.Timestamp;
 @TableName("sys_log")
 public class SysLog  implements Serializable {
 
-    @TableId(value = "log_id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     @Schema(description = "操作用户")

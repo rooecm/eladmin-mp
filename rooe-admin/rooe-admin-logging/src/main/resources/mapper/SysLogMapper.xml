@@ -3,15 +3,15 @@
 <mapper namespace="fun.rooe.admin.mapper.SysLogMapper">
 
     <sql id="info_column">
-        log_id id,description,method,params,request_ip,time,username,address,browser,exception_detail,create_time
+        id id,description,method,params,request_ip,time,username,address,browser,exception_detail,create_time
     </sql>
 
     <sql id="error_column">
-        log_id id,description,method,params,request_ip,username,address,browser,exception_detail,create_time
+        id id,description,method,params,request_ip,username,address,browser,exception_detail,create_time
     </sql>
 
     <sql id="user_column">
-        log_id id,description,request_ip,time,address,browser,create_time
+        id id,description,request_ip,time,address,browser,create_time
     </sql>
 
     <sql id="query">
@@ -37,7 +37,7 @@
                 and create_time between #{criteria.createTime[0]} and #{criteria.createTime[1]}
             </if>
         </where>
-        order by log_id desc
+        order by id desc
     </sql>
 
     <select id="queryAll" resultType="fun.rooe.admin.domain.SysLog">
@@ -64,6 +64,6 @@
     </delete>
 
     <select id="getExceptionDetails" resultType="java.lang.String">
-        select exception_detail from sys_log where log_id = #{id}
+        select exception_detail from sys_log where id = #{id}
     </select>
 </mapper>

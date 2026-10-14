@@ -1,4 +1,4 @@
-package fun.rooe.admin.modules.security.security;
+package fun.rooe.admin.config.security.security;
 
 import fun.rooe.admin.config.security.security.TokenProvider;
 import io.jsonwebtoken.Claims;

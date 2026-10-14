@@ -32,7 +32,7 @@ import java.util.List;
 @Mapper
 public interface JobMapper extends BaseMapper<Job> {
 
-    @Select("select job_id as id from sys_job where name = #{name}")
+    @Select("select id from sys_job where name = #{name}")
     Job findByName(@Param("name") String name);
 
     List<Job> findAll(@Param("criteria") JobQueryCriteria criteria);

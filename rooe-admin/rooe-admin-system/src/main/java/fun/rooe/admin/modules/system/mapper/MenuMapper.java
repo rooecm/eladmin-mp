@@ -40,15 +40,15 @@ public interface MenuMapper extends BaseMapper<Menu> {
 
     List<Menu> findByPidOrderByMenuSort(@Param("pid") Long pid);
 
-    @Select("SELECT menu_id id FROM sys_menu WHERE title = #{title}")
+    @Select("SELECT id FROM sys_menu WHERE title = #{title}")
     Menu findByTitle(@Param("title") String title);
 
-    @Select("SELECT menu_id id FROM sys_menu WHERE name = #{name}")
+    @Select("SELECT id FROM sys_menu WHERE name = #{name}")
     Menu findByComponentName(@Param("name") String name);
 
     @Select("SELECT count(*) FROM sys_menu WHERE pid = #{pid}")
     int countByPid(@Param("pid") Long pid);
 
-    @Select("update sys_menu set sub_count = #{count} where menu_id = #{menuId} ")
+    @Select("update sys_menu set sub_count = #{count} where id = #{menuId} ")
     void updateSubCntById(@Param("count") int count, @Param("menuId") Long menuId);
 }

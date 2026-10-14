@@ -67,7 +67,7 @@ public class QuartzJob implements Serializable {
 
     public static final String JOB_KEY = "JOB_KEY";
 
-    @TableId(value = "job_id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     @NotNull(groups = {Update.class})
     private Long id;
 

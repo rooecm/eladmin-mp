@@ -154,7 +154,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public List<Role> findByUsersId(Long userId) {
         String key = CacheKey.ROLE_USER + userId;
         List<Role> roles = redisUtils.getList(key, Role.class);
-        if (CollUtil.isEmpty(roles)) {
+        if (CollUtil.isEmpty(roles) || roles.stream().anyMatch(role -> role == null || role.getId() == null)) {
             roles = roleMapper.findByUserId(userId);
             redisUtils.set(key, roles, 1, TimeUnit.DAYS);
         }
