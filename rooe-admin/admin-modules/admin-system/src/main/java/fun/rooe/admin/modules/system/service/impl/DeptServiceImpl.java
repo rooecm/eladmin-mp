@@ -32,8 +32,6 @@ import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.enums.DataScopeEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import java.util.*;
@@ -145,21 +143,6 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
             deptMapper.deleteById(dept.getId());
             updateSubCnt(dept.getPid());
         }
-    }
-
-    @Override
-    public void download(List<Dept> depts, HttpServletResponse response) throws IOException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Dept dept : depts) {
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("部门名称", dept.getName());
-            map.put("部门状态", dept.getEnabled() ? "启用" : "停用");
-            map.put("创建日期", dept.getCreateTime());
-            list.add(map);
-        }
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        ExcelUtil.write(list, response.getOutputStream());
     }
 
     @Override

@@ -28,7 +28,6 @@ import fun.rooe.admin.infrastructure.utils.PageUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
@@ -45,13 +44,6 @@ public class DeptController {
 
     private final DeptService deptService;
     private static final String ENTITY_NAME = "dept";
-
-    @Operation(summary = "导出部门数据")
-    @GetMapping(value = "/download")
-    @PreAuthorize("@el.check('dept:list')")
-    public void exportDept(HttpServletResponse response, DeptQueryCriteria criteria) throws Exception {
-        deptService.download(deptService.queryAll(criteria, false), response);
-    }
 
     @Operation(summary = "查询部门")
     @GetMapping

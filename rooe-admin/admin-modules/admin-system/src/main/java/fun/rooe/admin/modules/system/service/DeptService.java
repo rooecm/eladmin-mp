@@ -18,8 +18,6 @@ package fun.rooe.admin.modules.system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -77,14 +75,6 @@ public interface DeptService extends IService<Dept> {
      * @return /
      */
     Set<Dept> findByRoleId(Long id);
-
-    /**
-     * 导出数据
-     * @param depts 待导出的数据
-     * @param response /
-     * @throws IOException /
-     */
-    void download(List<Dept> depts, HttpServletResponse response) throws IOException;
 
     /**
      * 获取待删除的部门
