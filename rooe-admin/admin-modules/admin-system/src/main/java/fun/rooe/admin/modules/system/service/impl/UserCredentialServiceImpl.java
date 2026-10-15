@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.service.UserCredentialService;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +19,10 @@ public class UserCredentialServiceImpl implements UserCredentialService {
 
     @Override
     public boolean matches(String username, String rawPassword) {
-        User user = userMapper.selectOne(
-                Wrappers.<User>lambdaQuery()
-                        .select(User::getPassword)
-                        .eq(User::getUsername, username));
+        UserDO user = userMapper.selectOne(
+                Wrappers.<UserDO>lambdaQuery()
+                        .select(UserDO::getPassword)
+                        .eq(UserDO::getUsername, username));
         String passwordHash = user == null ? null : user.getPassword();
         return passwordHash != null && passwordEncoder.matches(rawPassword, passwordHash);
     }

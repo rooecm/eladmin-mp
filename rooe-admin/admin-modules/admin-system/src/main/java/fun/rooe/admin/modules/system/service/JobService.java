@@ -2,7 +2,7 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.dto.JobDTO;
-import fun.rooe.admin.modules.system.domain.entity.Job;
+import fun.rooe.admin.modules.system.domain.entity.JobDO;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.JobDeleteRequest;
 import fun.rooe.admin.modules.system.domain.request.JobQueryRequest;
@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-public interface JobService extends IService<Job> {
-    Job findById(Long id);
+public interface JobService extends IService<JobDO> {
+    JobDO findById(Long id);
 
     PageResult<JobDTO> queryAll(JobQueryRequest request);
 

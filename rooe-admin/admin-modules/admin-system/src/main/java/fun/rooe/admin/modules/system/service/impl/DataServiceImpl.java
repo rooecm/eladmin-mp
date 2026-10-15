@@ -22,9 +22,9 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
-import fun.rooe.admin.modules.system.domain.entity.Role;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
@@ -32,13 +32,7 @@ import fun.rooe.admin.modules.system.service.DataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,14 +58,14 @@ public class DataServiceImpl implements DataService {
             return cached;
         }
 
-        List<Role> roles = roleMapper.findByUserId(userId);
+        List<RoleDO> roles = roleMapper.findByUserId(userId);
         if (roles.isEmpty()) {
             return cache(key, UserDataScope.none());
         }
 
         Set<Long> deptIds = new LinkedHashSet<>();
         boolean includeSelf = false;
-        for (Role role : roles) {
+        for (RoleDO role : roles) {
             DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
             if (configuredScope == null) {
                 throw new BadRequestException(
@@ -110,7 +104,7 @@ public class DataServiceImpl implements DataService {
     @Override
     public UserDataScope getCurrentDataScope() {
         Long userId = SecurityUtils.getCurrentUserId();
-        User user = userMapper.selectById(userId);
+        UserDO user = userMapper.selectById(userId);
         return user == null ? UserDataScope.none() : getDataScope(userId, user.getDeptId());
     }
 
@@ -171,7 +165,7 @@ public class DataServiceImpl implements DataService {
     }
 
     private void addCustomDepartments(Long roleId, Set<Long> result) {
-        for (Dept dept : deptMapper.findByRoleId(roleId)) {
+        for (DeptDO dept : deptMapper.findByRoleId(roleId)) {
             result.add(dept.getId());
         }
     }
@@ -182,9 +176,9 @@ public class DataServiceImpl implements DataService {
             while (!pending.isEmpty()) {
                 parentIds.add(pending.removeFirst());
             }
-            List<Dept> children = deptMapper.selectList(
-                    Wrappers.<Dept>lambdaQuery().in(Dept::getPid, parentIds));
-            for (Dept child : children) {
+            List<DeptDO> children = deptMapper.selectList(
+                    Wrappers.<DeptDO>lambdaQuery().in(DeptDO::getPid, parentIds));
+            for (DeptDO child : children) {
                 if (result.add(child.getId())) {
                     pending.add(child.getId());
                 }

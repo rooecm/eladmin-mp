@@ -15,8 +15,8 @@
  */
 package fun.rooe.admin.modules.security.converter;
 
-import fun.rooe.admin.modules.security.dto.JwtUserDTO;
-import fun.rooe.admin.modules.security.dto.OnlineUserDTO;
+import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
+import fun.rooe.admin.modules.security.domain.dto.OnlineUserDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;

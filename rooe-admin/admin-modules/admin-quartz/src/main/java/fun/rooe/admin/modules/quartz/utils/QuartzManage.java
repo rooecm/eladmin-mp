@@ -15,13 +15,13 @@
  */
 package fun.rooe.admin.modules.quartz.utils;
 
-import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.triggers.CronTriggerImpl;
 import org.springframework.stereotype.Component;
-import jakarta.annotation.Resource;
 
 import java.util.Date;
 
@@ -40,7 +40,7 @@ public class QuartzManage {
     @Resource
     private Scheduler scheduler;
 
-    public void addJob(QuartzJob quartzJob) {
+    public void addJob(QuartzJobDO quartzJob) {
         try {
             // 构建job信息
             JobDetail jobDetail = JobBuilder.newJob(ExecutionJob.class).
@@ -53,7 +53,7 @@ public class QuartzManage {
                     .withSchedule(CronScheduleBuilder.cronSchedule(quartzJob.getCronExpression()))
                     .build();
 
-            cronTrigger.getJobDataMap().put(QuartzJob.JOB_KEY, quartzJob);
+            cronTrigger.getJobDataMap().put(QuartzJobDO.JOB_KEY, quartzJob);
 
             //重置启动时间
             ((CronTriggerImpl) cronTrigger).setStartTime(new Date());
@@ -80,7 +80,7 @@ public class QuartzManage {
      *
      * @param quartzJob /
      */
-    public void updateJobCron(QuartzJob quartzJob) {
+    public void updateJobCron(QuartzJobDO quartzJob) {
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME + quartzJob.getId());
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
@@ -93,7 +93,7 @@ public class QuartzManage {
             trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
             //重置启动时间
             ((CronTriggerImpl) trigger).setStartTime(new Date());
-            trigger.getJobDataMap().put(QuartzJob.JOB_KEY, quartzJob);
+            trigger.getJobDataMap().put(QuartzJobDO.JOB_KEY, quartzJob);
 
             scheduler.rescheduleJob(triggerKey, trigger);
             // 暂停任务
@@ -112,7 +112,7 @@ public class QuartzManage {
      *
      * @param quartzJob /
      */
-    public void deleteJob(QuartzJob quartzJob) {
+    public void deleteJob(QuartzJobDO quartzJob) {
         try {
             JobKey jobKey = JobKey.jobKey(JOB_NAME + quartzJob.getId());
             scheduler.pauseJob(jobKey);
@@ -128,7 +128,7 @@ public class QuartzManage {
      *
      * @param quartzJob /
      */
-    public void resumeJob(QuartzJob quartzJob) {
+    public void resumeJob(QuartzJobDO quartzJob) {
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME + quartzJob.getId());
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
@@ -149,7 +149,7 @@ public class QuartzManage {
      *
      * @param quartzJob /
      */
-    public void runJobNow(QuartzJob quartzJob) {
+    public void runJobNow(QuartzJobDO quartzJob) {
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(JOB_NAME + quartzJob.getId());
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
@@ -158,7 +158,7 @@ public class QuartzManage {
                 addJob(quartzJob);
             }
             JobDataMap dataMap = new JobDataMap();
-            dataMap.put(QuartzJob.JOB_KEY, quartzJob);
+            dataMap.put(QuartzJobDO.JOB_KEY, quartzJob);
             JobKey jobKey = JobKey.jobKey(JOB_NAME + quartzJob.getId());
             scheduler.triggerJob(jobKey, dataMap);
         } catch (Exception e) {
@@ -172,7 +172,7 @@ public class QuartzManage {
      *
      * @param quartzJob /
      */
-    public void pauseJob(QuartzJob quartzJob) {
+    public void pauseJob(QuartzJobDO quartzJob) {
         try {
             JobKey jobKey = JobKey.jobKey(JOB_NAME + quartzJob.getId());
             scheduler.pauseJob(jobKey);

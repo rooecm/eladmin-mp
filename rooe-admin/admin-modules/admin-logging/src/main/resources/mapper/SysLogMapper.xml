@@ -40,7 +40,7 @@
         order by id desc
     </sql>
 
-    <select id="queryAll" resultType="fun.rooe.admin.domain.SysLog">
+    <select id="queryAll" resultType="fun.rooe.admin.domain.SysLogDO">
         select
         <choose>
             <when test="criteria.logType == 'ERROR'">
@@ -53,7 +53,7 @@
         <include refid="query"/>
     </select>
 
-    <select id="queryAllByUser" resultType="fun.rooe.admin.domain.SysLog">
+    <select id="queryAllByUser" resultType="fun.rooe.admin.domain.SysLogDO">
         select
         <include refid="user_column"/>
         <include refid="query"/>

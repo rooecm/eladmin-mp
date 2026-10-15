@@ -2,7 +2,7 @@ package fun.rooe.admin.modules.system.service.impl;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ class UserCredentialServiceImplTest {
     @BeforeEach
     void setUp() {
         TableInfoHelper.initTableInfo(
-                new MapperBuilderAssistant(new MybatisConfiguration(), "test"), User.class);
+                new MapperBuilderAssistant(new MybatisConfiguration(), "test"), UserDO.class);
         userMapper = mock(UserMapper.class);
         passwordEncoder = mock(PasswordEncoder.class);
         service = new UserCredentialServiceImpl(userMapper, passwordEncoder);
@@ -56,8 +56,8 @@ class UserCredentialServiceImplTest {
         verifyNoInteractions(passwordEncoder);
     }
 
-    private User userWithPassword(String password) {
-        User user = new User();
+    private UserDO userWithPassword(String password) {
+        UserDO user = new UserDO();
         user.setPassword(password);
         return user;
     }

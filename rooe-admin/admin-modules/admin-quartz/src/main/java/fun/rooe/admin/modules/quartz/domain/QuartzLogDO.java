@@ -28,7 +28,7 @@ import java.sql.Timestamp;
  */
 @Data
 @TableName("sys_quartz_log")
-public class QuartzLog implements Serializable {
+public class QuartzLogDO implements Serializable {
 
     @TableId(value = "id", type = IdType.AUTO)
     @Schema(description = "ID", hidden = true)

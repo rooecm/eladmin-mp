@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,6 +27,6 @@ import java.util.Set;
 * @date 2023-06-20
 */
 @Mapper
-public interface DeptMapper extends BaseMapper<Dept> {
-    Set<Dept> findByRoleId(@Param("roleId") Long roleId);
+public interface DeptMapper extends BaseMapper<DeptDO> {
+    Set<DeptDO> findByRoleId(@Param("roleId") Long roleId);
 }

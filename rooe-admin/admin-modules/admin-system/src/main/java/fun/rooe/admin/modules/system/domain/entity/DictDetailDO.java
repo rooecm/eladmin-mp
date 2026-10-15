@@ -6,10 +6,10 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
- * Persistence model for sys_job.
+ * Persistence model for sys_dict_detail.
  */
-@TableName("sys_job")
-public class Job implements Serializable {
+@TableName("sys_dict_detail")
+public class DictDetailDO implements Serializable {
     /**
      * Primary key.
      */
@@ -17,19 +17,25 @@ public class Job implements Serializable {
     private Long id;
 
     /**
-     * Job name.
+     * Dictionary ID.
      */
-    private String name;
+    @TableField("dict_id")
+    private Long dictId;
 
     /**
-     * Whether the job is enabled.
+     * Display label.
      */
-    private Boolean enabled;
+    private String label;
+
+    /**
+     * Stored dictionary value.
+     */
+    private String value;
 
     /**
      * Display order.
      */
-    private Long jobSort;
+    private Integer dictSort = 999;
 
     /**
      * Creator username.
@@ -63,28 +69,36 @@ public class Job implements Serializable {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public Long getDictId() {
+        return dictId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setDictId(Long dictId) {
+        this.dictId = dictId;
     }
 
-    public Boolean getEnabled() {
-        return enabled;
+    public String getLabel() {
+        return label;
     }
 
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
-    public Long getJobSort() {
-        return jobSort;
+    public String getValue() {
+        return value;
     }
 
-    public void setJobSort(Long jobSort) {
-        this.jobSort = jobSort;
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public Integer getDictSort() {
+        return dictSort;
+    }
+
+    public void setDictSort(Integer dictSort) {
+        this.dictSort = dictSort;
     }
 
     public String getCreateBy() {

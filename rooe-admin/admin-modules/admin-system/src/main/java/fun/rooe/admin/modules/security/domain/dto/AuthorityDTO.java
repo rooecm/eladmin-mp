@@ -13,25 +13,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.request;
+package fun.rooe.admin.modules.security.domain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.io.Serializable;
-import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
- * 在线用户强退请求：包装待踢出的加密 token 集合。
+ * 避免序列化问题
+ * @author Zheng Jie
+ * @date 2018-11-30
  */
-@Getter
-@Setter
-public class OnlineUserDeleteRequest implements Serializable {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthorityDTO implements GrantedAuthority {
 
-    @NotEmpty(message = "会话标识不能为空")
-    @Schema(description = "待强退的加密会话标识集合", requiredMode = Schema.RequiredMode.REQUIRED)
-    private Set<@NotBlank(message = "会话标识不能为空") String> keys;
+    @Schema(description = "角色名")
+    private String authority;
 }

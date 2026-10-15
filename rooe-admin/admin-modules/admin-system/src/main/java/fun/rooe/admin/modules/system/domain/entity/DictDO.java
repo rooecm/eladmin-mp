@@ -6,10 +6,10 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
- * Persistence model for sys_dict_detail.
+ * Persistence model for sys_dict.
  */
-@TableName("sys_dict_detail")
-public class DictDetail implements Serializable {
+@TableName("sys_dict")
+public class DictDO implements Serializable {
     /**
      * Primary key.
      */
@@ -17,25 +17,14 @@ public class DictDetail implements Serializable {
     private Long id;
 
     /**
-     * Dictionary ID.
+     * Dictionary name.
      */
-    @TableField("dict_id")
-    private Long dictId;
+    private String name;
 
     /**
-     * Display label.
+     * Dictionary description.
      */
-    private String label;
-
-    /**
-     * Stored dictionary value.
-     */
-    private String value;
-
-    /**
-     * Display order.
-     */
-    private Integer dictSort = 999;
+    private String description;
 
     /**
      * Creator username.
@@ -69,36 +58,20 @@ public class DictDetail implements Serializable {
         this.id = id;
     }
 
-    public Long getDictId() {
-        return dictId;
+    public String getName() {
+        return name;
     }
 
-    public void setDictId(Long dictId) {
-        this.dictId = dictId;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getLabel() {
-        return label;
+    public String getDescription() {
+        return description;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public Integer getDictSort() {
-        return dictSort;
-    }
-
-    public void setDictSort(Integer dictSort) {
-        this.dictSort = dictSort;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getCreateBy() {

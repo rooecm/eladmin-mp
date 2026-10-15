@@ -17,7 +17,7 @@ package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.framework.config.security.config.LoginProperties;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.security.dto.JwtUserDTO;
+import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
 import fun.rooe.admin.utils.StringUtils;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;

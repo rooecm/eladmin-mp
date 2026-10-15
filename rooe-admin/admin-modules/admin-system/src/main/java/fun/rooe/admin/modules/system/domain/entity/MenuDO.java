@@ -9,7 +9,7 @@ import java.sql.Timestamp;
  * Persistence model for sys_menu.
  */
 @TableName("sys_menu")
-public class Menu implements Serializable {
+public class MenuDO implements Serializable {
     /**
      * Primary key.
      */

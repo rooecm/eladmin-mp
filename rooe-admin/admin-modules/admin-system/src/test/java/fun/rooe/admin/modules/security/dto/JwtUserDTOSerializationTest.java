@@ -3,6 +3,7 @@ package fun.rooe.admin.modules.security.dto;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONWriter;
 import fun.rooe.admin.model.UserDataScope;
+import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import org.junit.jupiter.api.Test;
 

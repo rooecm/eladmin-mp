@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 /**
- * Persistence model for sys_user_job.
+ * Persistence model for sys_role_dept.
  */
-@TableName("sys_user_job")
-public class UserJob {
+@TableName("sys_role_dept")
+public class RoleDeptDO {
     /**
      * Primary key.
      */
@@ -16,14 +16,14 @@ public class UserJob {
     private Long id;
 
     /**
-     * User ID.
+     * Role ID.
      */
-    private Long userId;
+    private Long roleId;
 
     /**
-     * Job ID.
+     * Department ID.
      */
-    private Long jobId;
+    private Long deptId;
 
     public Long getId() {
         return id;
@@ -33,19 +33,19 @@ public class UserJob {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getRoleId() {
+        return roleId;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
     }
 
-    public Long getJobId() {
-        return jobId;
+    public Long getDeptId() {
+        return deptId;
     }
 
-    public void setJobId(Long jobId) {
-        this.jobId = jobId;
+    public void setDeptId(Long deptId) {
+        this.deptId = deptId;
     }
 }

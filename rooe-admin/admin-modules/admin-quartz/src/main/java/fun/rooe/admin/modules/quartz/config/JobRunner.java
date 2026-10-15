@@ -15,10 +15,10 @@
  */
 package fun.rooe.admin.modules.quartz.config;
 
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
 import fun.rooe.admin.modules.quartz.mapper.QuartzJobMapper;
 import fun.rooe.admin.modules.quartz.utils.QuartzManage;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -45,7 +45,7 @@ public class JobRunner implements ApplicationRunner {
      */
     @Override
     public void run(ApplicationArguments applicationArguments) {
-        List<QuartzJob> quartzJobs = quartzJobMapper.findByIsPauseIsFalse();
+        List<QuartzJobDO> quartzJobs = quartzJobMapper.findByIsPauseIsFalse();
         quartzJobs.forEach(quartzManage::addJob);
         log.info("Timing task injection complete");
     }

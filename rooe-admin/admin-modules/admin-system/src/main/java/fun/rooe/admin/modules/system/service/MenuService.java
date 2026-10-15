@@ -3,13 +3,13 @@ package fun.rooe.admin.modules.system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
 import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
-import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 
 import java.util.List;
 import java.util.Set;
 
-public interface MenuService extends IService<Menu> {
+public interface MenuService extends IService<MenuDO> {
     List<MenuRouterDTO> buildCurrentUserMenus();
 
     List<MenuDTO> queryAll(MenuQueryRequest request);

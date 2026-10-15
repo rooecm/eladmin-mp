@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
  * Persistence model for sys_role_menu.
  */
 @TableName("sys_role_menu")
-public class RoleMenu {
+public class RoleMenuDO {
     /**
      * Primary key.
      */

@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.modules.security.controller;
 
-import fun.rooe.admin.modules.security.dto.OnlineUserDTO;
-import fun.rooe.admin.modules.security.request.OnlineUserDeleteRequest;
-import fun.rooe.admin.modules.security.request.OnlineUserQueryRequest;
+import fun.rooe.admin.modules.security.domain.dto.OnlineUserDTO;
+import fun.rooe.admin.modules.security.domain.request.OnlineUserDeleteRequest;
+import fun.rooe.admin.modules.security.domain.request.OnlineUserQueryRequest;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,11 +26,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 

@@ -9,7 +9,7 @@
         dd.create_by, dd.update_by, dd.create_time, dd.update_time
     </sql>
 
-    <select id="findAll" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetail">
+    <select id="findAll" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetailDO">
         select
         <include refid="Columns"/>
         from sys_dict_detail dd
@@ -25,7 +25,7 @@
         order by dd.dict_sort, dd.id desc
     </select>
 
-    <select id="findByDictName" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetail">
+    <select id="findByDictName" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetailDO">
         select
         <include refid="Columns"/>
         from sys_dict_detail dd

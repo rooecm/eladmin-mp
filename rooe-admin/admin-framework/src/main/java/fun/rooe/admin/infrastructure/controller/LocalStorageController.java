@@ -16,21 +16,22 @@
 package fun.rooe.admin.infrastructure.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.infrastructure.domain.LocalStorage;
 import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.infrastructure.service.LocalStorageService;
+import fun.rooe.admin.framework.annotation.Log;
+import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
-import fun.rooe.admin.utils.FileUtil;
+import fun.rooe.admin.infrastructure.service.LocalStorageService;
 import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.FileUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 /**
@@ -48,7 +49,7 @@ public class LocalStorageController {
     @GetMapping
     @Operation(summary = "查询文件")
     @PreAuthorize("@el.check('storage:list')")
-    public PageResult<LocalStorage> queryFile(LocalStorageQueryCriteria criteria){
+    public PageResult<LocalStorageDO> queryFile(LocalStorageQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return localStorageService.queryAll(criteria,page);
     }
@@ -68,20 +69,20 @@ public class LocalStorageController {
 
     @Operation(summary = "上传图片")
     @PostMapping("/pictures")
-    public LocalStorage uploadPicture(@RequestParam MultipartFile file){
+    public LocalStorageDO uploadPicture(@RequestParam MultipartFile file) {
         // 判断文件是否为图片
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
         if(!FileUtil.IMAGE.equals(FileUtil.getFileType(suffix))){
             throw new BadRequestException("只能上传图片");
         }
-        LocalStorage localStorage = localStorageService.create(null, file);
+        LocalStorageDO localStorage = localStorageService.create(null, file);
         return localStorage;
     }
 
     @PutMapping
     @Log("修改文件")
     @Operation(summary = "修改文件")
-    public void updateFile(@Validated @RequestBody LocalStorage resources){
+    public void updateFile(@Validated @RequestBody LocalStorageDO resources) {
         localStorageService.update(resources);
     }
 

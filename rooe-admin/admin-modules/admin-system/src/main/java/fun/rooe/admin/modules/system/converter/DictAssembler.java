@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.converter;
 
 import fun.rooe.admin.modules.system.domain.dto.DictDTO;
-import fun.rooe.admin.modules.system.domain.entity.Dict;
+import fun.rooe.admin.modules.system.domain.entity.DictDO;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictUpdateRequest;
 import org.mapstruct.*;
@@ -15,17 +15,17 @@ import java.util.List;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DictAssembler {
-    DictDTO toDto(Dict entity);
+    DictDTO toDto(DictDO entity);
 
-    List<DictDTO> toDtos(List<Dict> entities);
-
-    @BeanMapping(ignoreByDefault = true)
-    @Mapping(target = "name", source = "name")
-    @Mapping(target = "description", source = "description")
-    Dict toEntity(DictCreateRequest request);
+    List<DictDTO> toDtos(List<DictDO> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")
     @Mapping(target = "description", source = "description")
-    void updateEntity(DictUpdateRequest request, @MappingTarget Dict entity);
+    DictDO toEntity(DictCreateRequest request);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "description", source = "description")
+    void updateEntity(DictUpdateRequest request, @MappingTarget DictDO entity);
 }

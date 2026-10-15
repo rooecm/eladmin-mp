@@ -10,8 +10,8 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.domain.dto.JobDTO;
-import fun.rooe.admin.modules.system.domain.entity.Job;
-import fun.rooe.admin.modules.system.domain.entity.UserJob;
+import fun.rooe.admin.modules.system.domain.entity.JobDO;
+import fun.rooe.admin.modules.system.domain.entity.UserJobDO;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.JobDeleteRequest;
 import fun.rooe.admin.modules.system.domain.request.JobQueryRequest;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @RequiredArgsConstructor
-public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobService {
+public class JobServiceImpl extends ServiceImpl<JobMapper, JobDO> implements JobService {
     private final JobMapper jobMapper;
     private final RedisUtils redisUtils;
     private final UserJobMapper userJobMapper;
@@ -47,7 +47,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
 
     @Override
     public PageResult<JobDTO> queryAll(JobQueryRequest request) {
-        Page<Job> page = new Page<>(request.getPage(), request.getSize());
+        Page<JobDO> page = new Page<>(request.getPage(), request.getSize());
         jobMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assembler.toDtos(page.getRecords()), page.getTotal());
     }
@@ -57,15 +57,15 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
         return assembler.toDtos(jobMapper.selectList(wrapper(request)));
     }
 
-    private LambdaQueryWrapper<Job> wrapper(JobQueryRequest request) {
-        LambdaQueryWrapper<Job> wrapper = Wrappers.lambdaQuery();
-        wrapper.like(StringUtils.isNotBlank(request.getName()), Job::getName, request.getName())
-                .eq(request.getEnabled() != null, Job::getEnabled, request.getEnabled())
-                .orderByAsc(Job::getJobSort)
-                .orderByDesc(Job::getId);
+    private LambdaQueryWrapper<JobDO> wrapper(JobQueryRequest request) {
+        LambdaQueryWrapper<JobDO> wrapper = Wrappers.lambdaQuery();
+        wrapper.like(StringUtils.isNotBlank(request.getName()), JobDO::getName, request.getName())
+                .eq(request.getEnabled() != null, JobDO::getEnabled, request.getEnabled())
+                .orderByAsc(JobDO::getJobSort)
+                .orderByDesc(JobDO::getId);
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
             wrapper.between(
-                    Job::getCreateTime,
+                    JobDO::getCreateTime,
                     request.getCreateTime().get(0),
                     request.getCreateTime().get(1));
         }
@@ -73,9 +73,9 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     }
 
     @Override
-    public Job findById(Long id) {
+    public JobDO findById(Long id) {
         String key = CacheKey.JOB_ID + id;
-        Job job = redisUtils.get(key, Job.class);
+        JobDO job = redisUtils.get(key, JobDO.class);
         if (job == null) {
             job = getById(id);
             redisUtils.set(key, job, 1, TimeUnit.DAYS);
@@ -86,9 +86,9 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(JobCreateRequest request) {
-        if (jobMapper.selectOne(Wrappers.<Job>lambdaQuery().eq(Job::getName, request.getName()))
+        if (jobMapper.selectOne(Wrappers.<JobDO>lambdaQuery().eq(JobDO::getName, request.getName()))
                 != null) {
-            throw new EntityExistException(Job.class, "name", request.getName());
+            throw new EntityExistException(JobDO.class, "name", request.getName());
         }
         save(assembler.toEntity(request));
     }
@@ -96,12 +96,12 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(JobUpdateRequest request) {
-        Job job = getById(request.getId());
-        Job duplicate =
+        JobDO job = getById(request.getId());
+        JobDO duplicate =
                 jobMapper.selectOne(
-                        Wrappers.<Job>lambdaQuery().eq(Job::getName, request.getName()));
+                        Wrappers.<JobDO>lambdaQuery().eq(JobDO::getName, request.getName()));
         if (duplicate != null && !duplicate.getId().equals(request.getId())) {
-            throw new EntityExistException(Job.class, "name", request.getName());
+            throw new EntityExistException(JobDO.class, "name", request.getName());
         }
         assembler.updateEntity(request, job);
         updateById(job);
@@ -112,7 +112,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     @Transactional(rollbackFor = Exception.class)
     public void delete(JobDeleteRequest request) {
         if (userJobMapper.selectCount(
-                Wrappers.<UserJob>lambdaQuery().in(UserJob::getJobId, request.getIds())) > 0) {
+                Wrappers.<UserJobDO>lambdaQuery().in(UserJobDO::getJobId, request.getIds())) > 0) {
             throw new BadRequestException("所选岗位存在用户关联，请解除关联后再试");
         }
         removeBatchByIds(request.getIds());

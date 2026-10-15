@@ -25,7 +25,7 @@ import java.sql.Timestamp;
  * @date 2019-03-25
  */
 @TableName("sys_dept")
-public class Dept implements Serializable {
+public class DeptDO implements Serializable {
 
     /**
      * ID

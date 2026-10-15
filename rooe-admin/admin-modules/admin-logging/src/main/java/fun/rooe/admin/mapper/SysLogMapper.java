@@ -18,7 +18,7 @@ package fun.rooe.admin.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.domain.SysLog;
+import fun.rooe.admin.domain.SysLogDO;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,13 +31,13 @@ import java.util.List;
  * @date 2023-06-12
  **/
 @Mapper
-public interface SysLogMapper extends BaseMapper<SysLog> {
+public interface SysLogMapper extends BaseMapper<SysLogDO> {
 
-    List<SysLog> queryAll(@Param("criteria") SysLogQueryCriteria criteria);
+    List<SysLogDO> queryAll(@Param("criteria") SysLogQueryCriteria criteria);
 
-    IPage<SysLog> queryAll(@Param("criteria") SysLogQueryCriteria criteria, Page<SysLog> page);
+    IPage<SysLogDO> queryAll(@Param("criteria") SysLogQueryCriteria criteria, Page<SysLogDO> page);
 
-    IPage<SysLog> queryAllByUser(@Param("criteria") SysLogQueryCriteria criteria, Page<SysLog> page);
+    IPage<SysLogDO> queryAllByUser(@Param("criteria") SysLogQueryCriteria criteria, Page<SysLogDO> page);
 
     String getExceptionDetails(@Param("id") Long id);
 

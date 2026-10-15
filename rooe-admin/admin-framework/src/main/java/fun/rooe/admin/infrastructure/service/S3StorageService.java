@@ -15,23 +15,24 @@
 */
 package fun.rooe.admin.infrastructure.service;
 
-import fun.rooe.admin.infrastructure.domain.S3Storage;
-import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
-import java.util.Map;
-import java.util.List;
-import java.io.IOException;
-import jakarta.servlet.http.HttpServletResponse;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import fun.rooe.admin.infrastructure.domain.S3StorageDO;
+import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
 import fun.rooe.admin.response.PageResult;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
 * @description 服务接口
 * @author Zheng Jie
 * @date 2025-06-19
 **/
-public interface S3StorageService extends IService<S3Storage> {
+public interface S3StorageService extends IService<S3StorageDO> {
 
     /**
     * 查询数据分页
@@ -39,14 +40,14 @@ public interface S3StorageService extends IService<S3Storage> {
     * @param page 分页参数
     * @return PageResult
     */
-    PageResult<S3Storage> queryAll(S3StorageQueryCriteria criteria, Page<Object> page);
+    PageResult<S3StorageDO> queryAll(S3StorageQueryCriteria criteria, Page<Object> page);
 
     /**
     * 查询所有数据不分页
     * @param criteria 条件参数
     * @return List<S3StorageDto>
     */
-    List<S3Storage> queryAll(S3StorageQueryCriteria criteria);
+    List<S3StorageDO> queryAll(S3StorageQueryCriteria criteria);
 
     /**
     * 多选删除
@@ -60,7 +61,7 @@ public interface S3StorageService extends IService<S3Storage> {
     * @param response /
     * @throws IOException /
     */
-    void download(List<S3Storage> all, HttpServletResponse response) throws IOException;
+    void download(List<S3StorageDO> all, HttpServletResponse response) throws IOException;
 
     /**
      * 私有化下载，仅供参考，还有许多方式
@@ -71,7 +72,7 @@ public interface S3StorageService extends IService<S3Storage> {
     /**
      * 上传文件
      * @param file 上传的文件
-     * @return S3Storage 对象，包含文件存储信息
+     * @return S3StorageDO 对象，包含文件存储信息
      */
-    S3Storage upload(MultipartFile file);
+    S3StorageDO upload(MultipartFile file);
 }

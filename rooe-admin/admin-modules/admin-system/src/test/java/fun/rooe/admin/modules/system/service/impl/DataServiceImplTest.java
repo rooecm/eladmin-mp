@@ -4,8 +4,8 @@ import com.alibaba.fastjson2.JSON;
 import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
-import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
@@ -80,7 +80,7 @@ class DataServiceImplTest {
 
     @Test
     void deptAndChildScopeExpandsTheUsersDepartment() {
-        Dept child = dept(20L);
+        DeptDO child = dept(20L);
         when(roleMapper.findByUserId(1L)).thenReturn(
                 List.of(role(DataScopeEnum.DEPT_AND_CHILD)));
         when(deptMapper.selectList(any())).thenReturn(List.of(child), List.of());
@@ -135,27 +135,27 @@ class DataServiceImplTest {
 
     @Test
     void expandsSelectedDepartmentsBeforeGrantValidation() {
-        Dept child = new Dept();
+        DeptDO child = new DeptDO();
         child.setId(20L);
         when(deptMapper.selectList(any())).thenReturn(List.of(child), List.of());
 
         assertEquals(List.of(10L, 20L), List.copyOf(service.expandDeptIds(List.of(10L))));
     }
 
-    private Role role(DataScopeEnum dataScope) {
+    private RoleDO role(DataScopeEnum dataScope) {
         return role(1L, dataScope);
     }
 
-    private Role role(Long id, DataScopeEnum dataScope) {
-        Role role = new Role();
+    private RoleDO role(Long id, DataScopeEnum dataScope) {
+        RoleDO role = new RoleDO();
         role.setId(id);
         role.setName("role");
         role.setDataScope(dataScope.getValue());
         return role;
     }
 
-    private Dept dept(Long id) {
-        Dept dept = new Dept();
+    private DeptDO dept(Long id) {
+        DeptDO dept = new DeptDO();
         dept.setId(id);
         return dept;
     }

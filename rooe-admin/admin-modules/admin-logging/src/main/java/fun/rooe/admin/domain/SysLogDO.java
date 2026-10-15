@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -33,7 +34,7 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor
 @TableName("sys_log")
-public class SysLog  implements Serializable {
+public class SysLogDO implements Serializable {
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
@@ -74,7 +75,7 @@ public class SysLog  implements Serializable {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp createTime;
 
-    public SysLog(String logType, Long time) {
+    public SysLogDO(String logType, Long time) {
         this.logType = logType;
         this.time = time;
     }

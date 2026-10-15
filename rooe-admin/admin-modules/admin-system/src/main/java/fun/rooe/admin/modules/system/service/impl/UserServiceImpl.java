@@ -21,10 +21,10 @@ import fun.rooe.admin.modules.system.domain.dto.JobDTO;
 import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
-import fun.rooe.admin.modules.system.domain.entity.Role;
-import fun.rooe.admin.modules.system.domain.entity.User;
-import fun.rooe.admin.modules.system.domain.entity.UserJob;
-import fun.rooe.admin.modules.system.domain.entity.UserRole;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
+import fun.rooe.admin.modules.system.domain.entity.UserJobDO;
+import fun.rooe.admin.modules.system.domain.entity.UserRoleDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
 import fun.rooe.admin.modules.system.service.*;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements UserService {
     private final UserMapper userMapper;
     private final UserJobMapper userJobMapper;
     private final UserRoleMapper userRoleMapper;
@@ -73,7 +73,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public PageResult<UserDTO> queryAll(UserQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
         if (dataScope.isNone()) return new PageResult<>(new ArrayList<>(), 0);
-        Page<User> page = new Page<>(request.getPage(), request.getSize());
+        Page<UserDO> page = new Page<>(request.getPage(), request.getSize());
         userMapper.selectPage(page, wrapper(request, requestedDeptIds(request), dataScope));
         return new PageResult<>(assemble(page.getRecords()), page.getTotal());
     }
@@ -97,43 +97,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return requested;
     }
 
-    private LambdaQueryWrapper<User> wrapper(
+    private LambdaQueryWrapper<UserDO> wrapper(
             UserQueryRequest request, Set<Long> requestedDeptIds, UserDataScope dataScope) {
-        LambdaQueryWrapper<User> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(request.getId() != null, User::getId, request.getId())
-                .eq(request.getEnabled() != null, User::getEnabled, request.getEnabled())
-                .in(!requestedDeptIds.isEmpty(), User::getDeptId, requestedDeptIds)
+        LambdaQueryWrapper<UserDO> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(request.getId() != null, UserDO::getId, request.getId())
+                .eq(request.getEnabled() != null, UserDO::getEnabled, request.getEnabled())
+                .in(!requestedDeptIds.isEmpty(), UserDO::getDeptId, requestedDeptIds)
                 .and(
                         StringUtils.isNotBlank(request.getBlurry()),
                         query ->
-                                query.like(User::getUsername, request.getBlurry())
+                                query.like(UserDO::getUsername, request.getBlurry())
                                         .or()
-                                        .like(User::getNickName, request.getBlurry())
+                                        .like(UserDO::getNickName, request.getBlurry())
                                         .or()
-                                        .like(User::getEmail, request.getBlurry()))
-                .orderByDesc(User::getId);
+                                        .like(UserDO::getEmail, request.getBlurry()))
+                .orderByDesc(UserDO::getId);
         if (!dataScope.isAll()) {
             wrapper.and(permission -> {
                 if (!dataScope.deptIds().isEmpty()) {
-                    permission.in(User::getDeptId, dataScope.deptIds());
+                    permission.in(UserDO::getDeptId, dataScope.deptIds());
                 }
                 if (dataScope.selfUserId() != null) {
                     if (!dataScope.deptIds().isEmpty()) {
                         permission.or();
                     }
-                    permission.eq(User::getId, dataScope.selfUserId());
+                    permission.eq(UserDO::getId, dataScope.selfUserId());
                 }
             });
         }
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2)
             wrapper.between(
-                    User::getCreateTime,
+                    UserDO::getCreateTime,
                     request.getCreateTime().get(0),
                     request.getCreateTime().get(1));
         return wrapper;
     }
 
-    private List<UserDTO> assemble(List<User> users) {
+    private List<UserDTO> assemble(List<UserDO> users) {
         List<UserDTO> result = assembler.toDtos(users);
         for (UserDTO dto : result) {
             if (dto.getDeptId() != null)
@@ -151,9 +151,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public User findById(long id) {
+    public UserDO findById(long id) {
         String key = CacheKey.USER_ID + id;
-        User user = redisUtils.get(key, User.class);
+        UserDO user = redisUtils.get(key, UserDO.class);
         if (user == null) {
             user = getById(id);
             redisUtils.set(key, user, 1, TimeUnit.DAYS);
@@ -170,7 +170,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         checkLevel(roleIds);
         roleService.checkDataScopes(roleIds, deptId);
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), null);
-        User user = assembler.toEntity(request);
+        UserDO user = assembler.toEntity(request);
         user.setPassword(userCredentialService.encode("123456"));
         user.setIsAdmin(false);
         save(user);
@@ -180,10 +180,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(UserUpdateRequest request) {
-        User user = getById(request.getId());
+        UserDO user = getById(request.getId());
         checkUserAccess(user);
         checkLevel(roleMapper.findByUserId(user.getId()).stream()
-                .map(Role::getId)
+                .map(RoleDO::getId)
                 .collect(Collectors.toSet()));
         Long newDeptId = request.getDept().getId();
         if (!Objects.equals(user.getDeptId(), newDeptId)) {
@@ -195,7 +195,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), user.getId());
         Set<Long> oldRoles =
                 roleMapper.findByUserId(user.getId()).stream()
-                        .map(Role::getId)
+                        .map(RoleDO::getId)
                         .collect(Collectors.toSet());
         if (!oldRoles.equals(newRoles)) clearAuthorizationCaches(user.getId());
         if (!Objects.equals(user.getDeptId(), request.getDept().getId()))
@@ -207,9 +207,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         delCaches(user.getId(), user.getUsername());
         // Relation rows represent the complete request state, so replace them atomically.
         userJobMapper.delete(
-                Wrappers.<UserJob>lambdaQuery().eq(UserJob::getUserId, user.getId()));
+                Wrappers.<UserJobDO>lambdaQuery().eq(UserJobDO::getUserId, user.getId()));
         userRoleMapper.delete(
-                Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, user.getId()));
+                Wrappers.<UserRoleDO>lambdaQuery().eq(UserRoleDO::getUserId, user.getId()));
         insertRelations(user.getId(), request.getJobs(), request.getRoles());
     }
 
@@ -218,12 +218,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void updateCenter(UserCenterUpdateRequest request) {
         if (!request.getId().equals(SecurityUtils.getCurrentUserId()))
             throw new BadRequestException("不能修改他人资料");
-        User user = getById(request.getId());
-        User duplicate =
+        UserDO user = getById(request.getId());
+        UserDO duplicate =
                 userMapper.selectOne(
-                        Wrappers.<User>lambdaQuery().eq(User::getPhone, request.getPhone()));
+                        Wrappers.<UserDO>lambdaQuery().eq(UserDO::getPhone, request.getPhone()));
         if (duplicate != null && !user.getId().equals(duplicate.getId()))
-            throw new EntityExistException(User.class, "phone", request.getPhone());
+            throw new EntityExistException(UserDO.class, "phone", request.getPhone());
         assembler.updateCenter(request, user);
         updateById(user);
         delCaches(user.getId(), user.getUsername());
@@ -237,21 +237,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             checkUserAccess(getById(id));
             int targetLevel =
                     roleService.findByUsersId(id).stream()
-                            .map(Role::getLevel)
+                            .map(RoleDO::getLevel)
                             .min(Integer::compareTo)
                             .orElse(Integer.MAX_VALUE);
             if (currentLevel > targetLevel)
                 throw new BadRequestException("角色权限不足，不能删除：" + findById(id).getUsername());
         }
         for (Long id : request.getIds()) {
-            User user = getById(id);
+            UserDO user = getById(id);
             if (user != null) delCaches(user.getId(), user.getUsername());
         }
         userMapper.deleteBatchIds(request.getIds());
         userJobMapper.delete(
-                Wrappers.<UserJob>lambdaQuery().in(UserJob::getUserId, request.getIds()));
+                Wrappers.<UserJobDO>lambdaQuery().in(UserJobDO::getUserId, request.getIds()));
         userRoleMapper.delete(
-                Wrappers.<UserRole>lambdaQuery().in(UserRole::getUserId, request.getIds()));
+                Wrappers.<UserRoleDO>lambdaQuery().in(UserRoleDO::getUserId, request.getIds()));
     }
 
     private void checkLevel(Set<Long> roleIds) {
@@ -262,20 +262,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private void checkUnique(String username, String email, String phone, Long currentId) {
         checkDuplicate(findByUsername(username), currentId, "username", username);
         checkDuplicate(
-                userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getEmail, email)),
+                userMapper.selectOne(Wrappers.<UserDO>lambdaQuery().eq(UserDO::getEmail, email)),
                 currentId,
                 "email",
                 email);
         checkDuplicate(
-                userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getPhone, phone)),
+                userMapper.selectOne(Wrappers.<UserDO>lambdaQuery().eq(UserDO::getPhone, phone)),
                 currentId,
                 "phone",
                 phone);
     }
 
-    private void checkDuplicate(User duplicate, Long currentId, String field, String value) {
+    private void checkDuplicate(UserDO duplicate, Long currentId, String field, String value) {
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(User.class, field, value);
+            throw new EntityExistException(UserDO.class, field, value);
     }
 
     private void insertRelations(Long userId, Set<IdReference> jobs, Set<IdReference> roles) {
@@ -291,15 +291,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
-    private UserJob toUserJob(Long userId, Long jobId) {
-        UserJob relation = new UserJob();
+    private UserJobDO toUserJob(Long userId, Long jobId) {
+        UserJobDO relation = new UserJobDO();
         relation.setUserId(userId);
         relation.setJobId(jobId);
         return relation;
     }
 
-    private UserRole toUserRole(Long userId, Long roleId) {
-        UserRole relation = new UserRole();
+    private UserRoleDO toUserRole(Long userId, Long roleId) {
+        UserRoleDO relation = new UserRoleDO();
         relation.setUserId(userId);
         relation.setRoleId(roleId);
         return relation;
@@ -316,18 +316,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public User findByName(String userName) {
+    public UserDO findByName(String userName) {
         return findByUsername(userName);
     }
 
-    private User findByUsername(String username) {
+    private UserDO findByUsername(String username) {
         return userMapper.selectOne(
-                Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
+                Wrappers.<UserDO>lambdaQuery().eq(UserDO::getUsername, username));
     }
 
     @Override
     public UserLoginDTO getLoginData(String userName) {
-        User user = findByUsername(userName);
+        UserDO user = findByUsername(userName);
         if (user == null) return null;
         UserLoginDTO dto = assembler.toLoginDto(user);
         if (user.getDeptId() != null)
@@ -340,24 +340,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePass(String username, String rawPassword) {
-        userMapper.update(Wrappers.<User>lambdaUpdate()
-                .eq(User::getUsername, username)
-                .set(User::getPassword, userCredentialService.encode(rawPassword))
-                .set(User::getPwdResetTime, new Date()));
+        userMapper.update(Wrappers.<UserDO>lambdaUpdate()
+                .eq(UserDO::getUsername, username)
+                .set(UserDO::getPassword, userCredentialService.encode(rawPassword))
+                .set(UserDO::getPwdResetTime, new Date()));
         flushCache(username);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void resetPwd(UserResetPasswordRequest request, String rawPassword) {
-        List<User> users = userMapper.selectBatchIds(request.getIds());
+        List<UserDO> users = userMapper.selectBatchIds(request.getIds());
         if (users.size() != request.getIds().size()) {
             throw new BadRequestException("User does not exist");
         }
-        for (User user : users) {
+        for (UserDO user : users) {
             checkUserAccess(user);
             checkLevel(roleMapper.findByUserId(user.getId()).stream()
-                    .map(Role::getId)
+                    .map(RoleDO::getId)
                     .collect(Collectors.toSet()));
         }
         users.forEach(
@@ -365,9 +365,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     flushCache(user.getUsername());
                     onlineUserService.kickOutForUsername(user.getUsername());
                 });
-        userMapper.update(Wrappers.<User>lambdaUpdate()
-                .in(User::getId, request.getIds())
-                .set(User::getPassword, userCredentialService.encode(rawPassword)));
+        userMapper.update(Wrappers.<UserDO>lambdaUpdate()
+                .in(UserDO::getId, request.getIds())
+                .set(UserDO::getPassword, userCredentialService.encode(rawPassword)));
     }
 
     @Override
@@ -378,7 +378,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
         if (fileType != null && !image.contains(fileType))
             throw new BadRequestException("文件格式错误，仅支持 " + image);
-        User user = findByUsername(SecurityUtils.getCurrentUsername());
+        UserDO user = findByUsername(SecurityUtils.getCurrentUsername());
         String oldPath = user.getAvatarPath();
         File file;
         try {
@@ -401,9 +401,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateEmail(String username, String email) {
-        userMapper.update(Wrappers.<User>lambdaUpdate()
-                .eq(User::getUsername, username)
-                .set(User::getEmail, email));
+        userMapper.update(Wrappers.<UserDO>lambdaUpdate()
+                .eq(UserDO::getUsername, username)
+                .set(UserDO::getEmail, email));
         flushCache(username);
     }
 
@@ -445,7 +445,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userCacheManager.cleanUserCache(username);
     }
 
-    private void checkUserAccess(User user) {
+    private void checkUserAccess(UserDO user) {
         if (user == null) {
             throw new BadRequestException("User does not exist");
         }

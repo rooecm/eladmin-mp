@@ -18,7 +18,7 @@ package fun.rooe.admin.modules.quartz.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,11 +31,11 @@ import java.util.List;
  * @date 2023-06-12
  **/
 @Mapper
-public interface QuartzJobMapper extends BaseMapper<QuartzJob> {
+public interface QuartzJobMapper extends BaseMapper<QuartzJobDO> {
 
-    IPage<QuartzJob> findAll(@Param("criteria") QuartzJobQueryCriteria criteria, Page<Object> page);
+    IPage<QuartzJobDO> findAll(@Param("criteria") QuartzJobQueryCriteria criteria, Page<Object> page);
 
-    List<QuartzJob> findAll(@Param("criteria") QuartzJobQueryCriteria criteria);
+    List<QuartzJobDO> findAll(@Param("criteria") QuartzJobQueryCriteria criteria);
 
-    List<QuartzJob> findByIsPauseIsFalse();
+    List<QuartzJobDO> findByIsPauseIsFalse();
 }

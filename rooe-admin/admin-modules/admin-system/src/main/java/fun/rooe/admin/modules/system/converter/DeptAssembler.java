@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.converter;
 
 import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
 import fun.rooe.admin.modules.system.domain.request.DeptCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DeptUpdateRequest;
 import org.mapstruct.*;
@@ -31,17 +31,17 @@ import java.util.*;
 public interface DeptAssembler {
 
     @Mapping(target = "children", ignore = true)
-    DeptDTO toDto(Dept dept);
+    DeptDTO toDto(DeptDO dept);
 
     @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
-    List<DeptDTO> toDtos(List<Dept> depts);
+    List<DeptDTO> toDtos(List<DeptDO> depts);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")
     @Mapping(target = "deptSort", source = "deptSort")
     @Mapping(target = "enabled", source = "enabled")
     @Mapping(target = "pid", source = "pid")
-    Dept toDept(DeptCreateRequest request);
+    DeptDO toDept(DeptCreateRequest request);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "id", source = "id")
@@ -49,7 +49,7 @@ public interface DeptAssembler {
     @Mapping(target = "deptSort", source = "deptSort")
     @Mapping(target = "enabled", source = "enabled")
     @Mapping(target = "pid", source = "pid")
-    void updateDept(DeptUpdateRequest request, @MappingTarget Dept dept);
+    void updateDept(DeptUpdateRequest request, @MappingTarget DeptDO dept);
 
     default List<DeptDTO> toTree(List<DeptDTO> deptList) {
         if (deptList == null || deptList.isEmpty()) {

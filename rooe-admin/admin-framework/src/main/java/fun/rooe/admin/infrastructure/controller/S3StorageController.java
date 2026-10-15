@@ -16,21 +16,22 @@
 package fun.rooe.admin.infrastructure.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.infrastructure.config.AmzS3Config;
-import fun.rooe.admin.infrastructure.domain.S3Storage;
+import fun.rooe.admin.infrastructure.domain.S3StorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
 import fun.rooe.admin.infrastructure.service.S3StorageService;
-import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.response.PageResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +62,7 @@ public class S3StorageController {
     @GetMapping
     @Operation(summary = "查询文件")
     @PreAuthorize("@el.check('storage:list')")
-    public PageResult<S3Storage> queryS3Storage(S3StorageQueryCriteria criteria){
+    public PageResult<S3StorageDO> queryS3Storage(S3StorageQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return s3StorageService.queryAll(criteria, page);
     }
@@ -69,7 +70,7 @@ public class S3StorageController {
     @PostMapping
     @Operation(summary = "上传文件")
     public Map<String,Object> uploadS3Storage(@RequestParam MultipartFile file){
-        S3Storage storage = s3StorageService.upload(file);
+        S3StorageDO storage = s3StorageService.upload(file);
         Map<String,Object> map = new HashMap<>(3);
         map.put("id",storage.getId());
         map.put("errno",0);
@@ -82,7 +83,7 @@ public class S3StorageController {
     @GetMapping(value = "/download/{id}")
     public Map<String,Object> downloadS3Storage(@PathVariable Long id){
         Map<String,Object> map = new HashMap<>(1);
-        S3Storage storage = s3StorageService.getById(id);
+        S3StorageDO storage = s3StorageService.getById(id);
         if (storage == null) {
             throw new BadRequestException(404, "文件不存在或已被删除");
         }

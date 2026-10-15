@@ -17,7 +17,7 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.Set;
 * @author Zheng Jie
 * @date 2019-03-25
 */
-public interface DeptService extends IService<Dept> {
+public interface DeptService extends IService<DeptDO> {
 
     /**
      * 查询所有数据
@@ -41,7 +41,7 @@ public interface DeptService extends IService<Dept> {
      * @param id /
      * @return /
      */
-    Dept findById(Long id);
+    DeptDO findById(Long id);
 
     /**
      * 创建
@@ -67,14 +67,14 @@ public interface DeptService extends IService<Dept> {
      * @param pid /
      * @return /
      */
-    List<Dept> findByPid(long pid);
+    List<DeptDO> findByPid(long pid);
 
     /**
      * 根据角色ID查询
      * @param id /
      * @return /
      */
-    Set<Dept> findByRoleId(Long id);
+    Set<DeptDO> findByRoleId(Long id);
 
     /**
      * 根据ID获取同级与上级数据
@@ -88,6 +88,6 @@ public interface DeptService extends IService<Dept> {
      * @param deptList 、
      * @return 、
      */
-    List<Long> getDeptChildren(List<Dept> deptList);
+    List<Long> getDeptChildren(List<DeptDO> deptList);
 
 }

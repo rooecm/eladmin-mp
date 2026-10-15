@@ -20,8 +20,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
-import fun.rooe.admin.modules.quartz.domain.QuartzLog;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import fun.rooe.admin.modules.quartz.domain.QuartzLogDO;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
 import fun.rooe.admin.modules.quartz.mapper.QuartzJobMapper;
 import fun.rooe.admin.modules.quartz.mapper.QuartzLogMapper;
@@ -45,7 +45,7 @@ import java.util.*;
  */
 @RequiredArgsConstructor
 @Service(value = "quartzJobService")
-public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob> implements QuartzJobService {
+public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJobDO> implements QuartzJobService {
 
     private final QuartzJobMapper quartzJobMapper;
     private final QuartzLogMapper quartzLogMapper;
@@ -53,28 +53,28 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     private final RedisUtils redisUtils;
 
     @Override
-    public PageResult<QuartzJob> queryAll(QuartzJobQueryCriteria criteria, Page<Object> page) {
+    public PageResult<QuartzJobDO> queryAll(QuartzJobQueryCriteria criteria, Page<Object> page) {
         return PageUtil.toPage(quartzJobMapper.findAll(criteria, page));
     }
 
     @Override
-    public PageResult<QuartzLog> queryAllLog(QuartzJobQueryCriteria criteria, Page<Object> page) {
+    public PageResult<QuartzLogDO> queryAllLog(QuartzJobQueryCriteria criteria, Page<Object> page) {
         return PageUtil.toPage(quartzLogMapper.findAll(criteria, page));
     }
 
     @Override
-    public List<QuartzJob> queryAll(QuartzJobQueryCriteria criteria) {
+    public List<QuartzJobDO> queryAll(QuartzJobQueryCriteria criteria) {
         return quartzJobMapper.findAll(criteria);
     }
 
     @Override
-    public List<QuartzLog> queryAllLog(QuartzJobQueryCriteria criteria) {
+    public List<QuartzLogDO> queryAllLog(QuartzJobQueryCriteria criteria) {
         return quartzLogMapper.findAll(criteria);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(QuartzJob resources) {
+    public void create(QuartzJobDO resources) {
         if (!CronExpression.isValidExpression(resources.getCronExpression())) {
             throw new BadRequestException("cron表达式格式错误");
         }
@@ -84,7 +84,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(QuartzJob resources) {
+    public void update(QuartzJobDO resources) {
         if (!CronExpression.isValidExpression(resources.getCronExpression())) {
             throw new BadRequestException("cron表达式格式错误");
         }
@@ -100,7 +100,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateIsPause(QuartzJob quartzJob) {
+    public void updateIsPause(QuartzJobDO quartzJob) {
         // 置换暂停状态
         if (quartzJob.getIsPause()) {
             quartzManage.resumeJob(quartzJob);
@@ -113,7 +113,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     }
 
     @Override
-    public void execution(QuartzJob quartzJob) {
+    public void execution(QuartzJobDO quartzJob) {
         quartzManage.runJobNow(quartzJob);
     }
 
@@ -121,7 +121,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     @Transactional(rollbackFor = Exception.class)
     public void delete(Set<Long> ids) {
         for (Long id : ids) {
-            QuartzJob quartzJob = getById(id);
+            QuartzJobDO quartzJob = getById(id);
             quartzManage.deleteJob(quartzJob);
             removeById(quartzJob);
         }
@@ -135,7 +135,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
                 // 如果是手动清除子任务id，会出现id为空字符串的问题
                 continue;
             }
-            QuartzJob quartzJob = getById(Long.parseLong(id));
+            QuartzJobDO quartzJob = getById(Long.parseLong(id));
             // 执行任务
             String uuid = UUID.randomUUID().toString().replace("-", "");
             quartzJob.setUuid(uuid);
@@ -156,9 +156,9 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     }
 
     @Override
-    public void download(List<QuartzJob> quartzJobs, HttpServletResponse response) throws IOException {
+    public void download(List<QuartzJobDO> quartzJobs, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (QuartzJob quartzJob : quartzJobs) {
+        for (QuartzJobDO quartzJob : quartzJobs) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("任务名称", quartzJob.getJobName());
             map.put("Bean名称", quartzJob.getBeanName());
@@ -176,9 +176,9 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     }
 
     @Override
-    public void downloadLog(List<QuartzLog> queryAllLog, HttpServletResponse response) throws IOException {
+    public void downloadLog(List<QuartzLogDO> queryAllLog, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (QuartzLog quartzLog : queryAllLog) {
+        for (QuartzLogDO quartzLog : queryAllLog) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("任务名称", quartzLog.getJobName());
             map.put("Bean名称", quartzLog.getBeanName());

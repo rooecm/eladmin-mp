@@ -15,19 +15,15 @@
  */
 package fun.rooe.admin.modules.quartz.domain;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -39,7 +35,7 @@ import java.sql.Timestamp;
 @Getter
 @Setter
 @TableName("sys_quartz_job")
-public class QuartzJob implements Serializable {
+public class QuartzJobDO implements Serializable {
 
     public static final String JOB_KEY = "JOB_KEY";
     @CreatedBy

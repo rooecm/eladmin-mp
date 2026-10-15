@@ -11,7 +11,7 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.security.dto.AuthorityDTO;
+import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
+public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements RoleService {
     private final RoleMapper roleMapper;
     private final RoleDeptMapper roleDeptMapper;
     private final RoleMenuMapper roleMenuMapper;
@@ -57,34 +57,34 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     public List<RoleDTO> queryAll() {
         return assemble(
-                roleMapper.selectList(Wrappers.<Role>lambdaQuery().orderByAsc(Role::getLevel)));
+                roleMapper.selectList(Wrappers.<RoleDO>lambdaQuery().orderByAsc(RoleDO::getLevel)));
     }
 
     @Override
     public PageResult<RoleDTO> queryAll(RoleQueryRequest request) {
-        Page<Role> page = new Page<>(request.getPage(), request.getSize());
+        Page<RoleDO> page = new Page<>(request.getPage(), request.getSize());
         roleMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assemble(page.getRecords()), page.getTotal());
     }
 
-    private LambdaQueryWrapper<Role> wrapper(RoleQueryRequest request) {
-        LambdaQueryWrapper<Role> wrapper = Wrappers.lambdaQuery();
+    private LambdaQueryWrapper<RoleDO> wrapper(RoleQueryRequest request) {
+        LambdaQueryWrapper<RoleDO> wrapper = Wrappers.lambdaQuery();
         wrapper.and(
                         StringUtils.isNotBlank(request.getBlurry()),
                         query ->
-                                query.like(Role::getName, request.getBlurry())
+                                query.like(RoleDO::getName, request.getBlurry())
                                         .or()
-                                        .like(Role::getDescription, request.getBlurry()))
-                .orderByAsc(Role::getLevel);
+                                        .like(RoleDO::getDescription, request.getBlurry()))
+                .orderByAsc(RoleDO::getLevel);
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2)
             wrapper.between(
-                    Role::getCreateTime,
+                    RoleDO::getCreateTime,
                     request.getCreateTime().get(0),
                     request.getCreateTime().get(1));
         return wrapper;
     }
 
-    private List<RoleDTO> assemble(List<Role> roles) {
+    private List<RoleDTO> assemble(List<RoleDO> roles) {
         List<RoleDTO> result = assembler.toDtos(roles);
         for (RoleDTO dto : result) {
             DataScopeEnum dataScope = DataScopeEnum.find(dto.getDataScope());
@@ -109,9 +109,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return result.get(0);
     }
 
-    private Role findById(Long id) {
+    private RoleDO findById(Long id) {
         String key = CacheKey.ROLE_ID + id;
-        Role role = redisUtils.get(key, Role.class);
+        RoleDO role = redisUtils.get(key, RoleDO.class);
         if (role == null) {
             role = roleMapper.selectById(id);
             redisUtils.set(key, role, 1, TimeUnit.DAYS);
@@ -126,7 +126,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         checkName(request.getName(), null);
         DataScopeEnum dataScope = validateDataScope(
                 request.getDataScope(), request.getDepts(), null);
-        Role role = assembler.toEntity(request);
+        RoleDO role = assembler.toEntity(request);
         role.setDataScope(dataScope.getValue());
         save(role);
         if (dataScope == DataScopeEnum.CUSTOM) {
@@ -137,7 +137,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(RoleUpdateRequest request) {
-        Role role = findById(request.getId());
+        RoleDO role = findById(request.getId());
         checkLevel(role.getLevel());
         checkLevel(request.getLevel());
         checkName(request.getName(), request.getId());
@@ -148,7 +148,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         updateById(role);
         // Custom data-scope rows represent the complete request state.
         roleDeptMapper.delete(
-                Wrappers.<RoleDept>lambdaQuery().eq(RoleDept::getRoleId, role.getId()));
+                Wrappers.<RoleDeptDO>lambdaQuery().eq(RoleDeptDO::getRoleId, role.getId()));
         if (dataScope == DataScopeEnum.CUSTOM) {
             insertDepts(role.getId(), request.getDepts());
         }
@@ -158,12 +158,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenu(RoleMenuUpdateRequest request) {
-        Role role = findById(request.getId());
+        RoleDO role = findById(request.getId());
         checkLevel(role.getLevel());
-        List<User> users = userMapper.findByRoleId(role.getId());
+        List<UserDO> users = userMapper.findByRoleId(role.getId());
         // Menu assignments are replaced as one transaction to avoid partial authorization state.
         roleMenuMapper.delete(
-                Wrappers.<RoleMenu>lambdaQuery().eq(RoleMenu::getRoleId, role.getId()));
+                Wrappers.<RoleMenuDO>lambdaQuery().eq(RoleMenuDO::getRoleId, role.getId()));
         Set<Long> menuIds = ids(request.getMenus());
         if (!menuIds.isEmpty()) {
             roleMenuMapper.insert(
@@ -177,20 +177,20 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public void delete(RoleDeleteRequest request) {
         for (Long id : request.getIds()) checkLevel(findById(id).getLevel());
         if (userRoleMapper.selectCount(
-                Wrappers.<UserRole>lambdaQuery().in(UserRole::getRoleId, request.getIds())) > 0)
+                Wrappers.<UserRoleDO>lambdaQuery().in(UserRoleDO::getRoleId, request.getIds())) > 0)
             throw new BadRequestException("所选角色存在用户关联，请解除关联后再试");
         request.getIds().forEach(id -> delCaches(id, null));
         removeBatchByIds(request.getIds());
         roleDeptMapper.delete(
-                Wrappers.<RoleDept>lambdaQuery().in(RoleDept::getRoleId, request.getIds()));
+                Wrappers.<RoleDeptDO>lambdaQuery().in(RoleDeptDO::getRoleId, request.getIds()));
         roleMenuMapper.delete(
-                Wrappers.<RoleMenu>lambdaQuery().in(RoleMenu::getRoleId, request.getIds()));
+                Wrappers.<RoleMenuDO>lambdaQuery().in(RoleMenuDO::getRoleId, request.getIds()));
     }
 
     private void checkName(String name, Long currentId) {
-        Role duplicate = roleMapper.selectOne(Wrappers.<Role>lambdaQuery().eq(Role::getName, name));
+        RoleDO duplicate = roleMapper.selectOne(Wrappers.<RoleDO>lambdaQuery().eq(RoleDO::getName, name));
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(Role.class, "name", name);
+            throw new EntityExistException(RoleDO.class, "name", name);
     }
 
     private void insertDepts(Long roleId, Set<IdReference> refs) {
@@ -201,15 +201,15 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         }
     }
 
-    private RoleMenu toRoleMenu(Long roleId, Long menuId) {
-        RoleMenu relation = new RoleMenu();
+    private RoleMenuDO toRoleMenu(Long roleId, Long menuId) {
+        RoleMenuDO relation = new RoleMenuDO();
         relation.setRoleId(roleId);
         relation.setMenuId(menuId);
         return relation;
     }
 
-    private RoleDept toRoleDept(Long roleId, Long deptId) {
-        RoleDept relation = new RoleDept();
+    private RoleDeptDO toRoleDept(Long roleId, Long deptId) {
+        RoleDeptDO relation = new RoleDeptDO();
         relation.setRoleId(roleId);
         relation.setDeptId(deptId);
         return relation;
@@ -244,7 +244,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         if (existingRoleId != null
                 && (configuredScope == DataScopeEnum.DEPT
                 || configuredScope == DataScopeEnum.DEPT_AND_CHILD)) {
-            for (User user : userMapper.findByRoleId(existingRoleId)) {
+            for (UserDO user : userMapper.findByRoleId(existingRoleId)) {
                 checkConfiguredScope(configuredScope, existingRoleId, user.getDeptId());
             }
         }
@@ -256,11 +256,11 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         if (CollectionUtils.isEmpty(roleIds)) {
             return;
         }
-        List<Role> roles = roleMapper.selectBatchIds(roleIds);
+        List<RoleDO> roles = roleMapper.selectBatchIds(roleIds);
         if (roles.size() != roleIds.size()) {
             throw new BadRequestException("Role does not exist");
         }
-        for (Role role : roles) {
+        for (RoleDO role : roles) {
             DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
             if (configuredScope == null) {
                 throw new BadRequestException(
@@ -289,7 +289,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
                 }
             }
             case CUSTOM -> dataService.checkDeptAccess(
-                    deptMapper.findByRoleId(roleId).stream().map(Dept::getId).toList());
+                    deptMapper.findByRoleId(roleId).stream().map(DeptDO::getId).toList());
             case SELF -> {
                 // Self-only access does not grant access to another user's data.
             }
@@ -297,9 +297,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public List<Role> findByUsersId(Long userId) {
+    public List<RoleDO> findByUsersId(Long userId) {
         String key = CacheKey.ROLE_USER + userId;
-        List<Role> roles = redisUtils.getList(key, Role.class);
+        List<RoleDO> roles = redisUtils.getList(key, RoleDO.class);
         if (CollectionUtils.isEmpty(roles)) {
             roles = roleMapper.findByUserId(userId);
             redisUtils.set(key, roles, 1, TimeUnit.DAYS);
@@ -311,7 +311,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public Integer findByRoleIds(Set<Long> roleIds) {
         if (CollectionUtils.isEmpty(roleIds)) return Integer.MAX_VALUE;
         return roleMapper.selectBatchIds(roleIds).stream()
-                .map(Role::getLevel)
+                .map(RoleDO::getLevel)
                 .min(Integer::compareTo)
                 .orElse(Integer.MAX_VALUE);
     }
@@ -319,7 +319,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     public int getCurrentUserLevel() {
         return findByUsersId(SecurityUtils.getCurrentUserId()).stream()
-                .map(Role::getLevel)
+                .map(RoleDO::getLevel)
                 .min(Integer::compareTo)
                 .orElse(Integer.MAX_VALUE);
     }
@@ -338,9 +338,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         if (!CollectionUtils.isEmpty(cached)) return cached;
         if (Boolean.TRUE.equals(user.getIsAdmin())) return List.of(new AuthorityDTO("admin"));
         Set<String> permissions = new HashSet<>();
-        for (Role role : roleMapper.findByUserId(user.getId())) {
+        for (RoleDO role : roleMapper.findByUserId(user.getId())) {
             menuMapper.findByRoleId(role.getId()).stream()
-                    .map(Menu::getPermission)
+                    .map(MenuDO::getPermission)
                     .filter(StringUtils::isNotBlank)
                     .forEach(permissions::add);
         }
@@ -350,14 +350,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public List<Role> findByMenuId(Long menuId) {
+    public List<RoleDO> findByMenuId(Long menuId) {
         return roleMapper.findByMenuId(menuId);
     }
 
-    private void delCaches(Long id, List<User> users) {
+    private void delCaches(Long id, List<UserDO> users) {
         users = CollectionUtils.isEmpty(users) ? userMapper.findByRoleId(id) : users;
-        for (User user : users) userCacheManager.cleanUserCache(user.getUsername());
-        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        for (UserDO user : users) userCacheManager.cleanUserCache(user.getUsername());
+        Set<Long> userIds = users.stream().map(UserDO::getId).collect(Collectors.toSet());
         redisUtils.delByKeys(CacheKey.DATA_USER, userIds);
         redisUtils.delByKeys(CacheKey.MENU_USER, userIds);
         redisUtils.delByKeys(CacheKey.ROLE_AUTH, userIds);

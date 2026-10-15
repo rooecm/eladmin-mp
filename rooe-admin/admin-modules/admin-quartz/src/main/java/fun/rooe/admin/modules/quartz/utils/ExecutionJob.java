@@ -19,8 +19,8 @@ import fun.rooe.admin.framework.utils.SpringBeanHolder;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
-import fun.rooe.admin.modules.quartz.domain.QuartzLog;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import fun.rooe.admin.modules.quartz.domain.QuartzLogDO;
 import fun.rooe.admin.modules.quartz.mapper.QuartzLogMapper;
 import fun.rooe.admin.modules.quartz.service.QuartzJobService;
 import fun.rooe.admin.modules.system.utils.TemplateUtils;
@@ -54,7 +54,7 @@ public class ExecutionJob extends QuartzJobBean {
     @Override
     public void executeInternal(JobExecutionContext context) {
         // 获取任务
-        QuartzJob quartzJob = (QuartzJob) context.getMergedJobDataMap().get(QuartzJob.JOB_KEY);
+        QuartzJobDO quartzJob = (QuartzJobDO) context.getMergedJobDataMap().get(QuartzJobDO.JOB_KEY);
         // 获取spring bean
         QuartzLogMapper quartzLogMapper = SpringBeanHolder.getBean(QuartzLogMapper.class);
         QuartzJobService quartzJobService = SpringBeanHolder.getBean(QuartzJobService.class);
@@ -62,7 +62,7 @@ public class ExecutionJob extends QuartzJobBean {
 
         String uuid = quartzJob.getUuid();
 
-        QuartzLog log = new QuartzLog();
+        QuartzLogDO log = new QuartzLogDO();
         log.setJobName(quartzJob.getJobName());
         log.setBeanName(quartzJob.getBeanName());
         log.setMethodName(quartzJob.getMethodName());
@@ -117,7 +117,7 @@ public class ExecutionJob extends QuartzJobBean {
         }
     }
 
-    private EmailDTO taskAlarm(QuartzJob quartzJob, String msg) {
+    private EmailDTO taskAlarm(QuartzJobDO quartzJob, String msg) {
         EmailDTO emailDto = new EmailDTO();
         emailDto.setSubject("定时任务【" + quartzJob.getJobName() + "】执行失败，请尽快处理！");
         Map<String, Object> data = new HashMap<>(16);

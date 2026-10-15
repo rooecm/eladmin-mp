@@ -9,9 +9,9 @@ import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
 import fun.rooe.admin.modules.quartz.config.JobRunner;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
-import fun.rooe.admin.modules.system.domain.entity.Menu;
-import fun.rooe.admin.modules.system.domain.entity.Role;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.MenuDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
@@ -78,21 +78,21 @@ public class RooeAdminBootstrapApplicationTests {
 
     @Test
     public void mapsIdentifiersRequiredToLoadUserMenus() {
-        User user = userMapper.selectOne(
-                Wrappers.<User>lambdaQuery().eq(User::getUsername, "admin"));
+        UserDO user = userMapper.selectOne(
+                Wrappers.<UserDO>lambdaQuery().eq(UserDO::getUsername, "admin"));
         assertNotNull(user);
         assertNotNull(user.getId());
 
-        List<Role> roles = roleMapper.findByUserId(user.getId());
+        List<RoleDO> roles = roleMapper.findByUserId(user.getId());
         assertFalse(roles.isEmpty());
         assertTrue(roles.stream().allMatch(role -> role.getId() != null));
 
-        List<Role> cachedRoles = roleService.findByUsersId(user.getId());
+        List<RoleDO> cachedRoles = roleService.findByUsersId(user.getId());
         assertFalse(cachedRoles.isEmpty());
         assertTrue(cachedRoles.stream().allMatch(role -> role.getId() != null));
 
-        Set<Long> roleIds = roles.stream().map(Role::getId).collect(Collectors.toSet());
-        List<Menu> menus = List.copyOf(menuMapper.findByRoleIdsAndTypeNot(roleIds, 2));
+        Set<Long> roleIds = roles.stream().map(RoleDO::getId).collect(Collectors.toSet());
+        List<MenuDO> menus = List.copyOf(menuMapper.findByRoleIdsAndTypeNot(roleIds, 2));
         assertFalse(menus.isEmpty());
         assertTrue(menus.stream().allMatch(menu -> menu.getId() != null));
     }

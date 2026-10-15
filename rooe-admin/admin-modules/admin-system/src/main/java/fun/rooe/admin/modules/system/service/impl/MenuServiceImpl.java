@@ -11,10 +11,10 @@ import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
 import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
-import fun.rooe.admin.modules.system.domain.entity.Menu;
-import fun.rooe.admin.modules.system.domain.entity.Role;
-import fun.rooe.admin.modules.system.domain.entity.RoleMenu;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.MenuDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleMenuDO;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMenuMapper;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements MenuService {
+public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements MenuService {
     private static final String HTTP_PRE = "http://";
     private static final String HTTPS_PRE = "https://";
     private final MenuMapper menuMapper;
@@ -52,23 +52,23 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                 StringUtils.isBlank(request.getBlurry())
                         && request.getPid() == null
                         && request.getCreateTime() == null;
-        LambdaQueryWrapper<Menu> wrapper = Wrappers.lambdaQuery();
+        LambdaQueryWrapper<MenuDO> wrapper = Wrappers.lambdaQuery();
         wrapper.and(
                         StringUtils.isNotBlank(request.getBlurry()),
                         query ->
-                                query.like(Menu::getTitle, request.getBlurry())
+                                query.like(MenuDO::getTitle, request.getBlurry())
                                         .or()
-                                        .like(Menu::getComponentName, request.getBlurry())
+                                        .like(MenuDO::getComponentName, request.getBlurry())
                                         .or()
-                                        .like(Menu::getPermission, request.getBlurry()))
+                                        .like(MenuDO::getPermission, request.getBlurry()))
                 .isNull(
                         noExplicitCondition || Boolean.TRUE.equals(request.getPidIsNull()),
-                        Menu::getPid)
-                .eq(request.getPid() != null, Menu::getPid, request.getPid())
-                .orderByAsc(Menu::getMenuSort);
+                        MenuDO::getPid)
+                .eq(request.getPid() != null, MenuDO::getPid, request.getPid())
+                .orderByAsc(MenuDO::getMenuSort);
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
             wrapper.between(
-                    Menu::getCreateTime,
+                    MenuDO::getCreateTime,
                     request.getCreateTime().get(0),
                     request.getCreateTime().get(1));
         }
@@ -77,13 +77,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
 
     @Override
     public List<MenuRouterDTO> buildCurrentUserMenus() {
-        List<Menu> menus = findByUser(SecurityUtils.getCurrentUserId());
+        List<MenuDO> menus = findByUser(SecurityUtils.getCurrentUserId());
         return assembler.toRouterDtos(assembler.toTree(assembler.toDtos(menus)));
     }
 
-    private Menu findById(long id) {
+    private MenuDO findById(long id) {
         String key = CacheKey.MENU_ID + id;
-        Menu menu = redisUtils.get(key, Menu.class);
+        MenuDO menu = redisUtils.get(key, MenuDO.class);
         if (menu == null) {
             menu = getById(id);
             redisUtils.set(key, menu, 1, TimeUnit.DAYS);
@@ -91,13 +91,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         return menu;
     }
 
-    private List<Menu> findByUser(Long userId) {
+    private List<MenuDO> findByUser(Long userId) {
         String key = CacheKey.MENU_USER + userId;
-        List<Menu> menus = redisUtils.getList(key, Menu.class);
+        List<MenuDO> menus = redisUtils.getList(key, MenuDO.class);
         if (CollectionUtils.isEmpty(menus)) {
             Set<Long> roleIds =
                     roleService.findByUsersId(userId).stream()
-                            .map(Role::getId)
+                            .map(RoleDO::getId)
                             .collect(Collectors.toSet());
             menus =
                     roleIds.isEmpty()
@@ -113,7 +113,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     public void create(MenuCreateRequest request) {
         validateUnique(request.getTitle(), request.getComponentName(), null);
         validateFrame(request.getIFrame(), request.getPath());
-        Menu menu = assembler.toEntity(request);
+        MenuDO menu = assembler.toEntity(request);
         if (Long.valueOf(0L).equals(menu.getPid())) menu.setPid(null);
         menu.setSubCount(0);
         save(menu);
@@ -126,7 +126,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         if (request.getId().equals(request.getPid())) throw new BadRequestException("上级不能为自己");
         validateUnique(request.getTitle(), request.getComponentName(), request.getId());
         validateFrame(request.getIFrame(), request.getPath());
-        Menu menu = getById(request.getId());
+        MenuDO menu = getById(request.getId());
         Long oldPid = menu.getPid();
         assembler.updateEntity(request, menu);
         if (Long.valueOf(0L).equals(menu.getPid())) menu.setPid(null);
@@ -137,16 +137,16 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     private void validateUnique(String title, String componentName, Long currentId) {
-        Menu duplicate =
-                menuMapper.selectOne(Wrappers.<Menu>lambdaQuery().eq(Menu::getTitle, title));
+        MenuDO duplicate =
+                menuMapper.selectOne(Wrappers.<MenuDO>lambdaQuery().eq(MenuDO::getTitle, title));
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(Menu.class, "title", title);
+            throw new EntityExistException(MenuDO.class, "title", title);
         if (StringUtils.isNotBlank(componentName)) {
             duplicate =
                     menuMapper.selectOne(
-                            Wrappers.<Menu>lambdaQuery().eq(Menu::getComponentName, componentName));
+                            Wrappers.<MenuDO>lambdaQuery().eq(MenuDO::getComponentName, componentName));
             if (duplicate != null && !duplicate.getId().equals(currentId))
-                throw new EntityExistException(Menu.class, "componentName", componentName);
+                throw new EntityExistException(MenuDO.class, "componentName", componentName);
         }
     }
 
@@ -162,19 +162,19 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(MenuDeleteRequest request) {
-        Map<Long, Menu> byId = new LinkedHashMap<>();
+        Map<Long, MenuDO> byId = new LinkedHashMap<>();
         request.getIds().forEach(id -> collect(findById(id), byId));
-        for (Menu menu : byId.values()) {
+        for (MenuDO menu : byId.values()) {
             delCaches(menu.getId());
             roleMenuMapper.delete(
-                    Wrappers.<RoleMenu>lambdaQuery().eq(RoleMenu::getMenuId, menu.getId()));
+                    Wrappers.<RoleMenuDO>lambdaQuery().eq(RoleMenuDO::getMenuId, menu.getId()));
             menuMapper.deleteById(menu.getId());
             updateSubCnt(menu.getPid());
         }
     }
 
     /** Collects a menu subtree once per ID so overlapping delete selections remain idempotent. */
-    private void collect(Menu menu, Map<Long, Menu> byId) {
+    private void collect(MenuDO menu, Map<Long, MenuDO> byId) {
         if (menu == null || byId.putIfAbsent(menu.getId(), menu) != null) return;
         getMenuEntities(menu.getId()).forEach(child -> collect(child, byId));
     }
@@ -184,19 +184,19 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         return assembler.toDtos(getMenuEntities(pid));
     }
 
-    private List<Menu> getMenuEntities(Long pid) {
-        LambdaQueryWrapper<Menu> wrapper = Wrappers.lambdaQuery();
+    private List<MenuDO> getMenuEntities(Long pid) {
+        LambdaQueryWrapper<MenuDO> wrapper = Wrappers.lambdaQuery();
         if (pid != null && !pid.equals(0L)) {
-            wrapper.eq(Menu::getPid, pid);
+            wrapper.eq(MenuDO::getPid, pid);
         } else {
-            wrapper.isNull(Menu::getPid);
+            wrapper.isNull(MenuDO::getPid);
         }
-        return menuMapper.selectList(wrapper.orderByAsc(Menu::getMenuSort));
+        return menuMapper.selectList(wrapper.orderByAsc(MenuDO::getMenuSort));
     }
 
     @Override
     public Set<Long> getChildIds(Long id) {
-        Map<Long, Menu> byId = new LinkedHashMap<>();
+        Map<Long, MenuDO> byId = new LinkedHashMap<>();
         collect(findById(id), byId);
         return byId.keySet();
     }
@@ -207,12 +207,12 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
      */
     @Override
     public List<MenuDTO> getSuperior(MenuSuperiorRequest request) {
-        Map<Long, Menu> byId = new LinkedHashMap<>();
+        Map<Long, MenuDO> byId = new LinkedHashMap<>();
         Set<Long> adjustedParents = new HashSet<>();
         for (Long id : request.getIds()) {
-            Menu menu = findById(id);
+            MenuDO menu = findById(id);
             if (menu == null) continue;
-            List<Menu> branch = getSuperiorEntities(menu, new ArrayList<>());
+            List<MenuDO> branch = getSuperiorEntities(menu, new ArrayList<>());
             if (request.isExclude()) {
                 if (menu.getPid() != null) adjustedParents.add(menu.getPid());
                 branch =
@@ -235,7 +235,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         return assembler.toTree(dtos);
     }
 
-    private List<Menu> getSuperiorEntities(Menu menu, List<Menu> result) {
+    private List<MenuDO> getSuperiorEntities(MenuDO menu, List<MenuDO> result) {
         if (menu.getPid() == null) {
             result.addAll(getMenuEntities(null));
             return result;
@@ -247,20 +247,20 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     private void updateSubCnt(Long id) {
         if (id != null) {
             long count = menuMapper.selectCount(
-                    Wrappers.<Menu>lambdaQuery().eq(Menu::getPid, id));
-            menuMapper.update(Wrappers.<Menu>lambdaUpdate()
-                    .eq(Menu::getId, id)
-                    .set(Menu::getSubCount, Math.toIntExact(count)));
+                    Wrappers.<MenuDO>lambdaQuery().eq(MenuDO::getPid, id));
+            menuMapper.update(Wrappers.<MenuDO>lambdaUpdate()
+                    .eq(MenuDO::getId, id)
+                    .set(MenuDO::getSubCount, Math.toIntExact(count)));
         }
     }
 
     private void delCaches(Long id) {
-        List<User> users = userMapper.findByMenuId(id);
+        List<UserDO> users = userMapper.findByMenuId(id);
         redisUtils.del(CacheKey.MENU_ID + id);
         redisUtils.delByKeys(
-                CacheKey.MENU_USER, users.stream().map(User::getId).collect(Collectors.toSet()));
-        List<Role> roles = roleService.findByMenuId(id);
+                CacheKey.MENU_USER, users.stream().map(UserDO::getId).collect(Collectors.toSet()));
+        List<RoleDO> roles = roleService.findByMenuId(id);
         redisUtils.delByKeys(
-                CacheKey.ROLE_ID, roles.stream().map(Role::getId).collect(Collectors.toSet()));
+                CacheKey.ROLE_ID, roles.stream().map(RoleDO::getId).collect(Collectors.toSet()));
     }
 }

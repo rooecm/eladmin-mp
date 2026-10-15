@@ -15,12 +15,13 @@
  */
 package fun.rooe.admin.aspect;
 
-import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.domain.SysLog;
-import fun.rooe.admin.service.SysLogService;
+import fun.rooe.admin.domain.SysLogDO;
 import fun.rooe.admin.framework.utils.RequestHolder;
 import fun.rooe.admin.framework.utils.SecurityUtils;
+import fun.rooe.admin.service.SysLogService;
 import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -29,7 +30,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author Zheng Jie
@@ -66,7 +66,7 @@ public class LogAspect {
         Object result;
         currentTime.set(System.currentTimeMillis());
         result = joinPoint.proceed();
-        SysLog sysLog = new SysLog("INFO",System.currentTimeMillis() - currentTime.get());
+        SysLogDO sysLog = new SysLogDO("INFO", System.currentTimeMillis() - currentTime.get());
         currentTime.remove();
         HttpServletRequest request = RequestHolder.getHttpServletRequest();
         sysLogService.save(getUsername(), StringUtils.getBrowser(request), StringUtils.getIp(request),joinPoint, sysLog);
@@ -81,7 +81,7 @@ public class LogAspect {
      */
     @AfterThrowing(pointcut = "logPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
-        SysLog sysLog = new SysLog("ERROR",System.currentTimeMillis() - currentTime.get());
+        SysLogDO sysLog = new SysLogDO("ERROR", System.currentTimeMillis() - currentTime.get());
         currentTime.remove();
         sysLog.setExceptionDetail(new String(ExceptionUtils.getStackTrace(e).getBytes()));
         HttpServletRequest request = RequestHolder.getHttpServletRequest();

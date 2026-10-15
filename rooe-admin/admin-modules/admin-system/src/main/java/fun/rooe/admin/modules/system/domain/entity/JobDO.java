@@ -6,10 +6,10 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
- * Persistence model for sys_dict.
+ * Persistence model for sys_job.
  */
-@TableName("sys_dict")
-public class Dict implements Serializable {
+@TableName("sys_job")
+public class JobDO implements Serializable {
     /**
      * Primary key.
      */
@@ -17,14 +17,19 @@ public class Dict implements Serializable {
     private Long id;
 
     /**
-     * Dictionary name.
+     * Job name.
      */
     private String name;
 
     /**
-     * Dictionary description.
+     * Whether the job is enabled.
      */
-    private String description;
+    private Boolean enabled;
+
+    /**
+     * Display order.
+     */
+    private Long jobSort;
 
     /**
      * Creator username.
@@ -66,12 +71,20 @@ public class Dict implements Serializable {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public Boolean getEnabled() {
+        return enabled;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Long getJobSort() {
+        return jobSort;
+    }
+
+    public void setJobSort(Long jobSort) {
+        this.jobSort = jobSort;
     }
 
     public String getCreateBy() {

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="fun.rooe.admin.modules.quartz.mapper.QuartzLogMapper">
 
-    <resultMap id="BaseResultMap" type="fun.rooe.admin.modules.quartz.domain.QuartzLog">
+    <resultMap id="BaseResultMap" type="fun.rooe.admin.modules.quartz.domain.QuartzLogDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
         <result column="bean_name" property="beanName" jdbcType="VARCHAR"/>

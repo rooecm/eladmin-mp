@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import fun.rooe.admin.modules.system.domain.entity.UserRole;
+import fun.rooe.admin.modules.system.domain.entity.UserRoleDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -24,5 +24,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2023-06-20
  */
 @Mapper
-public interface UserRoleMapper extends BaseMapper<UserRole> {
+public interface UserRoleMapper extends BaseMapper<UserRoleDO> {
 }

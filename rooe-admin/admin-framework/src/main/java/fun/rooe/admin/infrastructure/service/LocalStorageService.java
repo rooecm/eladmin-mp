@@ -17,11 +17,12 @@ package fun.rooe.admin.infrastructure.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.infrastructure.domain.LocalStorage;
+import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import fun.rooe.admin.response.PageResult;
-import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
 * @author Zheng Jie
 * @date 2019-09-05
 */
-public interface LocalStorageService extends IService<LocalStorage> {
+public interface LocalStorageService extends IService<LocalStorageDO> {
 
     /**
      * 分页查询
@@ -38,14 +39,14 @@ public interface LocalStorageService extends IService<LocalStorage> {
      * @param page     分页参数
      * @return /
      */
-    PageResult<LocalStorage> queryAll(LocalStorageQueryCriteria criteria, Page<Object> page);
+    PageResult<LocalStorageDO> queryAll(LocalStorageQueryCriteria criteria, Page<Object> page);
 
     /**
      * 查询全部数据
      * @param criteria 条件
      * @return /
      */
-    List<LocalStorage> queryAll(LocalStorageQueryCriteria criteria);
+    List<LocalStorageDO> queryAll(LocalStorageQueryCriteria criteria);
 
     /**
      * 上传
@@ -53,13 +54,13 @@ public interface LocalStorageService extends IService<LocalStorage> {
      * @param file 文件
      * @return /
      */
-    LocalStorage create(String name, MultipartFile file);
+    LocalStorageDO create(String name, MultipartFile file);
 
     /**
      * 编辑
      * @param resources 文件信息
      */
-    void update(LocalStorage resources);
+    void update(LocalStorageDO resources);
 
     /**
      * 多选删除
@@ -73,5 +74,5 @@ public interface LocalStorageService extends IService<LocalStorage> {
      * @param response /
      * @throws IOException /
      */
-    void download(List<LocalStorage> localStorages, HttpServletResponse response) throws IOException;
+    void download(List<LocalStorageDO> localStorages, HttpServletResponse response) throws IOException;
 }

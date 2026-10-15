@@ -15,17 +15,16 @@
  */
 package fun.rooe.admin.infrastructure.domain;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import fun.rooe.admin.framework.utils.BeanUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
-import fun.rooe.admin.framework.utils.BeanUtils;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -37,7 +36,7 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor
 @TableName("tool_local_storage")
-public class LocalStorage implements Serializable {
+public class LocalStorageDO implements Serializable {
 
     @CreatedBy
     @TableField(fill = FieldFill.INSERT)
@@ -81,7 +80,7 @@ public class LocalStorage implements Serializable {
     @Schema(description = "大小")
     private String size;
 
-    public LocalStorage(String realName,String name, String suffix, String path, String type, String size) {
+    public LocalStorageDO(String realName, String name, String suffix, String path, String type, String size) {
         this.realName = realName;
         this.name = name;
         this.suffix = suffix;
@@ -90,7 +89,7 @@ public class LocalStorage implements Serializable {
         this.size = size;
     }
 
-    public void copy(LocalStorage source){
+    public void copy(LocalStorageDO source) {
         BeanUtils.copyNonNullProperties(source, this);
     }
 }

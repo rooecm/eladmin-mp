@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.dto;
+package fun.rooe.admin.modules.security.domain.dto;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;

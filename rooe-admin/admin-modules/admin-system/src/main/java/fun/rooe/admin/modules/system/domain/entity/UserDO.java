@@ -10,7 +10,7 @@ import java.util.Date;
  * Persistence model for sys_user.
  */
 @TableName("sys_user")
-public class User implements Serializable {
+public class UserDO implements Serializable {
     /**
      * Primary key.
      */

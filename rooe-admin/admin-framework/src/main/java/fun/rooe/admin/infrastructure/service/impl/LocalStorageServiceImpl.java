@@ -17,29 +17,26 @@ package fun.rooe.admin.infrastructure.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.ExcelUtil;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
-import fun.rooe.admin.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.infrastructure.config.properties.FileProperties;
-import fun.rooe.admin.infrastructure.domain.LocalStorage;
-import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.infrastructure.config.properties.FileProperties;
+import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
+import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import fun.rooe.admin.infrastructure.mapper.LocalStorageMapper;
 import fun.rooe.admin.infrastructure.service.LocalStorageService;
+import fun.rooe.admin.infrastructure.utils.PageUtil;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.ExcelUtil;
+import fun.rooe.admin.utils.FileUtil;
+import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletResponse;
-import java.util.Objects;
+import java.util.*;
 
 /**
 * @author Zheng Jie
@@ -47,24 +44,24 @@ import java.util.Objects;
 */
 @Service
 @RequiredArgsConstructor
-public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, LocalStorage> implements LocalStorageService {
+public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, LocalStorageDO> implements LocalStorageService {
 
     private final LocalStorageMapper localStorageMapper;
     private final FileProperties properties;
 
     @Override
-    public PageResult<LocalStorage> queryAll(LocalStorageQueryCriteria criteria, Page<Object> page){
+    public PageResult<LocalStorageDO> queryAll(LocalStorageQueryCriteria criteria, Page<Object> page) {
         return PageUtil.toPage(localStorageMapper.findAll(criteria, page));
     }
 
     @Override
-    public List<LocalStorage> queryAll(LocalStorageQueryCriteria criteria){
+    public List<LocalStorageDO> queryAll(LocalStorageQueryCriteria criteria) {
         return localStorageMapper.findAll(criteria);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public LocalStorage create(String name, MultipartFile multipartFile) {
+    public LocalStorageDO create(String name, MultipartFile multipartFile) {
         FileUtil.checkSize(properties.getMaxSize(), multipartFile.getSize());
         String suffix = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
         String type = FileUtil.getFileType(suffix);
@@ -79,7 +76,7 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
         }
         try {
             name = StringUtils.isBlank(name) ? FileUtil.getFileNameNoEx(multipartFile.getOriginalFilename()) : name;
-            LocalStorage localStorage = new LocalStorage(
+            LocalStorageDO localStorage = new LocalStorageDO(
                     file.getName(),
                     name,
                     suffix,
@@ -97,8 +94,8 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(LocalStorage resources) {
-        LocalStorage localStorage = getById(resources.getId());
+    public void update(LocalStorageDO resources) {
+        LocalStorageDO localStorage = getById(resources.getId());
         localStorage.copy(resources);
         saveOrUpdate(localStorage);
     }
@@ -107,16 +104,16 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
     @Transactional(rollbackFor = Exception.class)
     public void deleteAll(Long[] ids) {
         for (Long id : ids) {
-            LocalStorage storage = getById(id);
+            LocalStorageDO storage = getById(id);
             FileUtil.del(storage.getPath());
             removeById(storage);
         }
     }
 
     @Override
-    public void download(List<LocalStorage> queryAll, HttpServletResponse response) throws IOException {
+    public void download(List<LocalStorageDO> queryAll, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (LocalStorage localStorage : queryAll) {
+        for (LocalStorageDO localStorage : queryAll) {
             Map<String,Object> map = new LinkedHashMap<>();
             map.put("文件名", localStorage.getRealName());
             map.put("备注名", localStorage.getName());

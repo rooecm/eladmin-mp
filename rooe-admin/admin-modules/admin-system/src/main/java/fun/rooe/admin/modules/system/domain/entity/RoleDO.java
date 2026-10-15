@@ -10,7 +10,7 @@ import java.sql.Timestamp;
  * Persistence model for sys_role.
  */
 @TableName("sys_role")
-public class Role implements Serializable {
+public class RoleDO implements Serializable {
     /**
      * Primary key.
      */

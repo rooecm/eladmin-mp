@@ -15,21 +15,17 @@
 */
 package fun.rooe.admin.infrastructure.domain;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import fun.rooe.admin.framework.utils.BeanUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import java.io.Serializable;
-import java.sql.Timestamp;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
-import fun.rooe.admin.framework.utils.BeanUtils;
+
+import java.io.Serializable;
+import java.sql.Timestamp;
 
 /**
 * @description /
@@ -38,7 +34,7 @@ import fun.rooe.admin.framework.utils.BeanUtils;
 **/
 @Data
 @TableName("tool_s3_storage")
-public class S3Storage implements Serializable {
+public class S3StorageDO implements Serializable {
 
     @CreatedBy
     @TableField(fill = FieldFill.INSERT)
@@ -88,7 +84,7 @@ public class S3Storage implements Serializable {
     @Schema(description = "文件路径")
     private String filePath;
 
-    public void copy(S3Storage source){
+    public void copy(S3StorageDO source) {
         BeanUtils.copyNonNullProperties(source, this);
     }
 }

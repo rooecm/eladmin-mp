@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.converter;
 
 import fun.rooe.admin.modules.system.domain.dto.JobDTO;
-import fun.rooe.admin.modules.system.domain.entity.Job;
+import fun.rooe.admin.modules.system.domain.entity.JobDO;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.JobUpdateRequest;
 import org.mapstruct.*;
@@ -15,19 +15,19 @@ import java.util.List;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface JobAssembler {
-    JobDTO toDto(Job entity);
+    JobDTO toDto(JobDO entity);
 
-    List<JobDTO> toDtos(List<Job> entities);
-
-    @BeanMapping(ignoreByDefault = true)
-    @Mapping(target = "name", source = "name")
-    @Mapping(target = "jobSort", source = "jobSort")
-    @Mapping(target = "enabled", source = "enabled")
-    Job toEntity(JobCreateRequest request);
+    List<JobDTO> toDtos(List<JobDO> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")
     @Mapping(target = "jobSort", source = "jobSort")
     @Mapping(target = "enabled", source = "enabled")
-    void updateEntity(JobUpdateRequest request, @MappingTarget Job entity);
+    JobDO toEntity(JobCreateRequest request);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "jobSort", source = "jobSort")
+    @Mapping(target = "enabled", source = "enabled")
+    void updateEntity(JobUpdateRequest request, @MappingTarget JobDO entity);
 }

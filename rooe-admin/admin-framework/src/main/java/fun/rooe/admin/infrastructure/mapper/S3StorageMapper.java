@@ -15,25 +15,26 @@
 */
 package fun.rooe.admin.infrastructure.mapper;
 
-import fun.rooe.admin.infrastructure.domain.S3Storage;
-import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
-import java.util.List;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import fun.rooe.admin.infrastructure.domain.S3StorageDO;
+import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author Zheng Jie
 * @date 2025-06-19
 **/
 @Mapper
-public interface S3StorageMapper extends BaseMapper<S3Storage> {
+public interface S3StorageMapper extends BaseMapper<S3StorageDO> {
 
-    IPage<S3Storage> findAll(@Param("criteria") S3StorageQueryCriteria criteria, Page<Object> page);
+    IPage<S3StorageDO> findAll(@Param("criteria") S3StorageQueryCriteria criteria, Page<Object> page);
 
-    List<S3Storage> findAll(@Param("criteria") S3StorageQueryCriteria criteria);
+    List<S3StorageDO> findAll(@Param("criteria") S3StorageQueryCriteria criteria);
 
     String selectFilePathById(@Param("id") Long id);
 }

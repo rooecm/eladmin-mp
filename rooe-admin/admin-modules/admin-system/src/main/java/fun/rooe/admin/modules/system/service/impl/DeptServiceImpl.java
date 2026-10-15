@@ -25,9 +25,9 @@ import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
-import fun.rooe.admin.modules.system.domain.entity.RoleDept;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDeptDO;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.mapper.RoleDeptMapper;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 */
 @Service
 @RequiredArgsConstructor
-public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
+public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptDO> implements DeptService {
 
     private final DeptMapper deptMapper;
     private final UserMapper userMapper;
@@ -67,8 +67,8 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 || (dataScope.isSelf() && dataScope.selfDeptId() == null)) {
             return List.of();
         }
-        LambdaQueryWrapper<Dept> queryWrapper = buildQueryWrapper(request, dataScope);
-        List<Dept> list = deptMapper.selectList(queryWrapper);
+        LambdaQueryWrapper<DeptDO> queryWrapper = buildQueryWrapper(request, dataScope);
+        List<DeptDO> list = deptMapper.selectList(queryWrapper);
         // Restricted scopes return only the highest visible nodes for tree rendering.
         if (!dataScope.isAll()) {
             list = deduplication(list);
@@ -76,7 +76,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         return deptAssembler.toDtos(list);
     }
 
-    private LambdaQueryWrapper<Dept> buildQueryWrapper(
+    private LambdaQueryWrapper<DeptDO> buildQueryWrapper(
             DeptQueryRequest request, UserDataScope dataScope) {
         boolean hasExplicitCondition = request.getName() != null
                 || request.getPid() != null
@@ -89,24 +89,24 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         if (dataScope.selfDeptId() != null) {
             visibleDeptIds.add(dataScope.selfDeptId());
         }
-        LambdaQueryWrapper<Dept> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.in(!dataScope.isAll(), Dept::getId, visibleDeptIds)
-                .like(StringUtils.isNotBlank(request.getName()), Dept::getName, request.getName())
-                .eq(request.getEnabled() != null, Dept::getEnabled, request.getEnabled())
-                .eq(request.getPid() != null, Dept::getPid, request.getPid())
-                .isNull(queryRootDept, Dept::getPid)
-                .orderByAsc(Dept::getDeptSort);
+        LambdaQueryWrapper<DeptDO> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(!dataScope.isAll(), DeptDO::getId, visibleDeptIds)
+                .like(StringUtils.isNotBlank(request.getName()), DeptDO::getName, request.getName())
+                .eq(request.getEnabled() != null, DeptDO::getEnabled, request.getEnabled())
+                .eq(request.getPid() != null, DeptDO::getPid, request.getPid())
+                .isNull(queryRootDept, DeptDO::getPid)
+                .orderByAsc(DeptDO::getDeptSort);
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
-            queryWrapper.between(Dept::getCreateTime,
+            queryWrapper.between(DeptDO::getCreateTime,
                     request.getCreateTime().get(0), request.getCreateTime().get(1));
         }
         return queryWrapper;
     }
 
     @Override
-    public Dept findById(Long id) {
+    public DeptDO findById(Long id) {
         String key = CacheKey.DEPT_ID + id;
-        Dept dept = redisUtils.get(key, Dept.class);
+        DeptDO dept = redisUtils.get(key, DeptDO.class);
         if(dept == null){
             dept = deptMapper.selectById(id);
             redisUtils.set(key, dept, 1, TimeUnit.DAYS);
@@ -115,12 +115,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public List<Dept> findByPid(long pid) {
-        return deptMapper.selectList(Wrappers.<Dept>lambdaQuery().eq(Dept::getPid, pid));
+    public List<DeptDO> findByPid(long pid) {
+        return deptMapper.selectList(Wrappers.<DeptDO>lambdaQuery().eq(DeptDO::getPid, pid));
     }
 
     @Override
-    public Set<Dept> findByRoleId(Long id) {
+    public Set<DeptDO> findByRoleId(Long id) {
         return deptMapper.findByRoleId(id);
     }
 
@@ -128,7 +128,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Transactional(rollbackFor = Exception.class)
     public void create(DeptCreateRequest request) {
         dataService.checkDeptAccess(request.getPid());
-        Dept dept = deptAssembler.toDept(request);
+        DeptDO dept = deptAssembler.toDept(request);
         save(dept);
         // 清理缓存
         updateSubCnt(dept.getPid());
@@ -149,7 +149,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         if(request.getPid() != null && request.getId().equals(request.getPid())) {
             throw new BadRequestException("上级不能为自己");
         }
-        Dept dept = getById(request.getId());
+        DeptDO dept = getById(request.getId());
         deptAssembler.updateDept(request, dept);
         saveOrUpdate(dept);
         // 更新父节点中子节点数目
@@ -162,9 +162,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(DeptDeleteRequest request) {
-        Map<Long, Dept> deptById = new LinkedHashMap<>();
+        Map<Long, DeptDO> deptById = new LinkedHashMap<>();
         for (Long id : request.getIds()) {
-            Dept dept = findById(id);
+            DeptDO dept = findById(id);
             if (dept != null) {
                 deptById.putIfAbsent(dept.getId(), dept);
                 collectDeleteDepts(findByPid(id), deptById);
@@ -172,7 +172,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         }
         dataService.checkDeptAccess(deptById.keySet());
         verification(deptById.values());
-        for (Dept dept : deptById.values()) {
+        for (DeptDO dept : deptById.values()) {
             // 清理缓存
             deptMapper.deleteById(dept.getId());
             updateSubCnt(dept.getPid());
@@ -180,10 +180,10 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         delCaches();
     }
 
-    private void collectDeleteDepts(List<Dept> deptList, Map<Long, Dept> deptById) {
-        for (Dept dept : deptList) {
+    private void collectDeleteDepts(List<DeptDO> deptList, Map<Long, DeptDO> deptById) {
+        for (DeptDO dept : deptList) {
             if (deptById.putIfAbsent(dept.getId(), dept) == null) {
-                List<Dept> children = findByPid(dept.getId());
+                List<DeptDO> children = findByPid(dept.getId());
                 if (!CollectionUtils.isEmpty(children)) {
                     collectDeleteDepts(children, deptById);
                 }
@@ -192,11 +192,11 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public List<Long> getDeptChildren(List<Dept> deptList) {
+    public List<Long> getDeptChildren(List<DeptDO> deptList) {
         List<Long> list = new ArrayList<>();
         deptList.forEach(dept -> {
                     if (dept!=null && dept.getEnabled()) {
-                        List<Dept> depts = findByPid(dept.getId());
+                        List<DeptDO> depts = findByPid(dept.getId());
                         if (!CollectionUtils.isEmpty(depts)) {
                             list.addAll(getDeptChildren(depts));
                         }
@@ -213,11 +213,11 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         UserDataScope dataScope = dataService.getCurrentDataScope();
         dataService.checkDeptReadAccess(ids);
         Set<Long> hierarchyIds = getHierarchyIds(ids);
-        Map<Long, Dept> deptById = new LinkedHashMap<>();
+        Map<Long, DeptDO> deptById = new LinkedHashMap<>();
         Set<Long> adjustedParentIds = new HashSet<>();
         for (Long id : ids) {
-            Dept dept = findById(id);
-            List<Dept> depts = getSuperiorDepts(dept, new ArrayList<>());
+            DeptDO dept = findById(id);
+            List<DeptDO> depts = getSuperiorDepts(dept, new ArrayList<>());
             if (request.isExclude()) {
                 if (dept.getPid() != null) {
                     adjustedParentIds.add(dept.getPid());
@@ -241,7 +241,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private Set<Long> getHierarchyIds(Collection<Long> deptIds) {
         Set<Long> hierarchyIds = new HashSet<>();
         for (Long deptId : deptIds) {
-            Dept current = findById(deptId);
+            DeptDO current = findById(deptId);
             while (current != null && hierarchyIds.add(current.getId())) {
                 current = current.getPid() == null ? null : findById(current.getPid());
             }
@@ -249,24 +249,24 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         return hierarchyIds;
     }
 
-    private List<Dept> getSuperiorDepts(Dept dept, List<Dept> depts) {
+    private List<DeptDO> getSuperiorDepts(DeptDO dept, List<DeptDO> depts) {
         if(dept.getPid() == null){
             depts.addAll(deptMapper.selectList(
-                    Wrappers.<Dept>lambdaQuery().isNull(Dept::getPid)));
+                    Wrappers.<DeptDO>lambdaQuery().isNull(DeptDO::getPid)));
             return depts;
         }
         depts.addAll(findByPid(dept.getPid()));
         return getSuperiorDepts(findById(dept.getPid()), depts);
     }
 
-    private void verification(Collection<Dept> depts) {
-        Set<Long> deptIds = depts.stream().map(Dept::getId).collect(Collectors.toSet());
+    private void verification(Collection<DeptDO> depts) {
+        Set<Long> deptIds = depts.stream().map(DeptDO::getId).collect(Collectors.toSet());
         if (userMapper.selectCount(
-                Wrappers.<User>lambdaQuery().in(User::getDeptId, deptIds)) > 0) {
+                Wrappers.<UserDO>lambdaQuery().in(UserDO::getDeptId, deptIds)) > 0) {
             throw new BadRequestException("所选部门存在用户关联，请解除后再试！");
         }
         if (roleDeptMapper.selectCount(
-                Wrappers.<RoleDept>lambdaQuery().in(RoleDept::getDeptId, deptIds)) > 0) {
+                Wrappers.<RoleDeptDO>lambdaQuery().in(RoleDeptDO::getDeptId, deptIds)) > 0) {
             throw new BadRequestException("所选部门存在角色关联，请解除后再试！");
         }
     }
@@ -274,18 +274,18 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private void updateSubCnt(Long deptId){
         if(deptId != null){
             long count = deptMapper.selectCount(
-                    Wrappers.<Dept>lambdaQuery().eq(Dept::getPid, deptId));
-            deptMapper.update(Wrappers.<Dept>lambdaUpdate()
-                    .eq(Dept::getId, deptId)
-                    .set(Dept::getSubCount, Math.toIntExact(count)));
+                    Wrappers.<DeptDO>lambdaQuery().eq(DeptDO::getPid, deptId));
+            deptMapper.update(Wrappers.<DeptDO>lambdaUpdate()
+                    .eq(DeptDO::getId, deptId)
+                    .set(DeptDO::getSubCount, Math.toIntExact(count)));
         }
     }
 
-    private List<Dept> deduplication(List<Dept> list) {
-        List<Dept> depts = new ArrayList<>();
-        for (Dept dept : list) {
+    private List<DeptDO> deduplication(List<DeptDO> list) {
+        List<DeptDO> depts = new ArrayList<>();
+        for (DeptDO dept : list) {
             boolean flag = true;
-            for (Dept dept1 : list) {
+            for (DeptDO dept1 : list) {
                 if (dept1.getId().equals(dept.getPid())) {
                     flag = false;
                     break;

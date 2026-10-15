@@ -16,18 +16,19 @@
 package fun.rooe.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.domain.SysLog;
-import fun.rooe.admin.service.SysLogService;
+import fun.rooe.admin.domain.SysLogDO;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
-import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.utils.SecurityUtils;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.service.SysLogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 /**
@@ -63,27 +64,27 @@ public class SysLogController {
     @GetMapping
     @Operation(summary = "日志查询")
     @PreAuthorize("@el.check()")
-    public PageResult<SysLog> queryLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLogDO> queryLog(SysLogQueryCriteria criteria) {
         criteria.setLogType("INFO");
-        Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
+        Page<SysLogDO> page = new Page<>(criteria.getPage(), criteria.getSize());
         return sysLogService.queryAll(criteria,page);
     }
 
     @GetMapping(value = "/user")
     @Operation(summary = "用户日志查询")
-    public PageResult<SysLog> queryUserLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLogDO> queryUserLog(SysLogQueryCriteria criteria) {
         criteria.setLogType("INFO");
         criteria.setUsername(SecurityUtils.getCurrentUsername());
-        Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
+        Page<SysLogDO> page = new Page<>(criteria.getPage(), criteria.getSize());
         return sysLogService.queryAllByUser(criteria,page);
     }
 
     @GetMapping(value = "/error")
     @Operation(summary = "错误日志查询")
     @PreAuthorize("@el.check()")
-    public PageResult<SysLog> queryErrorLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLogDO> queryErrorLog(SysLogQueryCriteria criteria) {
         criteria.setLogType("ERROR");
-        Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
+        Page<SysLogDO> page = new Page<>(criteria.getPage(), criteria.getSize());
         return sysLogService.queryAll(criteria,page);
     }
 

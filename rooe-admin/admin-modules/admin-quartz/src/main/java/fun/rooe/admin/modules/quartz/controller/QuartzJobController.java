@@ -19,8 +19,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
-import fun.rooe.admin.modules.quartz.domain.QuartzLog;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import fun.rooe.admin.modules.quartz.domain.QuartzLogDO;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
 import fun.rooe.admin.modules.quartz.service.QuartzJobService;
 import fun.rooe.admin.response.PageResult;
@@ -53,7 +53,7 @@ public class QuartzJobController {
     @Operation(summary = "查询定时任务")
     @GetMapping
     @PreAuthorize("@el.check('timing:list')")
-    public PageResult<QuartzJob> queryQuartzJob(QuartzJobQueryCriteria criteria) {
+    public PageResult<QuartzJobDO> queryQuartzJob(QuartzJobQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return quartzJobService.queryAll(criteria, page);
     }
@@ -75,7 +75,7 @@ public class QuartzJobController {
     @Operation(summary = "查询任务执行日志")
     @GetMapping(value = "/logs")
     @PreAuthorize("@el.check('timing:list')")
-    public PageResult<QuartzLog> queryQuartzJobLog(QuartzJobQueryCriteria criteria) {
+    public PageResult<QuartzLogDO> queryQuartzJobLog(QuartzJobQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return quartzJobService.queryAllLog(criteria, page);
     }
@@ -84,7 +84,7 @@ public class QuartzJobController {
     @Operation(summary = "新增定时任务")
     @PostMapping
     @PreAuthorize("@el.check('timing:add')")
-    public void createQuartzJob(@Validated @RequestBody QuartzJob resources) {
+    public void createQuartzJob(@Validated @RequestBody QuartzJobDO resources) {
         if (resources.getId() != null) {
             throw new BadRequestException("A new " + ENTITY_NAME + " cannot already have an ID");
         }
@@ -97,7 +97,7 @@ public class QuartzJobController {
     @Operation(summary = "修改定时任务")
     @PutMapping
     @PreAuthorize("@el.check('timing:edit')")
-    public void updateQuartzJob(@Validated(QuartzJob.Update.class) @RequestBody QuartzJob resources) {
+    public void updateQuartzJob(@Validated(QuartzJobDO.Update.class) @RequestBody QuartzJobDO resources) {
         // 验证Bean是不是合法的，合法的定时任务 Bean 需要用 @Service 定义
         checkBean(resources.getBeanName());
         quartzJobService.update(resources);

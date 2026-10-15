@@ -15,12 +15,12 @@
  */
 package fun.rooe.admin.infrastructure.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
 import java.io.Serializable;
 
 /**
@@ -30,7 +30,7 @@ import java.io.Serializable;
  */
 @Data
 @TableName("tool_email_config")
-public class EmailConfig implements Serializable {
+public class EmailConfigDO implements Serializable {
 
     @TableId("config_id")
     private Long id;

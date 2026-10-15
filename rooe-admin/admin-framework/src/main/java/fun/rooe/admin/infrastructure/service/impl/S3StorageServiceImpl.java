@@ -15,27 +15,25 @@
 */
 package fun.rooe.admin.infrastructure.service.impl;
 
-import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.infrastructure.config.AmzS3Config;
-import fun.rooe.admin.infrastructure.domain.S3Storage;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.utils.ExcelUtil;
-import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.infrastructure.service.S3StorageService;
+import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.infrastructure.config.AmzS3Config;
+import fun.rooe.admin.infrastructure.domain.S3StorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
 import fun.rooe.admin.infrastructure.mapper.S3StorageMapper;
+import fun.rooe.admin.infrastructure.service.S3StorageService;
+import fun.rooe.admin.infrastructure.utils.PageUtil;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.ExcelUtil;
+import fun.rooe.admin.utils.FileUtil;
 import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
-import java.util.*;
-import java.io.IOException;
-import jakarta.servlet.http.HttpServletResponse;
-import fun.rooe.admin.response.PageResult;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -43,7 +41,10 @@ import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
+
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
 * @description 服务实现
@@ -53,19 +54,19 @@ import java.text.SimpleDateFormat;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage> implements S3StorageService {
+public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3StorageDO> implements S3StorageService {
 
     private final S3Client s3Client;
     private final AmzS3Config amzS3Config;
     private final S3StorageMapper s3StorageMapper;
 
     @Override
-    public PageResult<S3Storage> queryAll(S3StorageQueryCriteria criteria, Page<Object> page){
+    public PageResult<S3StorageDO> queryAll(S3StorageQueryCriteria criteria, Page<Object> page) {
         return PageUtil.toPage(s3StorageMapper.findAll(criteria, page));
     }
 
     @Override
-    public List<S3Storage> queryAll(S3StorageQueryCriteria criteria){
+    public List<S3StorageDO> queryAll(S3StorageQueryCriteria criteria) {
         return s3StorageMapper.findAll(criteria);
     }
 
@@ -102,7 +103,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
     }
 
     @Override
-    public S3Storage upload(MultipartFile file) {
+    public S3StorageDO upload(MultipartFile file) {
         String bucketName = amzS3Config.getDefaultBucket();
         // 检查存储桶是否存在
         if (!bucketExists(bucketName)) {
@@ -127,12 +128,12 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
                 .bucket(amzS3Config.getDefaultBucket())
                 .key(filePath)
                 .build();
-        // 创建 S3Storage 实例
-        S3Storage s3Storage = new S3Storage();
+        // 创建 S3StorageDO 实例
+        S3StorageDO s3Storage = new S3StorageDO();
         try {
             // 上传文件到 S3
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-            // 设置 S3Storage 属性
+            // 设置 S3StorageDO 属性
             s3Storage.setFileMimeType(FileUtil.getMimeType(originalName));
             s3Storage.setFileName(originalName);
             s3Storage.setFileRealName(fileName);
@@ -149,9 +150,9 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
     }
 
     @Override
-    public void download(List<S3Storage> all, HttpServletResponse response) throws IOException {
+    public void download(List<S3StorageDO> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (S3Storage s3Storage : all) {
+        for (S3StorageDO s3Storage : all) {
             Map<String,Object> map = new LinkedHashMap<>();
             map.put("文件名称", s3Storage.getFileName());
             map.put("真实存储的名称", s3Storage.getFileRealName());
@@ -171,7 +172,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
     }
 
     public Map<String, String> privateDownload(Long id) {
-        S3Storage storage = s3StorageMapper.selectById(id);
+        S3StorageDO storage = s3StorageMapper.selectById(id);
         if (storage == null) {
             throw new BadRequestException("文件不存在或已被删除");
         }

@@ -1,17 +1,17 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.security.dto.AuthorityDTO;
+import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
 import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
-import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
 
 import java.util.List;
 import java.util.Set;
 
-public interface RoleService extends IService<Role> {
+public interface RoleService extends IService<RoleDO> {
     List<RoleDTO> queryAll();
 
     PageResult<RoleDTO> queryAll(RoleQueryRequest request);
@@ -26,7 +26,7 @@ public interface RoleService extends IService<Role> {
 
     void delete(RoleDeleteRequest request);
 
-    List<Role> findByUsersId(Long userId);
+    List<RoleDO> findByUsersId(Long userId);
 
     Integer findByRoleIds(Set<Long> roleIds);
 
@@ -36,5 +36,5 @@ public interface RoleService extends IService<Role> {
 
     List<AuthorityDTO> buildPermissions(UserLoginDTO user);
 
-    List<Role> findByMenuId(Long menuId);
+    List<RoleDO> findByMenuId(Long menuId);
 }

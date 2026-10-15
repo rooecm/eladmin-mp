@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,10 +13,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public interface UserService extends IService<User> {
-    User findById(long id);
+public interface UserService extends IService<UserDO> {
+    UserDO findById(long id);
 
-    User findByName(String userName);
+    UserDO findByName(String userName);
 
     UserLoginDTO getLoginData(String userName);
 

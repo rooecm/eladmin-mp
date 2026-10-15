@@ -6,8 +6,8 @@ import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
-import fun.rooe.admin.modules.system.domain.entity.Dept;
-import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.DeptDO;
+import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.mapper.*;
 import fun.rooe.admin.modules.system.service.DataService;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +47,7 @@ class RoleServiceImplDataScopeTest {
 
     @Test
     void deptAndChildRoleChecksTheExpandedTargetDepartment() {
-        Role role = role(1L, DataScopeEnum.DEPT_AND_CHILD);
+        RoleDO role = role(1L, DataScopeEnum.DEPT_AND_CHILD);
         when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
         when(dataService.expandDeptIds(List.of(10L))).thenReturn(Set.of(10L, 20L));
 
@@ -58,8 +58,8 @@ class RoleServiceImplDataScopeTest {
 
     @Test
     void customRoleChecksOnlyExplicitRoleDepartments() {
-        Role role = role(1L, DataScopeEnum.CUSTOM);
-        Dept dept = new Dept();
+        RoleDO role = role(1L, DataScopeEnum.CUSTOM);
+        DeptDO dept = new DeptDO();
         dept.setId(10L);
         when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
         when(deptMapper.findByRoleId(1L)).thenReturn(Set.of(dept));
@@ -72,7 +72,7 @@ class RoleServiceImplDataScopeTest {
 
     @Test
     void selfRoleDoesNotRequireDepartmentManagementAccess() {
-        Role role = role(1L, DataScopeEnum.SELF);
+        RoleDO role = role(1L, DataScopeEnum.SELF);
         when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
 
         service.checkDataScopes(Set.of(1L), 10L);
@@ -80,8 +80,8 @@ class RoleServiceImplDataScopeTest {
         verify(dataService, never()).checkDeptAccess(10L);
     }
 
-    private Role role(Long id, DataScopeEnum dataScope) {
-        Role role = new Role();
+    private RoleDO role(Long id, DataScopeEnum dataScope) {
+        RoleDO role = new RoleDO();
         role.setId(id);
         role.setName("role");
         role.setDataScope(dataScope.getValue());

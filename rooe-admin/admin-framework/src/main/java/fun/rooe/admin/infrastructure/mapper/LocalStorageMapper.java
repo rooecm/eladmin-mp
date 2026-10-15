@@ -18,10 +18,11 @@ package fun.rooe.admin.infrastructure.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.infrastructure.domain.LocalStorage;
+import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
 /**
@@ -30,9 +31,9 @@ import java.util.List;
  * @date 2023-06-14
  **/
 @Mapper
-public interface LocalStorageMapper extends BaseMapper<LocalStorage> {
+public interface LocalStorageMapper extends BaseMapper<LocalStorageDO> {
 
-    IPage<LocalStorage> findAll(@Param("criteria") LocalStorageQueryCriteria criteria, Page<Object> page);
+    IPage<LocalStorageDO> findAll(@Param("criteria") LocalStorageQueryCriteria criteria, Page<Object> page);
 
-    List<LocalStorage> findAll(@Param("criteria") LocalStorageQueryCriteria criteria);
+    List<LocalStorageDO> findAll(@Param("criteria") LocalStorageQueryCriteria criteria);
 }

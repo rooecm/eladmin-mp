@@ -17,8 +17,8 @@ package fun.rooe.admin.modules.quartz.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.quartz.domain.QuartzJob;
-import fun.rooe.admin.modules.quartz.domain.QuartzLog;
+import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import fun.rooe.admin.modules.quartz.domain.QuartzLogDO;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
 import fun.rooe.admin.response.PageResult;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +31,7 @@ import java.util.Set;
  * @author Zheng Jie
  * @date 2019-01-07
  */
-public interface QuartzJobService extends IService<QuartzJob> {
+public interface QuartzJobService extends IService<QuartzJobDO> {
 
     /**
      * 分页查询
@@ -40,7 +40,7 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param page     分页参数
      * @return /
      */
-    PageResult<QuartzJob> queryAll(QuartzJobQueryCriteria criteria, Page<Object> page);
+    PageResult<QuartzJobDO> queryAll(QuartzJobQueryCriteria criteria, Page<Object> page);
 
     /**
      * 查询全部
@@ -48,7 +48,7 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param criteria 条件
      * @return /
      */
-    List<QuartzJob> queryAll(QuartzJobQueryCriteria criteria);
+    List<QuartzJobDO> queryAll(QuartzJobQueryCriteria criteria);
 
     /**
      * 分页查询日志
@@ -57,7 +57,7 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param page     分页参数
      * @return /
      */
-    PageResult<QuartzLog> queryAllLog(QuartzJobQueryCriteria criteria, Page<Object> page);
+    PageResult<QuartzLogDO> queryAllLog(QuartzJobQueryCriteria criteria, Page<Object> page);
 
     /**
      * 查询全部
@@ -65,21 +65,21 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param criteria 条件
      * @return /
      */
-    List<QuartzLog> queryAllLog(QuartzJobQueryCriteria criteria);
+    List<QuartzLogDO> queryAllLog(QuartzJobQueryCriteria criteria);
 
     /**
      * 创建
      *
      * @param resources /
      */
-    void create(QuartzJob resources);
+    void create(QuartzJobDO resources);
 
     /**
      * 编辑
      *
      * @param resources /
      */
-    void update(QuartzJob resources);
+    void update(QuartzJobDO resources);
 
     /**
      * 删除任务
@@ -93,14 +93,14 @@ public interface QuartzJobService extends IService<QuartzJob> {
      *
      * @param quartzJob /
      */
-    void updateIsPause(QuartzJob quartzJob);
+    void updateIsPause(QuartzJobDO quartzJob);
 
     /**
      * 立即执行定时任务
      *
      * @param quartzJob /
      */
-    void execution(QuartzJob quartzJob);
+    void execution(QuartzJobDO quartzJob);
 
     /**
      * 导出定时任务
@@ -109,7 +109,7 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param response /
      * @throws IOException /
      */
-    void download(List<QuartzJob> queryAll, HttpServletResponse response) throws IOException;
+    void download(List<QuartzJobDO> queryAll, HttpServletResponse response) throws IOException;
 
     /**
      * 导出定时任务日志
@@ -118,7 +118,7 @@ public interface QuartzJobService extends IService<QuartzJob> {
      * @param response    /
      * @throws IOException /
      */
-    void downloadLog(List<QuartzLog> queryAllLog, HttpServletResponse response) throws IOException;
+    void downloadLog(List<QuartzLogDO> queryAllLog, HttpServletResponse response) throws IOException;
 
     /**
      * 执行子任务

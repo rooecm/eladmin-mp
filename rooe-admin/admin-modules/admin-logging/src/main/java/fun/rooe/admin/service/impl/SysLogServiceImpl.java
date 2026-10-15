@@ -21,15 +21,17 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.utils.ExcelUtil;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.domain.SysLog;
-import fun.rooe.admin.mapper.SysLogMapper;
-import fun.rooe.admin.service.SysLogService;
+import fun.rooe.admin.domain.SysLogDO;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
+import fun.rooe.admin.framework.annotation.Log;
+import fun.rooe.admin.mapper.SysLogMapper;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.service.SysLogService;
+import fun.rooe.admin.utils.ExcelUtil;
+import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.scheduling.annotation.Async;
@@ -37,8 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -50,33 +51,33 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
-public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> implements SysLogService {
+public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> implements SysLogService {
 
     private final SysLogMapper sysLogMapper;
     // 定义敏感字段常量数组
     private static final String[] SENSITIVE_KEYS = {"password"};
 
     @Override
-    public PageResult<SysLog> queryAll(SysLogQueryCriteria criteria, Page<SysLog> page) {
-        IPage<SysLog> result = sysLogMapper.queryAll(criteria, page);
+    public PageResult<SysLogDO> queryAll(SysLogQueryCriteria criteria, Page<SysLogDO> page) {
+        IPage<SysLogDO> result = sysLogMapper.queryAll(criteria, page);
         return new PageResult<>(result.getRecords(), result.getTotal());
     }
 
     @Override
-    public List<SysLog> queryAll(SysLogQueryCriteria criteria) {
+    public List<SysLogDO> queryAll(SysLogQueryCriteria criteria) {
         return sysLogMapper.queryAll(criteria);
     }
 
     @Override
-    public PageResult<SysLog> queryAllByUser(SysLogQueryCriteria criteria, Page<SysLog> page) {
-        IPage<SysLog> result = sysLogMapper.queryAllByUser(criteria, page);
+    public PageResult<SysLogDO> queryAllByUser(SysLogQueryCriteria criteria, Page<SysLogDO> page) {
+        IPage<SysLogDO> result = sysLogMapper.queryAllByUser(criteria, page);
         return new PageResult<>(result.getRecords(), result.getTotal());
     }
 
     @Async
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void save(String username, String browser, String ip, ProceedingJoinPoint joinPoint, SysLog sysLog) {
+    public void save(String username, String browser, String ip, ProceedingJoinPoint joinPoint, SysLogDO sysLog) {
         if (sysLog == null) {
             throw new IllegalArgumentException("Log 不能为 null!");
         }
@@ -161,9 +162,9 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
     }
 
     @Override
-    public void download(List<SysLog> sysLogs, HttpServletResponse response) throws IOException {
+    public void download(List<SysLogDO> sysLogs, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (SysLog sysLog : sysLogs) {
+        for (SysLogDO sysLog : sysLogs) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("用户名", sysLog.getUsername());
             map.put("IP", sysLog.getRequestIp());

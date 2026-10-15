@@ -15,13 +15,13 @@
  */
 package fun.rooe.admin.infrastructure.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
+import fun.rooe.admin.infrastructure.domain.EmailConfigDO;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
-import fun.rooe.admin.infrastructure.domain.EmailConfig;
 import fun.rooe.admin.infrastructure.service.EmailService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,14 +39,14 @@ public class EmailController {
     private final EmailService emailService;
 
     @GetMapping
-    public EmailConfig queryEmailConfig(){
+    public EmailConfigDO queryEmailConfig() {
         return emailService.find();
     }
 
     @Log("配置邮件")
     @PutMapping
     @Operation(summary = "配置邮件")
-    public void updateEmailConfig(@Validated @RequestBody EmailConfig emailConfig) throws Exception {
+    public void updateEmailConfig(@Validated @RequestBody EmailConfigDO emailConfig) throws Exception {
         emailService.config(emailConfig, emailService.find());
     }
 

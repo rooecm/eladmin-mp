@@ -16,7 +16,7 @@
 package fun.rooe.admin.infrastructure.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import fun.rooe.admin.infrastructure.domain.EmailConfig;
+import fun.rooe.admin.infrastructure.domain.EmailConfigDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -25,6 +25,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2023-06-14
  **/
 @Mapper
-public interface EmailConfigMapper extends BaseMapper<EmailConfig> {
+public interface EmailConfigMapper extends BaseMapper<EmailConfigDO> {
 
 }

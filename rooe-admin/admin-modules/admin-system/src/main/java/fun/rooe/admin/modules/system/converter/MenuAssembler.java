@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.system.converter;
 import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
 import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
 import fun.rooe.admin.modules.system.domain.dto.MenuRouterMetaDTO;
-import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.domain.request.MenuCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.MenuUpdateRequest;
 import fun.rooe.admin.utils.StringUtils;
@@ -20,9 +20,9 @@ import java.util.*;
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface MenuAssembler {
     @Mapping(target = "children", ignore = true)
-    MenuDTO toDto(Menu entity);
+    MenuDTO toDto(MenuDO entity);
 
-    List<MenuDTO> toDtos(List<Menu> entities);
+    List<MenuDTO> toDtos(List<MenuDO> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "pid", source = "pid")
@@ -37,10 +37,10 @@ public interface MenuAssembler {
     @Mapping(target = "cache", source = "cache")
     @Mapping(target = "hidden", source = "hidden")
     @Mapping(target = "permission", source = "permission")
-    Menu toEntity(MenuCreateRequest request);
+    MenuDO toEntity(MenuCreateRequest request);
 
     @InheritConfiguration(name = "toEntity")
-    void updateEntity(MenuUpdateRequest request, @MappingTarget Menu entity);
+    void updateEntity(MenuUpdateRequest request, @MappingTarget MenuDO entity);
 
     /** Builds a forest from a flat menu list while preserving the source query order. */
     default List<MenuDTO> toTree(List<MenuDTO> menus) {

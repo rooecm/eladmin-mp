@@ -16,27 +16,24 @@
 package fun.rooe.admin.infrastructure.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.infrastructure.domain.EmailConfig;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.infrastructure.domain.EmailConfigDO;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.mapper.EmailConfigMapper;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.utils.EncryptUtils;
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
+import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import java.nio.charset.StandardCharsets;
-import java.util.Properties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 /**
  * @author Zheng Jie
@@ -45,12 +42,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "email")
-public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfig> implements EmailService {
+public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfigDO> implements EmailService {
 
     @Override
     @CachePut(key = "'config'")
     @Transactional(rollbackFor = Exception.class)
-    public EmailConfig config(EmailConfig emailConfig, EmailConfig old) throws Exception {
+    public EmailConfigDO config(EmailConfigDO emailConfig, EmailConfigDO old) throws Exception {
         emailConfig.setId(1L);
         if(!emailConfig.getPass().equals(old.getPass())){
             // 对称加密
@@ -62,14 +59,14 @@ public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfig
 
     @Override
     @Cacheable(key = "'config'")
-    public EmailConfig find() {
-        EmailConfig emailConfig = getById(1L);
-        return emailConfig == null ? new EmailConfig() : emailConfig;
+    public EmailConfigDO find() {
+        EmailConfigDO emailConfig = getById(1L);
+        return emailConfig == null ? new EmailConfigDO() : emailConfig;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void send(EmailDTO emailDto, EmailConfig emailConfig){
+    public void send(EmailDTO emailDto, EmailConfigDO emailConfig) {
         if(emailConfig.getId() == null){
             throw new BadRequestException("请先配置，再操作");
         }

@@ -2,7 +2,7 @@ package fun.rooe.admin.modules.system.converter;
 
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
-import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.request.UserCenterUpdateRequest;
 import fun.rooe.admin.modules.system.domain.request.UserCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.UserUpdateRequest;
@@ -20,14 +20,14 @@ public interface UserAssembler {
     @Mapping(target = "dept", ignore = true)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "jobs", ignore = true)
-    UserDTO toDto(User entity);
+    UserDTO toDto(UserDO entity);
 
-    List<UserDTO> toDtos(List<User> entities);
+    List<UserDTO> toDtos(List<UserDO> entities);
 
     @Mapping(target = "dept", ignore = true)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "jobs", ignore = true)
-    UserLoginDTO toLoginDto(User entity);
+    UserLoginDTO toLoginDto(UserDO entity);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "deptId", source = "dept.id")
@@ -37,14 +37,14 @@ public interface UserAssembler {
     @Mapping(target = "phone", source = "phone")
     @Mapping(target = "gender", source = "gender")
     @Mapping(target = "enabled", source = "enabled")
-    User toEntity(UserCreateRequest request);
+    UserDO toEntity(UserCreateRequest request);
 
     @InheritConfiguration(name = "toEntity")
-    void updateEntity(UserUpdateRequest request, @MappingTarget User entity);
+    void updateEntity(UserUpdateRequest request, @MappingTarget UserDO entity);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "nickName", source = "nickName")
     @Mapping(target = "phone", source = "phone")
     @Mapping(target = "gender", source = "gender")
-    void updateCenter(UserCenterUpdateRequest request, @MappingTarget User entity);
+    void updateCenter(UserCenterUpdateRequest request, @MappingTarget UserDO entity);
 }

@@ -17,8 +17,8 @@ package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.security.dto.AuthorityDTO;
-import fun.rooe.admin.modules.security.dto.JwtUserDTO;
+import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
+import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.RoleService;

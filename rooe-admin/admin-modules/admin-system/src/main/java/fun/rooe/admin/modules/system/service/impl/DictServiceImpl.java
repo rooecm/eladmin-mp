@@ -8,8 +8,8 @@ import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.DictAssembler;
 import fun.rooe.admin.modules.system.domain.dto.DictDTO;
-import fun.rooe.admin.modules.system.domain.entity.Dict;
-import fun.rooe.admin.modules.system.domain.entity.DictDetail;
+import fun.rooe.admin.modules.system.domain.entity.DictDO;
+import fun.rooe.admin.modules.system.domain.entity.DictDetailDO;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDeleteRequest;
 import fun.rooe.admin.modules.system.domain.request.DictQueryRequest;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
-public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements DictService {
+public class DictServiceImpl extends ServiceImpl<DictMapper, DictDO> implements DictService {
     private final DictMapper dictMapper;
     private final DictDetailMapper dictDetailMapper;
     private final RedisUtils redisUtils;
@@ -41,7 +41,7 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
 
     @Override
     public PageResult<DictDTO> queryAll(DictQueryRequest request) {
-        Page<Dict> page = new Page<>(request.getPage(), request.getSize());
+        Page<DictDO> page = new Page<>(request.getPage(), request.getSize());
         dictMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assembler.toDtos(page.getRecords()), page.getTotal());
     }
@@ -51,18 +51,18 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
         return assembler.toDtos(dictMapper.selectList(wrapper(request)));
     }
 
-    private LambdaQueryWrapper<Dict> wrapper(DictQueryRequest request) {
-        LambdaQueryWrapper<Dict> wrapper = Wrappers.lambdaQuery();
+    private LambdaQueryWrapper<DictDO> wrapper(DictQueryRequest request) {
+        LambdaQueryWrapper<DictDO> wrapper = Wrappers.lambdaQuery();
         wrapper.and(
                         StringUtils.isNotBlank(request.getBlurry()),
                         query ->
-                                query.like(Dict::getName, request.getBlurry())
+                                query.like(DictDO::getName, request.getBlurry())
                                         .or()
-                                        .like(Dict::getDescription, request.getBlurry()))
-                .orderByDesc(Dict::getId);
+                                        .like(DictDO::getDescription, request.getBlurry()))
+                .orderByDesc(DictDO::getId);
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
             wrapper.between(
-                    Dict::getCreateTime,
+                    DictDO::getCreateTime,
                     request.getCreateTime().get(0),
                     request.getCreateTime().get(1));
         }
@@ -78,7 +78,7 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(DictUpdateRequest request) {
-        Dict dict = getById(request.getId());
+        DictDO dict = getById(request.getId());
         delCaches(dict);
         assembler.updateEntity(request, dict);
         updateById(dict);
@@ -87,21 +87,21 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(DictDeleteRequest request) {
-        List<Dict> dicts = dictMapper.selectBatchIds(request.getIds());
+        List<DictDO> dicts = dictMapper.selectBatchIds(request.getIds());
         dicts.forEach(this::delCaches);
         dictMapper.deleteBatchIds(request.getIds());
         dictDetailMapper.delete(
-                Wrappers.<DictDetail>lambdaQuery()
-                        .in(DictDetail::getDictId, request.getIds()));
+                Wrappers.<DictDetailDO>lambdaQuery()
+                        .in(DictDetailDO::getDictId, request.getIds()));
     }
 
     @Override
     public void download(List<DictDTO> dicts, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (DictDTO dict : dicts) {
-            List<DictDetail> details = dictDetailMapper.findByDictName(dict.getName());
+            List<DictDetailDO> details = dictDetailMapper.findByDictName(dict.getName());
             if (details.isEmpty()) details = Collections.singletonList(null);
-            for (DictDetail detail : details) {
+            for (DictDetailDO detail : details) {
                 Map<String, Object> row = new LinkedHashMap<>();
                 row.put("字典名称", dict.getName());
                 row.put("字典描述", dict.getDescription());
@@ -117,7 +117,7 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
         ExcelUtil.write(rows, response.getOutputStream());
     }
 
-    private void delCaches(Dict dict) {
+    private void delCaches(DictDO dict) {
         if (dict != null) redisUtils.del(CacheKey.DICT_NAME + dict.getName());
     }
 }

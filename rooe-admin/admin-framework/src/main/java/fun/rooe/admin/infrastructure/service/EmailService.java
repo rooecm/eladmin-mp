@@ -16,14 +16,14 @@
 package fun.rooe.admin.infrastructure.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import fun.rooe.admin.infrastructure.domain.EmailConfigDO;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
-import fun.rooe.admin.infrastructure.domain.EmailConfig;
 
 /**
  * @author Zheng Jie
  * @date 2018-12-26
  */
-public interface EmailService extends IService<EmailConfig> {
+public interface EmailService extends IService<EmailConfigDO> {
 
     /**
      * 更新邮件配置
@@ -32,18 +32,18 @@ public interface EmailService extends IService<EmailConfig> {
      * @return /
      * @throws Exception /
      */
-    EmailConfig config(EmailConfig emailConfig, EmailConfig old) throws Exception;
+    EmailConfigDO config(EmailConfigDO emailConfig, EmailConfigDO old) throws Exception;
 
     /**
      * 查询配置
-     * @return EmailConfig 邮件配置
+     * @return EmailConfigDO 邮件配置
      */
-    EmailConfig find();
+    EmailConfigDO find();
 
     /**
      * 发送邮件
      * @param emailDto 邮件发送的内容
      * @param emailConfig 邮件配置
      */
-    void send(EmailDTO emailDto, EmailConfig emailConfig);
+    void send(EmailDTO emailDto, EmailConfigDO emailConfig);
 }

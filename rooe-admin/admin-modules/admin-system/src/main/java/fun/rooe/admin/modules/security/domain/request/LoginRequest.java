@@ -13,24 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.dto;
+package fun.rooe.admin.modules.security.domain.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
 /**
- * 验证码响应：Base64 图片与校验用 key。
+ * 登录请求：仅表达客户端可提交的凭据字段。
  */
 @Getter
-@AllArgsConstructor
-public class CaptchaResponse implements Serializable {
+@Setter
+public class LoginRequest implements Serializable {
 
-    @Schema(description = "验证码图片（Base64）")
-    private final String img;
+    @NotBlank
+    @Schema(description = "用户名", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String username;
+
+    @NotBlank
+    @Schema(description = "密码（RSA 加密后的密文）", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String password;
+
+    @Schema(description = "验证码")
+    private String code;
 
     @Schema(description = "验证码的key")
-    private final String uuid;
+    private String uuid = "";
 }

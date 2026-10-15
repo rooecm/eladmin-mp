@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -28,10 +28,10 @@ import java.util.Set;
  * @date 2023-06-20
  */
 @Mapper
-public interface MenuMapper extends BaseMapper<Menu> {
+public interface MenuMapper extends BaseMapper<MenuDO> {
 
-    LinkedHashSet<Menu> findByRoleIdsAndTypeNot(
+    LinkedHashSet<MenuDO> findByRoleIdsAndTypeNot(
             @Param("roleIds") Set<Long> roleIds, @Param("type") Integer type);
 
-    Set<Menu> findByRoleId(@Param("roleId") Long roleId);
+    Set<MenuDO> findByRoleId(@Param("roleId") Long roleId);
 }
