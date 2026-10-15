@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dict;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictUpdateRequest;
@@ -15,9 +15,9 @@ import java.util.List;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DictAssembler {
-    DictDto toDto(Dict entity);
+    DictDTO toDto(Dict entity);
 
-    List<DictDto> toDtos(List<Dict> entities);
+    List<DictDTO> toDtos(List<Dict> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")

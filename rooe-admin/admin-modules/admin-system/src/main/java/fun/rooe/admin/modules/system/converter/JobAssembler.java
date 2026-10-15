@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.dto.JobDTO;
 import fun.rooe.admin.modules.system.domain.entity.Job;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.JobUpdateRequest;
@@ -15,9 +15,9 @@ import java.util.List;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface JobAssembler {
-    JobDto toDto(Job entity);
+    JobDTO toDto(Job entity);
 
-    List<JobDto> toDtos(List<Job> entities);
+    List<JobDTO> toDtos(List<Job> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")

@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.modules.system.service;
 
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 
 /**
  * @author Zheng Jie
@@ -29,7 +29,7 @@ public interface VerifyService {
      * @param key /
      * @return /
      */
-    EmailDto sendEmail(String email, String key);
+    EmailDTO sendEmail(String email, String key);
 
 
     /**

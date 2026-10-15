@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDTO;
 import fun.rooe.admin.modules.system.domain.request.DictDetailCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDetailQueryRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDetailUpdateRequest;
@@ -33,14 +33,14 @@ public class DictDetailController {
 
     @Operation(summary = "查询字典详情")
     @GetMapping
-    public PageResult<DictDetailDto> queryDictDetail(@Valid DictDetailQueryRequest request) {
+    public PageResult<DictDetailDTO> queryDictDetail(@Valid DictDetailQueryRequest request) {
       return dictDetailService.queryAll(request);
     }
 
     @Operation(summary = "查询多个字典详情")
     @GetMapping("/map")
-    public Map<String, List<DictDetailDto>> getDictDetailMaps(@RequestParam String dictName) {
-      Map<String, List<DictDetailDto>> result = new LinkedHashMap<>();
+    public Map<String, List<DictDetailDTO>> getDictDetailMaps(@RequestParam String dictName) {
+      Map<String, List<DictDetailDTO>> result = new LinkedHashMap<>();
       for (String name : dictName.split("[,，]"))
         result.put(name, dictDetailService.getDictByName(name));
       return result;

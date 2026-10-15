@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.dto.JobDTO;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.JobDeleteRequest;
 import fun.rooe.admin.modules.system.domain.request.JobQueryRequest;
@@ -39,7 +39,7 @@ public class JobController {
     @Operation(summary = "查询岗位")
     @GetMapping
     @PreAuthorize("@el.check('job:list','user:list')")
-    public PageResult<JobDto> queryJob(@Valid JobQueryRequest request) {
+    public PageResult<JobDTO> queryJob(@Valid JobQueryRequest request) {
       return jobService.queryAll(request);
     }
 

@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dict;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDeleteRequest;
@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.util.List;
 
 public interface DictService extends IService<Dict> {
-    PageResult<DictDto> queryAll(DictQueryRequest request);
+    PageResult<DictDTO> queryAll(DictQueryRequest request);
 
-    List<DictDto> queryList(DictQueryRequest request);
+    List<DictDTO> queryList(DictQueryRequest request);
 
     void create(DictCreateRequest request);
 
@@ -24,5 +24,5 @@ public interface DictService extends IService<Dict> {
 
     void delete(DictDeleteRequest request);
 
-    void download(List<DictDto> dicts, HttpServletResponse response) throws IOException;
+    void download(List<DictDTO> dicts, HttpServletResponse response) throws IOException;
 }

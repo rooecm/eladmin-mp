@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Data
 @AllArgsConstructor
-public class MenuRouterMetaDto implements Serializable {
+public class MenuRouterMetaDTO implements Serializable {
 
     @Schema(description = "菜单标题")
     private String title;

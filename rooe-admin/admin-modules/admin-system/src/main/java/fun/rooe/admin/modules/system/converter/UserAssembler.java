@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.UserDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.User;
 import fun.rooe.admin.modules.system.domain.request.UserCenterUpdateRequest;
 import fun.rooe.admin.modules.system.domain.request.UserCreateRequest;
@@ -20,14 +20,14 @@ public interface UserAssembler {
     @Mapping(target = "dept", ignore = true)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "jobs", ignore = true)
-    UserDto toDto(User entity);
+    UserDTO toDto(User entity);
 
-    List<UserDto> toDtos(List<User> entities);
+    List<UserDTO> toDtos(List<User> entities);
 
     @Mapping(target = "dept", ignore = true)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "jobs", ignore = true)
-    UserLoginDto toLoginDto(User entity);
+    UserLoginDTO toLoginDto(User entity);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "deptId", source = "dept.id")

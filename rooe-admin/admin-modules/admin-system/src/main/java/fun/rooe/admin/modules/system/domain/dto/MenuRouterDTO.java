@@ -10,7 +10,7 @@ import java.util.List;
  * Frontend router response assembled from the current user's authorized menus.
  */
 @Data
-public class MenuRouterDto implements Serializable {
+public class MenuRouterDTO implements Serializable {
 
     @Schema(description = "路由名称")
     private String name;
@@ -31,8 +31,8 @@ public class MenuRouterDto implements Serializable {
     private Boolean alwaysShow;
 
     @Schema(description = "路由元数据")
-    private MenuRouterMetaDto meta;
+    private MenuRouterMetaDTO meta;
 
     @Schema(description = "子路由")
-    private List<MenuRouterDto> children;
+    private List<MenuRouterDTO> children;
 }

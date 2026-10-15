@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDTO;
 import fun.rooe.admin.modules.system.domain.entity.DictDetail;
 import fun.rooe.admin.modules.system.domain.request.DictDetailCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDetailUpdateRequest;
@@ -16,9 +16,9 @@ import java.util.List;
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DictDetailAssembler {
     @Mapping(target = "dict", ignore = true)
-    DictDetailDto toDto(DictDetail entity);
+    DictDetailDTO toDto(DictDetail entity);
 
-    List<DictDetailDto> toDtos(List<DictDetail> entities);
+    List<DictDetailDTO> toDtos(List<DictDetail> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "dictId", source = "dict.id")

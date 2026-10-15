@@ -1,8 +1,8 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.MenuDto;
-import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
-import fun.rooe.admin.modules.system.domain.dto.MenuRouterMetaDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterMetaDTO;
 import fun.rooe.admin.modules.system.domain.entity.Menu;
 import fun.rooe.admin.modules.system.domain.request.MenuCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.MenuUpdateRequest;
@@ -20,9 +20,9 @@ import java.util.*;
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface MenuAssembler {
     @Mapping(target = "children", ignore = true)
-    MenuDto toDto(Menu entity);
+    MenuDTO toDto(Menu entity);
 
-    List<MenuDto> toDtos(List<Menu> entities);
+    List<MenuDTO> toDtos(List<Menu> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "pid", source = "pid")
@@ -43,15 +43,15 @@ public interface MenuAssembler {
     void updateEntity(MenuUpdateRequest request, @MappingTarget Menu entity);
 
     /** Builds a forest from a flat menu list while preserving the source query order. */
-    default List<MenuDto> toTree(List<MenuDto> menus) {
+    default List<MenuDTO> toTree(List<MenuDTO> menus) {
         if (menus == null || menus.isEmpty()) return new ArrayList<>();
-        Map<Long, MenuDto> byId = new LinkedHashMap<>();
+        Map<Long, MenuDTO> byId = new LinkedHashMap<>();
         menus.forEach(menu -> byId.putIfAbsent(menu.getId(), menu));
-        List<MenuDto> roots = new ArrayList<>();
+        List<MenuDTO> roots = new ArrayList<>();
         Set<Long> childIds = new HashSet<>();
-        for (MenuDto menu : byId.values()) {
+        for (MenuDTO menu : byId.values()) {
             if (menu.getPid() == null) roots.add(menu);
-            MenuDto parent = byId.get(menu.getPid());
+            MenuDTO parent = byId.get(menu.getPid());
             if (parent != null) {
                 if (parent.getChildren() == null) parent.setChildren(new ArrayList<>());
                 parent.getChildren().add(menu);
@@ -65,10 +65,10 @@ public interface MenuAssembler {
     /**
      * Converts the administrative menu tree into the route contract consumed by the frontend.
      */
-    default List<MenuRouterDto> toRouterDtos(List<MenuDto> menus) {
-        List<MenuRouterDto> result = new LinkedList<>();
-        for (MenuDto menu : menus) {
-            MenuRouterDto item = new MenuRouterDto();
+    default List<MenuRouterDTO> toRouterDtos(List<MenuDTO> menus) {
+        List<MenuRouterDTO> result = new LinkedList<>();
+        for (MenuDTO menu : menus) {
+            MenuRouterDTO item = new MenuRouterDTO();
             item.setName(
                     StringUtils.isNotBlank(menu.getComponentName())
                             ? menu.getComponentName()
@@ -86,7 +86,7 @@ public interface MenuAssembler {
                 }
             }
             item.setMeta(
-                    new MenuRouterMetaDto(
+                    new MenuRouterMetaDTO(
                             menu.getTitle(),
                             menu.getIcon(),
                             !Boolean.TRUE.equals(menu.getCache())));
@@ -95,7 +95,7 @@ public interface MenuAssembler {
                 item.setRedirect("noredirect");
                 item.setChildren(toRouterDtos(menu.getChildren()));
             } else if (menu.getPid() == null) {
-                MenuRouterDto child = new MenuRouterDto();
+                MenuRouterDTO child = new MenuRouterDTO();
                 child.setMeta(item.getMeta());
                 if (!Boolean.TRUE.equals(menu.getIFrame())) {
                     child.setPath("index");

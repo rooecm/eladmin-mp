@@ -15,8 +15,8 @@
  */
 package fun.rooe.admin.modules.security.converter;
 
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
-import fun.rooe.admin.modules.security.dto.OnlineUserDto;
+import fun.rooe.admin.modules.security.dto.JwtUserDTO;
+import fun.rooe.admin.modules.security.dto.OnlineUserDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -43,8 +43,8 @@ public interface OnlineUserAssembler {
     @Mapping(target = "address", source = "address")
     @Mapping(target = "key", source = "key")
     @Mapping(target = "loginTime", source = "loginTime")
-    OnlineUserDto toOnlineUser(
-            JwtUserDto jwtUserDto,
+    OnlineUserDTO toOnlineUser(
+            JwtUserDTO jwtUserDto,
             String id,
             String deptName,
             String browser,

@@ -11,13 +11,13 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.security.dto.AuthorityDto;
+import fun.rooe.admin.modules.security.dto.AuthorityDTO;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
-import fun.rooe.admin.modules.system.domain.dto.RoleDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.*;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
@@ -55,13 +55,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private final MenuAssembler menuAssembler;
 
     @Override
-    public List<RoleDto> queryAll() {
+    public List<RoleDTO> queryAll() {
         return assemble(
                 roleMapper.selectList(Wrappers.<Role>lambdaQuery().orderByAsc(Role::getLevel)));
     }
 
     @Override
-    public PageResult<RoleDto> queryAll(RoleQueryRequest request) {
+    public PageResult<RoleDTO> queryAll(RoleQueryRequest request) {
         Page<Role> page = new Page<>(request.getPage(), request.getSize());
         roleMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assemble(page.getRecords()), page.getTotal());
@@ -84,9 +84,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return wrapper;
     }
 
-    private List<RoleDto> assemble(List<Role> roles) {
-        List<RoleDto> result = assembler.toDtos(roles);
-        for (RoleDto dto : result) {
+    private List<RoleDTO> assemble(List<Role> roles) {
+        List<RoleDTO> result = assembler.toDtos(roles);
+        for (RoleDTO dto : result) {
             DataScopeEnum dataScope = DataScopeEnum.find(dto.getDataScope());
             if (dataScope != null) {
                 dto.setDataScope(dataScope.getValue());
@@ -104,8 +104,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public RoleDto findDtoById(Long id) {
-        List<RoleDto> result = assemble(List.of(findById(id)));
+    public RoleDTO findDtoById(Long id) {
+        List<RoleDTO> result = assemble(List.of(findById(id)));
         return result.get(0);
     }
 
@@ -332,11 +332,11 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     /** Builds deduplicated menu permissions for the authentication principal. */
     @Override
-    public List<AuthorityDto> buildPermissions(UserLoginDto user) {
+    public List<AuthorityDTO> buildPermissions(UserLoginDTO user) {
         String key = CacheKey.ROLE_AUTH + user.getId();
-        List<AuthorityDto> cached = redisUtils.getList(key, AuthorityDto.class);
+        List<AuthorityDTO> cached = redisUtils.getList(key, AuthorityDTO.class);
         if (!CollectionUtils.isEmpty(cached)) return cached;
-        if (Boolean.TRUE.equals(user.getIsAdmin())) return List.of(new AuthorityDto("admin"));
+        if (Boolean.TRUE.equals(user.getIsAdmin())) return List.of(new AuthorityDTO("admin"));
         Set<String> permissions = new HashSet<>();
         for (Role role : roleMapper.findByUserId(user.getId())) {
             menuMapper.findByRoleId(role.getId()).stream()
@@ -344,7 +344,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
                     .filter(StringUtils::isNotBlank)
                     .forEach(permissions::add);
         }
-        cached = permissions.stream().map(AuthorityDto::new).toList();
+        cached = permissions.stream().map(AuthorityDTO::new).toList();
         redisUtils.set(key, cached, 1, TimeUnit.HOURS);
         return cached;
     }

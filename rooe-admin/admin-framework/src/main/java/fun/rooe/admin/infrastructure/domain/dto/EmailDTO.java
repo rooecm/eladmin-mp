@@ -13,24 +13,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.dto;
+package fun.rooe.admin.infrastructure.domain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
 
 /**
- * 避免序列化问题
- * @author Zheng Jie
- * @date 2018-11-30
+ * 发送邮件时，接收参数的类
+ * @author 郑杰
+ * @date 2018/09/28 12:02:14
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class AuthorityDto implements GrantedAuthority {
+@NoArgsConstructor
+public class EmailDTO {
 
-    @Schema(description = "角色名")
-    private String authority;
+    @NotEmpty
+    @Schema(description = "收件人")
+    private List<String> tos;
+
+    @NotBlank
+    @Schema(description = "主题")
+    private String subject;
+
+    @NotBlank
+    @Schema(description = "内容")
+    private String content;
 }

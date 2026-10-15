@@ -17,9 +17,9 @@ package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.security.dto.AuthorityDto;
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.security.dto.AuthorityDTO;
+import fun.rooe.admin.modules.security.dto.JwtUserDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.service.UserService;
@@ -44,10 +44,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserCacheManager userCacheManager;
 
     @Override
-    public JwtUserDto loadUserByUsername(String username) {
-        JwtUserDto jwtUserDto = userCacheManager.getUserCache(username);
+    public JwtUserDTO loadUserByUsername(String username) {
+        JwtUserDTO jwtUserDto = userCacheManager.getUserCache(username);
         if (jwtUserDto == null || jwtUserDto.getDataScopeMode() == null) {
-            UserLoginDto user = userService.getLoginData(username);
+            UserLoginDTO user = userService.getLoginData(username);
             if (user == null) {
                 throw new BadRequestException("用户不存在");
             } else {
@@ -55,10 +55,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     throw new BadRequestException("账号未激活！");
                 }
                 // 获取用户的权限
-                List<AuthorityDto> authorities = roleService.buildPermissions(user);
+                List<AuthorityDTO> authorities = roleService.buildPermissions(user);
                 // 初始化JwtUserDto
                 UserDataScope dataScope = dataService.getDataScope(user.getId(), user.getDeptId());
-                jwtUserDto = new JwtUserDto(
+                jwtUserDto = new JwtUserDTO(
                         user,
                         dataScope.deptIds(),
                         dataScope.mode(),

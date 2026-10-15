@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.DictAssembler;
-import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dict;
 import fun.rooe.admin.modules.system.domain.entity.DictDetail;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
@@ -40,14 +40,14 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
     private final DictAssembler assembler;
 
     @Override
-    public PageResult<DictDto> queryAll(DictQueryRequest request) {
+    public PageResult<DictDTO> queryAll(DictQueryRequest request) {
         Page<Dict> page = new Page<>(request.getPage(), request.getSize());
         dictMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assembler.toDtos(page.getRecords()), page.getTotal());
     }
 
     @Override
-    public List<DictDto> queryList(DictQueryRequest request) {
+    public List<DictDTO> queryList(DictQueryRequest request) {
         return assembler.toDtos(dictMapper.selectList(wrapper(request)));
     }
 
@@ -96,9 +96,9 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
     }
 
     @Override
-    public void download(List<DictDto> dicts, HttpServletResponse response) throws IOException {
+    public void download(List<DictDTO> dicts, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> rows = new ArrayList<>();
-        for (DictDto dict : dicts) {
+        for (DictDTO dict : dicts) {
             List<DictDetail> details = dictDetailMapper.findByDictName(dict.getName());
             if (details.isEmpty()) details = Collections.singletonList(null);
             for (DictDetail detail : details) {

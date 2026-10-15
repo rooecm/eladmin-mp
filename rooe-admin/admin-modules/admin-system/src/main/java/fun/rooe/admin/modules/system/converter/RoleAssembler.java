@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.RoleDto;
+import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
 import fun.rooe.admin.modules.system.domain.entity.Role;
 import fun.rooe.admin.modules.system.domain.request.RoleCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.RoleUpdateRequest;
@@ -17,9 +17,9 @@ import java.util.List;
 public interface RoleAssembler {
     @Mapping(target = "menus", ignore = true)
     @Mapping(target = "depts", ignore = true)
-    RoleDto toDto(Role entity);
+    RoleDTO toDto(Role entity);
 
-    List<RoleDto> toDtos(List<Role> entities);
+    List<RoleDTO> toDtos(List<Role> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")

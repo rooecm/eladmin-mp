@@ -18,7 +18,7 @@ package fun.rooe.admin.modules.security.dto;
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,10 +34,10 @@ import java.util.stream.Collectors;
  */
 @Getter
 @AllArgsConstructor
-public class JwtUserDto implements UserDetails {
+public class JwtUserDTO implements UserDetails {
 
     @Schema(description = "用户")
-    private final UserLoginDto user;
+    private final UserLoginDTO user;
 
     @Schema(description = "数据权限")
     private final List<Long> dataScopes;
@@ -49,10 +49,10 @@ public class JwtUserDto implements UserDetails {
     private final boolean dataScopeIncludesSelf;
 
     @Schema(description = "角色")
-    private final List<AuthorityDto> authorities;
+    private final List<AuthorityDTO> authorities;
 
-    public JwtUserDto(
-            UserLoginDto user, List<Long> dataScopes, List<AuthorityDto> authorities) {
+    public JwtUserDTO(
+            UserLoginDTO user, List<Long> dataScopes, List<AuthorityDTO> authorities) {
         this(
                 user,
                 dataScopes,
@@ -64,7 +64,7 @@ public class JwtUserDto implements UserDetails {
     }
 
     public Set<String> getRoles() {
-        return authorities.stream().map(AuthorityDto::getAuthority).collect(Collectors.toSet());
+        return authorities.stream().map(AuthorityDTO::getAuthority).collect(Collectors.toSet());
     }
 
     @Override

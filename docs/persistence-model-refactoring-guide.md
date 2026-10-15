@@ -72,7 +72,7 @@ DeptUpdateRequest            修改请求
 DeptQueryRequest             查询请求
 DeptDeleteRequest            删除请求
 DeptSuperiorRequest          上级部门树查询请求
-DeptDto                      API 响应
+DeptDTO                      API 响应
 DeptAssembler                MapStruct 转换与部门树组装
 ```
 
@@ -89,12 +89,12 @@ Controller 最终只保留协议层逻辑：
 
 ```java
 @GetMapping
-public List<DeptDto> queryDept(@Valid DeptQueryRequest request) {
+public List<DeptDTO> queryDept(@Valid DeptQueryRequest request) {
     return deptService.queryAll(request);
 }
 
 @PostMapping("/superior")
-public List<DeptDto> getDeptSuperior(
+public List<DeptDTO> getDeptSuperior(
         @Valid @RequestBody DeptSuperiorRequest request) {
     return deptService.getSuperior(request);
 }

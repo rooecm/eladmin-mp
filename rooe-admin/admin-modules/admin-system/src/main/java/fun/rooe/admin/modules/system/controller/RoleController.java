@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.RoleDto;
+import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.response.PageResult;
@@ -31,21 +31,21 @@ public class RoleController {
     @Operation(summary = "获取单个角色")
     @GetMapping("/{id}")
     @PreAuthorize("@el.check('roles:list')")
-    public RoleDto findRoleById(@PathVariable @Positive Long id) {
+    public RoleDTO findRoleById(@PathVariable @Positive Long id) {
         return roleService.findDtoById(id);
     }
 
     @Operation(summary = "返回全部角色")
     @GetMapping("/all")
     @PreAuthorize("@el.check('roles:list','user:add','user:edit')")
-    public List<RoleDto> queryAllRole() {
+    public List<RoleDTO> queryAllRole() {
         return roleService.queryAll();
     }
 
     @Operation(summary = "查询角色")
     @GetMapping
     @PreAuthorize("@el.check('roles:list')")
-    public PageResult<RoleDto> queryRole(@Valid RoleQueryRequest request) {
+    public PageResult<RoleDTO> queryRole(@Valid RoleQueryRequest request) {
         return roleService.queryAll(request);
     }
 

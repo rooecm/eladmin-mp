@@ -22,8 +22,8 @@ import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.security.converter.OnlineUserAssembler;
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
-import fun.rooe.admin.modules.security.dto.OnlineUserDto;
+import fun.rooe.admin.modules.security.dto.JwtUserDTO;
+import fun.rooe.admin.modules.security.dto.OnlineUserDTO;
 import fun.rooe.admin.modules.security.request.OnlineUserDeleteRequest;
 import fun.rooe.admin.modules.security.request.OnlineUserQueryRequest;
 import fun.rooe.admin.response.PageResult;
@@ -66,7 +66,7 @@ public class OnlineUserService implements OnlineSessionService {
      * @param token /
      * @param request /
      */
-    public void save(JwtUserDto jwtUserDto, String token, HttpServletRequest request) {
+    public void save(JwtUserDTO jwtUserDto, String token, HttpServletRequest request) {
         String dept =
                 jwtUserDto.getUser().getDept() == null
                         ? null
@@ -75,7 +75,7 @@ public class OnlineUserService implements OnlineSessionService {
         String id = tokenProvider.getId(token);
         String browser = StringUtils.getBrowser(request);
         String address = StringUtils.getCityInfo(ip);
-        OnlineUserDto onlineUserDto = null;
+        OnlineUserDTO onlineUserDto = null;
         try {
             String key = EncryptUtils.desEncrypt(token);
             onlineUserDto =
@@ -98,8 +98,8 @@ public class OnlineUserService implements OnlineSessionService {
      * @param request 查询条件
      * @return /
      */
-    public PageResult<OnlineUserDto> getAll(OnlineUserQueryRequest request) {
-        List<OnlineUserDto> onlineUserDtos = getAll(request.getUsername());
+    public PageResult<OnlineUserDTO> getAll(OnlineUserQueryRequest request) {
+        List<OnlineUserDTO> onlineUserDtos = getAll(request.getUsername());
         return PageUtil.toPage(
                 PageUtil.paging(request.getPage(), request.getSize(), onlineUserDtos),
                 onlineUserDtos.size());
@@ -111,14 +111,14 @@ public class OnlineUserService implements OnlineSessionService {
      * @param username /
      * @return /
      */
-    public List<OnlineUserDto> getAll(String username) {
+    public List<OnlineUserDTO> getAll(String username) {
         String loginKey =
                 properties.getOnlineKey() + (StringUtils.isBlank(username) ? "" : "*" + username);
         List<String> keys = redisUtils.scan(loginKey + "*");
         Collections.reverse(keys);
-        List<OnlineUserDto> onlineUserDtos = new ArrayList<>();
+        List<OnlineUserDTO> onlineUserDtos = new ArrayList<>();
         for (String key : keys) {
-            onlineUserDtos.add(redisUtils.get(key, OnlineUserDto.class));
+            onlineUserDtos.add(redisUtils.get(key, OnlineUserDTO.class));
         }
         onlineUserDtos.sort((o1, o2) -> o2.getLoginTime().compareTo(o1.getLoginTime()));
         return onlineUserDtos;
@@ -156,9 +156,9 @@ public class OnlineUserService implements OnlineSessionService {
      * @param response /
      * @throws IOException /
      */
-    public void download(List<OnlineUserDto> all, HttpServletResponse response) throws IOException {
+    public void download(List<OnlineUserDTO> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
-        for (OnlineUserDto user : all) {
+        for (OnlineUserDTO user : all) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("用户名", user.getUserName());
             map.put("部门", user.getDept());
@@ -180,8 +180,8 @@ public class OnlineUserService implements OnlineSessionService {
      * @param key /
      * @return /
      */
-    public OnlineUserDto getOne(String key) {
-        return redisUtils.get(key, OnlineUserDto.class);
+    public OnlineUserDTO getOne(String key) {
+        return redisUtils.get(key, OnlineUserDTO.class);
     }
 
     @Override

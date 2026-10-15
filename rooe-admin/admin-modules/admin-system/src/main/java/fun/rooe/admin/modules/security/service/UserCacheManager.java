@@ -17,7 +17,7 @@ package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.framework.config.security.config.LoginProperties;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
+import fun.rooe.admin.modules.security.dto.JwtUserDTO;
 import fun.rooe.admin.utils.StringUtils;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,14 +42,14 @@ public class UserCacheManager {
     /**
      * 返回用户缓存
      * @param userName 用户名
-     * @return JwtUserDto
+     * @return JwtUserDTO
      */
-    public JwtUserDto getUserCache(String userName) {
+    public JwtUserDTO getUserCache(String userName) {
         // 转小写
         userName = StringUtils.lowerCase(userName);
         if (StringUtils.isNotEmpty(userName)) {
             // 获取数据
-            return redisUtils.get(LoginProperties.cacheKey + userName, JwtUserDto.class);
+            return redisUtils.get(LoginProperties.cacheKey + userName, JwtUserDTO.class);
         }
         return null;
     }
@@ -59,7 +59,7 @@ public class UserCacheManager {
      * @param userName 用户名
      */
     @Async
-    public void addUserCache(String userName, JwtUserDto user) {
+    public void addUserCache(String userName, JwtUserDTO user) {
         // 转小写
         userName = StringUtils.lowerCase(userName);
         if (StringUtils.isNotEmpty(userName)) {

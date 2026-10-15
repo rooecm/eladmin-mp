@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class DeptDto implements Serializable {
+public class DeptDTO implements Serializable {
 
     @Schema(description = "创建人")
     private String createBy;
@@ -51,7 +51,7 @@ public class DeptDto implements Serializable {
     private Long id;
 
     @Schema(description = "子部门")
-    private List<DeptDto> children;
+    private List<DeptDTO> children;
 
     @Schema(description = "排序")
     private Integer deptSort;

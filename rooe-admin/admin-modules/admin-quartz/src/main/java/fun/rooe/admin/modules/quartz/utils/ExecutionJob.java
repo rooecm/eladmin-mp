@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.quartz.utils;
 
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.quartz.domain.QuartzJob;
@@ -108,7 +108,7 @@ public class ExecutionJob extends QuartzJobBean {
                 EmailService emailService = SpringBeanHolder.getBean(EmailService.class);
                 // 邮箱报警
                 if (StringUtils.isNoneBlank(quartzJob.getEmail())) {
-                    EmailDto emailDto = taskAlarm(quartzJob, ExceptionUtils.getStackTrace(e));
+                    EmailDTO emailDto = taskAlarm(quartzJob, ExceptionUtils.getStackTrace(e));
                     emailService.send(emailDto, emailService.find());
                 }
             }
@@ -117,8 +117,8 @@ public class ExecutionJob extends QuartzJobBean {
         }
     }
 
-    private EmailDto taskAlarm(QuartzJob quartzJob, String msg) {
-        EmailDto emailDto = new EmailDto();
+    private EmailDTO taskAlarm(QuartzJob quartzJob, String msg) {
+        EmailDTO emailDto = new EmailDTO();
         emailDto.setSubject("定时任务【" + quartzJob.getJobName() + "】执行失败，请尽快处理！");
         Map<String, Object> data = new HashMap<>(16);
         data.put("task", quartzJob);

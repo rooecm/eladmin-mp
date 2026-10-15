@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.DeptDto;
+import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.DeptService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,14 +43,14 @@ public class DeptController {
     @Operation(summary = "查询部门")
     @GetMapping
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public List<DeptDto> queryDept(@Valid DeptQueryRequest request) {
+    public List<DeptDTO> queryDept(@Valid DeptQueryRequest request) {
         return deptService.queryAll(request);
     }
 
     @Operation(summary = "查询部门:根据ID获取同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public List<DeptDto> getDeptSuperior(@Valid @RequestBody DeptSuperiorRequest request) {
+    public List<DeptDTO> getDeptSuperior(@Valid @RequestBody DeptSuperiorRequest request) {
         return deptService.getSuperior(request);
     }
 

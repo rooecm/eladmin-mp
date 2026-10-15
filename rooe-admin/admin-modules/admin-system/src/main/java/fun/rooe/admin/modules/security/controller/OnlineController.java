@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.modules.security.controller;
 
-import fun.rooe.admin.modules.security.dto.OnlineUserDto;
+import fun.rooe.admin.modules.security.dto.OnlineUserDTO;
 import fun.rooe.admin.modules.security.request.OnlineUserDeleteRequest;
 import fun.rooe.admin.modules.security.request.OnlineUserQueryRequest;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
@@ -48,7 +48,7 @@ public class OnlineController {
     @Operation(summary = "查询在线用户")
     @GetMapping
     @PreAuthorize("@el.check()")
-    public PageResult<OnlineUserDto> queryOnlineUser(@Valid OnlineUserQueryRequest request) {
+    public PageResult<OnlineUserDTO> queryOnlineUser(@Valid OnlineUserQueryRequest request) {
         return onlineUserService.getAll(request);
     }
 

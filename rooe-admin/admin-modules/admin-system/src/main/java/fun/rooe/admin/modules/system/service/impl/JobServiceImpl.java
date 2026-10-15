@@ -9,7 +9,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
-import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.dto.JobDTO;
 import fun.rooe.admin.modules.system.domain.entity.Job;
 import fun.rooe.admin.modules.system.domain.entity.UserJob;
 import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
@@ -46,14 +46,14 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     private final JobAssembler assembler;
 
     @Override
-    public PageResult<JobDto> queryAll(JobQueryRequest request) {
+    public PageResult<JobDTO> queryAll(JobQueryRequest request) {
         Page<Job> page = new Page<>(request.getPage(), request.getSize());
         jobMapper.selectPage(page, wrapper(request));
         return new PageResult<>(assembler.toDtos(page.getRecords()), page.getTotal());
     }
 
     @Override
-    public List<JobDto> queryList(JobQueryRequest request) {
+    public List<JobDTO> queryList(JobQueryRequest request) {
         return assembler.toDtos(jobMapper.selectList(wrapper(request)));
     }
 
@@ -120,9 +120,9 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     }
 
     @Override
-    public void download(List<JobDto> jobs, HttpServletResponse response) throws IOException {
+    public void download(List<JobDTO> jobs, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> rows = new ArrayList<>();
-        for (JobDto job : jobs) {
+        for (JobDTO job : jobs) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("岗位名称", job.getName());
             row.put("岗位状态", Boolean.TRUE.equals(job.getEnabled()) ? "启用" : "停用");

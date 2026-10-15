@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.DeptDto;
+import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dept;
 import fun.rooe.admin.modules.system.domain.request.DeptCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DeptUpdateRequest;
@@ -31,10 +31,10 @@ import java.util.*;
 public interface DeptAssembler {
 
     @Mapping(target = "children", ignore = true)
-    DeptDto toDto(Dept dept);
+    DeptDTO toDto(Dept dept);
 
     @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
-    List<DeptDto> toDtos(List<Dept> depts);
+    List<DeptDTO> toDtos(List<Dept> depts);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "name", source = "name")
@@ -51,23 +51,23 @@ public interface DeptAssembler {
     @Mapping(target = "pid", source = "pid")
     void updateDept(DeptUpdateRequest request, @MappingTarget Dept dept);
 
-    default List<DeptDto> toTree(List<DeptDto> deptList) {
+    default List<DeptDTO> toTree(List<DeptDTO> deptList) {
         if (deptList == null || deptList.isEmpty()) {
             return new ArrayList<>();
         }
 
-        Map<Long, DeptDto> deptById = new LinkedHashMap<>();
-        for (DeptDto dept : deptList) {
+        Map<Long, DeptDTO> deptById = new LinkedHashMap<>();
+        for (DeptDTO dept : deptList) {
             deptById.putIfAbsent(dept.getId(), dept);
         }
 
-        Set<DeptDto> roots = new LinkedHashSet<>();
-        Set<DeptDto> parentsAndOrphans = new LinkedHashSet<>();
-        for (DeptDto dept : deptById.values()) {
+        Set<DeptDTO> roots = new LinkedHashSet<>();
+        Set<DeptDTO> parentsAndOrphans = new LinkedHashSet<>();
+        for (DeptDTO dept : deptById.values()) {
             if (dept.getPid() == null) {
                 roots.add(dept);
             } else {
-                DeptDto parent = deptById.get(dept.getPid());
+                DeptDTO parent = deptById.get(dept.getPid());
                 if (parent == null) {
                     parentsAndOrphans.add(dept);
                 } else {

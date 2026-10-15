@@ -5,7 +5,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.config.properties.RsaProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
-import fun.rooe.admin.modules.system.domain.dto.UserDto;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.UserCredentialService;
 import fun.rooe.admin.modules.system.service.UserService;
@@ -47,7 +47,7 @@ public class UserController {
     @Operation(summary = "查询用户")
     @GetMapping
     @PreAuthorize("@el.check('user:list')")
-    public PageResult<UserDto> queryUser(@Valid UserQueryRequest request) {
+    public PageResult<UserDTO> queryUser(@Valid UserQueryRequest request) {
       return userService.queryAll(request);
     }
 

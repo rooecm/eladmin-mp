@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.dto.DeptDto;
+import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dept;
 import fun.rooe.admin.modules.system.domain.request.*;
 
@@ -34,7 +34,7 @@ public interface DeptService extends IService<Dept> {
      * @param request 查询条件
      * @return /
      */
-    List<DeptDto> queryAll(DeptQueryRequest request);
+    List<DeptDTO> queryAll(DeptQueryRequest request);
 
     /**
      * 根据ID查询
@@ -81,7 +81,7 @@ public interface DeptService extends IService<Dept> {
      * @param request 查询参数
      * @return /
      */
-    List<DeptDto> getSuperior(DeptSuperiorRequest request);
+    List<DeptDTO> getSuperior(DeptSuperiorRequest request);
 
     /**
      * 获取

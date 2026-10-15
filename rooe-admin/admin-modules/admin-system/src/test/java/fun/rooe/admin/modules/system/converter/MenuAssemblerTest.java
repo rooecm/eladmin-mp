@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.dto.MenuDto;
-import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -14,7 +14,7 @@ class MenuAssemblerTest {
 
     @Test
     void convertsRootLeafToLayoutRouteWithoutChangingFrontendContract() {
-        MenuDto menu = new MenuDto();
+        MenuDTO menu = new MenuDTO();
         menu.setId(1L);
         menu.setTitle("控制台");
         menu.setComponentName("Dashboard");
@@ -25,8 +25,8 @@ class MenuAssemblerTest {
         menu.setHidden(false);
         menu.setIFrame(false);
 
-        MenuRouterDto root = assembler.toRouterDtos(List.of(menu)).get(0);
-        MenuRouterDto child = root.getChildren().get(0);
+        MenuRouterDTO root = assembler.toRouterDtos(List.of(menu)).get(0);
+        MenuRouterDTO child = root.getChildren().get(0);
 
         assertEquals("/dashboard", root.getPath());
         assertEquals("Layout", root.getComponent());

@@ -9,7 +9,7 @@ import java.sql.Timestamp;
  * Job response model.
  */
 @Data
-public class JobDto {
+public class JobDTO {
     private Long id;
     private String name;
     private Boolean enabled;

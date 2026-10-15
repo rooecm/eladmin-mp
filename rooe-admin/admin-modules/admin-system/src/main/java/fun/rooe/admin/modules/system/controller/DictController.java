@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDTO;
 import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.request.DictDeleteRequest;
 import fun.rooe.admin.modules.system.domain.request.DictQueryRequest;
@@ -38,14 +38,14 @@ public class DictController {
     @Operation(summary = "查询全部字典")
     @GetMapping("/all")
     @PreAuthorize("@el.check('dict:list')")
-    public List<DictDto> queryAllDict() {
+    public List<DictDTO> queryAllDict() {
         return dictService.queryList(new DictQueryRequest());
     }
 
     @Operation(summary = "查询字典")
     @GetMapping
     @PreAuthorize("@el.check('dict:list')")
-    public PageResult<DictDto> queryDict(@Valid DictQueryRequest request) {
+    public PageResult<DictDTO> queryDict(@Valid DictQueryRequest request) {
         return dictService.queryAll(request);
     }
 

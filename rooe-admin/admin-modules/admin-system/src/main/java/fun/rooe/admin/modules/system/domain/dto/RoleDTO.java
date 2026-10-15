@@ -4,15 +4,20 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.sql.Timestamp;
+import java.util.Set;
 
 /**
- * Dictionary response model.
+ * Role response model with optional menu and department associations.
  */
 @Data
-public class DictDto {
+public class RoleDTO {
     private Long id;
     private String name;
+    private Integer level;
+    private String dataScope;
     private String description;
+    private Set<MenuDTO> menus;
+    private Set<DeptDTO> depts;
     private String createBy;
     private String updateBy;
 

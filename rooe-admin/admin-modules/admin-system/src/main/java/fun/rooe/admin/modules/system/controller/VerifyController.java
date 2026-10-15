@@ -17,7 +17,7 @@ package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.enums.CodeBiEnum;
 import fun.rooe.admin.enums.CodeEnum;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,14 +43,14 @@ public class VerifyController {
     @PostMapping(value = "/resetEmail")
     @Operation(summary = "重置邮箱，发送验证码")
     public void resetEmail(@RequestParam String email){
-        EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey());
+        EmailDTO emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey());
         emailService.send(emailDto,emailService.find());
     }
 
     @PostMapping(value = "/email/resetPass")
     @Operation(summary = "重置密码，发送验证码")
     public void resetPass(@RequestParam String email){
-        EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_PWD_CODE.getKey());
+        EmailDTO emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_PWD_CODE.getKey());
         emailService.send(emailDto,emailService.find());
     }
 

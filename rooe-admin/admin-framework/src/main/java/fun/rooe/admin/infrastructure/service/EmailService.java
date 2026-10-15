@@ -16,7 +16,7 @@
 package fun.rooe.admin.infrastructure.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.domain.EmailConfig;
 
 /**
@@ -45,5 +45,5 @@ public interface EmailService extends IService<EmailConfig> {
      * @param emailDto 邮件发送的内容
      * @param emailConfig 邮件配置
      */
-    void send(EmailDto emailDto, EmailConfig emailConfig);
+    void send(EmailDTO emailDto, EmailConfig emailConfig);
 }

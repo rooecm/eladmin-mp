@@ -9,8 +9,8 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
-import fun.rooe.admin.modules.system.domain.dto.MenuDto;
-import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
 import fun.rooe.admin.modules.system.domain.entity.Menu;
 import fun.rooe.admin.modules.system.domain.entity.Role;
 import fun.rooe.admin.modules.system.domain.entity.RoleMenu;
@@ -47,7 +47,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     private final MenuAssembler assembler;
 
     @Override
-    public List<MenuDto> queryAll(MenuQueryRequest request) {
+    public List<MenuDTO> queryAll(MenuQueryRequest request) {
         boolean noExplicitCondition =
                 StringUtils.isBlank(request.getBlurry())
                         && request.getPid() == null
@@ -76,7 +76,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     @Override
-    public List<MenuRouterDto> buildCurrentUserMenus() {
+    public List<MenuRouterDTO> buildCurrentUserMenus() {
         List<Menu> menus = findByUser(SecurityUtils.getCurrentUserId());
         return assembler.toRouterDtos(assembler.toTree(assembler.toDtos(menus)));
     }
@@ -180,7 +180,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     @Override
-    public List<MenuDto> getMenus(Long pid) {
+    public List<MenuDTO> getMenus(Long pid) {
         return assembler.toDtos(getMenuEntities(pid));
     }
 
@@ -206,7 +206,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
      * parent child counts are adjusted so the frontend can render the remaining branch correctly.
      */
     @Override
-    public List<MenuDto> getSuperior(MenuSuperiorRequest request) {
+    public List<MenuDTO> getSuperior(MenuSuperiorRequest request) {
         Map<Long, Menu> byId = new LinkedHashMap<>();
         Set<Long> adjustedParents = new HashSet<>();
         for (Long id : request.getIds()) {
@@ -222,7 +222,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
             }
             branch.forEach(item -> byId.putIfAbsent(item.getId(), item));
         }
-        List<MenuDto> dtos = assembler.toDtos(new ArrayList<>(byId.values()));
+        List<MenuDTO> dtos = assembler.toDtos(new ArrayList<>(byId.values()));
         dtos.stream()
                 .filter(item -> adjustedParents.contains(item.getId()))
                 .forEach(

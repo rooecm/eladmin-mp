@@ -17,10 +17,10 @@ import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
 import fun.rooe.admin.modules.system.converter.UserAssembler;
-import fun.rooe.admin.modules.system.domain.dto.JobDto;
-import fun.rooe.admin.modules.system.domain.dto.RoleDto;
-import fun.rooe.admin.modules.system.domain.dto.UserDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.dto.JobDTO;
+import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.Role;
 import fun.rooe.admin.modules.system.domain.entity.User;
 import fun.rooe.admin.modules.system.domain.entity.UserJob;
@@ -70,7 +70,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JobAssembler jobAssembler;
 
     @Override
-    public PageResult<UserDto> queryAll(UserQueryRequest request) {
+    public PageResult<UserDTO> queryAll(UserQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
         if (dataScope.isNone()) return new PageResult<>(new ArrayList<>(), 0);
         Page<User> page = new Page<>(request.getPage(), request.getSize());
@@ -79,7 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<UserDto> queryList(UserQueryRequest request) {
+    public List<UserDTO> queryList(UserQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
         return dataScope.isNone()
                 ? new ArrayList<>()
@@ -133,9 +133,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return wrapper;
     }
 
-    private List<UserDto> assemble(List<User> users) {
-        List<UserDto> result = assembler.toDtos(users);
-        for (UserDto dto : result) {
+    private List<UserDTO> assemble(List<User> users) {
+        List<UserDTO> result = assembler.toDtos(users);
+        for (UserDTO dto : result) {
             if (dto.getDeptId() != null)
                 dto.setDept(deptAssembler.toDto(deptMapper.selectById(dto.getDeptId())));
             dto.setRoles(
@@ -326,10 +326,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserLoginDto getLoginData(String userName) {
+    public UserLoginDTO getLoginData(String userName) {
         User user = findByUsername(userName);
         if (user == null) return null;
-        UserLoginDto dto = assembler.toLoginDto(user);
+        UserLoginDTO dto = assembler.toLoginDto(user);
         if (user.getDeptId() != null)
             dto.setDept(deptAssembler.toDto(deptMapper.selectById(user.getDeptId())));
         dto.setRoles(Collections.emptySet());
@@ -408,14 +408,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public void download(List<UserDto> users, HttpServletResponse response) throws IOException {
+    public void download(List<UserDTO> users, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> rows = new ArrayList<>();
-        for (UserDto user : users) {
+        for (UserDTO user : users) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("用户名", user.getUsername());
-            row.put("角色", user.getRoles().stream().map(RoleDto::getName).toList());
+            row.put("角色", user.getRoles().stream().map(RoleDTO::getName).toList());
             row.put("部门", user.getDept() == null ? null : user.getDept().getName());
-            row.put("岗位", user.getJobs().stream().map(JobDto::getName).toList());
+            row.put("岗位", user.getJobs().stream().map(JobDTO::getName).toList());
             row.put("邮箱", user.getEmail());
             row.put("状态", Boolean.TRUE.equals(user.getEnabled()) ? "启用" : "禁用");
             row.put("手机号", user.getPhone());

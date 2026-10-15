@@ -1,8 +1,8 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.dto.UserDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.User;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
@@ -18,11 +18,11 @@ public interface UserService extends IService<User> {
 
     User findByName(String userName);
 
-    UserLoginDto getLoginData(String userName);
+    UserLoginDTO getLoginData(String userName);
 
-    PageResult<UserDto> queryAll(UserQueryRequest request);
+    PageResult<UserDTO> queryAll(UserQueryRequest request);
 
-    List<UserDto> queryList(UserQueryRequest request);
+    List<UserDTO> queryList(UserQueryRequest request);
 
     void create(UserCreateRequest request);
 
@@ -40,5 +40,5 @@ public interface UserService extends IService<User> {
 
     void updateEmail(String username, String email);
 
-    void download(List<UserDto> users, HttpServletResponse response) throws IOException;
+    void download(List<UserDTO> users, HttpServletResponse response) throws IOException;
 }

@@ -11,12 +11,12 @@ import java.util.Set;
  * User response model with resolved department, role, and job associations.
  */
 @Data
-public class UserDto {
+public class UserDTO {
     private Long id;
     private Long deptId;
-    private DeptDto dept;
-    private Set<RoleDto> roles;
-    private Set<JobDto> jobs;
+    private DeptDTO dept;
+    private Set<RoleDTO> roles;
+    private Set<JobDTO> jobs;
     private String username;
     private String nickName;
     private String email;

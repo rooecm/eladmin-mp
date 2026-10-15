@@ -18,7 +18,7 @@ package fun.rooe.admin.infrastructure.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.infrastructure.domain.EmailConfig;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.infrastructure.mapper.EmailConfigMapper;
 import fun.rooe.admin.infrastructure.service.EmailService;
@@ -69,7 +69,7 @@ public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfig
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void send(EmailDto emailDto, EmailConfig emailConfig){
+    public void send(EmailDTO emailDto, EmailConfig emailConfig){
         if(emailConfig.getId() == null){
             throw new BadRequestException("请先配置，再操作");
         }

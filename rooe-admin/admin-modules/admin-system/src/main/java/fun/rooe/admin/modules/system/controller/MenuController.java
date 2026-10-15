@@ -1,8 +1,8 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.MenuDto;
-import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuDTO;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDTO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.MenuService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,14 +30,14 @@ public class MenuController {
 
     @GetMapping("/build")
     @Operation(summary = "获取前端所需菜单")
-    public List<MenuRouterDto> buildMenus() {
+    public List<MenuRouterDTO> buildMenus() {
         return menuService.buildCurrentUserMenus();
     }
 
     @Operation(summary = "懒加载菜单")
     @GetMapping("/lazy")
     @PreAuthorize("@el.check('menu:list','roles:list')")
-    public List<MenuDto> queryAllMenu(@RequestParam Long pid) {
+    public List<MenuDTO> queryAllMenu(@RequestParam Long pid) {
         return menuService.getMenus(pid);
     }
 
@@ -51,14 +51,14 @@ public class MenuController {
     @GetMapping
     @Operation(summary = "查询菜单")
     @PreAuthorize("@el.check('menu:list')")
-    public List<MenuDto> queryMenu(@Valid MenuQueryRequest request) {
+    public List<MenuDTO> queryMenu(@Valid MenuQueryRequest request) {
         return menuService.queryAll(request);
     }
 
     @Operation(summary = "查询菜单同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('menu:list')")
-    public List<MenuDto> getMenuSuperior(@Valid @RequestBody MenuSuperiorRequest request) {
+    public List<MenuDTO> getMenuSuperior(@Valid @RequestBody MenuSuperiorRequest request) {
         return menuService.getSuperior(request);
     }
 

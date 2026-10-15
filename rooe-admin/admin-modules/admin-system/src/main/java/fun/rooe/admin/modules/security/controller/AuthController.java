@@ -30,7 +30,7 @@ import fun.rooe.admin.framework.config.security.security.TokenProvider;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.security.dto.CaptchaResponse;
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
+import fun.rooe.admin.modules.security.dto.JwtUserDTO;
 import fun.rooe.admin.modules.security.dto.LoginResponse;
 import fun.rooe.admin.modules.security.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
@@ -97,7 +97,7 @@ public class AuthController {
             throw new BadRequestException("验证码错误");
         }
         // 获取用户信息
-        JwtUserDto jwtUser = userDetailsService.loadUserByUsername(request.getUsername());
+        JwtUserDTO jwtUser = userDetailsService.loadUserByUsername(request.getUsername());
         // 验证用户密码
         if (!userCredentialService.matches(request.getUsername(), password)) {
             throw new BadRequestException("登录密码错误");
@@ -121,7 +121,7 @@ public class AuthController {
     @Operation(summary = "获取用户信息")
     @GetMapping(value = "/info")
     public UserDetails getUserInfo() {
-        return (JwtUserDto) SecurityUtils.getCurrentUser();
+        return (JwtUserDTO) SecurityUtils.getCurrentUser();
     }
 
     @Operation(summary = "获取验证码")

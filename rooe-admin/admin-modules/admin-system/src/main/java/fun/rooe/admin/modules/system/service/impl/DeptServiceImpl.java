@@ -24,7 +24,7 @@ import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
-import fun.rooe.admin.modules.system.domain.dto.DeptDto;
+import fun.rooe.admin.modules.system.domain.dto.DeptDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dept;
 import fun.rooe.admin.modules.system.domain.entity.RoleDept;
 import fun.rooe.admin.modules.system.domain.entity.User;
@@ -61,7 +61,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private final UserCacheManager userCacheManager;
 
     @Override
-    public List<DeptDto> queryAll(DeptQueryRequest request) {
+    public List<DeptDTO> queryAll(DeptQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
         if (dataScope.isNone()
                 || (dataScope.isSelf() && dataScope.selfDeptId() == null)) {
@@ -208,7 +208,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public List<DeptDto> getSuperior(DeptSuperiorRequest request) {
+    public List<DeptDTO> getSuperior(DeptSuperiorRequest request) {
         List<Long> ids = request.getIds();
         UserDataScope dataScope = dataService.getCurrentDataScope();
         dataService.checkDeptReadAccess(ids);
@@ -230,7 +230,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                             || hierarchyIds.contains(item.getId()))
                     .forEach(item -> deptById.putIfAbsent(item.getId(), item));
         }
-        List<DeptDto> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptById.values()));
+        List<DeptDTO> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptById.values()));
         deptDtos.stream()
                 .filter(dept -> adjustedParentIds.contains(dept.getId()))
                 .forEach(dept -> dept.setSubCount(Math.max(0,

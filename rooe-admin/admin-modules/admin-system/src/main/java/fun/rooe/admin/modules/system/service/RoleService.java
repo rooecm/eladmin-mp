@@ -1,9 +1,9 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.security.dto.AuthorityDto;
-import fun.rooe.admin.modules.system.domain.dto.RoleDto;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.security.dto.AuthorityDTO;
+import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.Role;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Set;
 
 public interface RoleService extends IService<Role> {
-    List<RoleDto> queryAll();
+    List<RoleDTO> queryAll();
 
-    PageResult<RoleDto> queryAll(RoleQueryRequest request);
+    PageResult<RoleDTO> queryAll(RoleQueryRequest request);
 
-    RoleDto findDtoById(Long id);
+    RoleDTO findDtoById(Long id);
 
     void create(RoleCreateRequest request);
 
@@ -34,7 +34,7 @@ public interface RoleService extends IService<Role> {
 
     int getCurrentUserLevel();
 
-    List<AuthorityDto> buildPermissions(UserLoginDto user);
+    List<AuthorityDTO> buildPermissions(UserLoginDTO user);
 
     List<Role> findByMenuId(Long menuId);
 }

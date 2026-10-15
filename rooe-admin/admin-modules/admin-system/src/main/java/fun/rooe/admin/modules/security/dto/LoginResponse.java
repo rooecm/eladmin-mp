@@ -32,5 +32,5 @@ public class LoginResponse implements Serializable {
     private final String token;
 
     @Schema(description = "当前登录用户")
-    private final JwtUserDto user;
+    private final JwtUserDTO user;
 }

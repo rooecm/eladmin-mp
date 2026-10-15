@@ -11,7 +11,7 @@ import java.util.List;
  * Menu response model, including derived tree-view properties.
  */
 @Data
-public class MenuDto {
+public class MenuDTO {
     private Long id;
     private Long pid;
     private Integer subCount;
@@ -38,7 +38,7 @@ public class MenuDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp updateTime;
 
-    private List<MenuDto> children;
+    private List<MenuDTO> children;
 
     public Boolean getHasChildren() {
         return subCount != null && subCount > 0;

@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.domain.EmailConfig;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import org.springframework.validation.annotation.Validated;
@@ -53,7 +53,7 @@ public class EmailController {
     @Log("发送邮件")
     @PostMapping
     @Operation(summary = "发送邮件")
-    public void sendEmail(@Validated @RequestBody EmailDto emailDto){
+    public void sendEmail(@Validated @RequestBody EmailDTO emailDto){
         emailService.send(emailDto,emailService.find());
     }
 }

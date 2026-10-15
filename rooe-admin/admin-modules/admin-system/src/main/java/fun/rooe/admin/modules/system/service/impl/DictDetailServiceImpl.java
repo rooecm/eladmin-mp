@@ -7,7 +7,7 @@ import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.DictAssembler;
 import fun.rooe.admin.modules.system.converter.DictDetailAssembler;
-import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDTO;
 import fun.rooe.admin.modules.system.domain.entity.Dict;
 import fun.rooe.admin.modules.system.domain.entity.DictDetail;
 import fun.rooe.admin.modules.system.domain.request.DictDetailCreateRequest;
@@ -43,7 +43,7 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
   private final DictAssembler dictAssembler;
 
     @Override
-    public PageResult<DictDetailDto> queryAll(DictDetailQueryRequest request) {
+    public PageResult<DictDetailDTO> queryAll(DictDetailQueryRequest request) {
       IPage<DictDetail> page =
               dictDetailMapper.findAll(
                       request.getDictName(),
@@ -53,9 +53,9 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
     }
 
   @Override
-  public List<DictDetailDto> getDictByName(String name) {
+  public List<DictDetailDTO> getDictByName(String name) {
     String key = CacheKey.DICT_NAME + name;
-    List<DictDetailDto> cached = redisUtils.getList(key, DictDetailDto.class);
+    List<DictDetailDTO> cached = redisUtils.getList(key, DictDetailDTO.class);
     if (cached == null || cached.isEmpty()) {
       cached = assemble(dictDetailMapper.findByDictName(name));
       redisUtils.set(key, cached, 1, TimeUnit.DAYS);
@@ -63,13 +63,13 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
     return cached;
   }
 
-  private List<DictDetailDto> assemble(List<DictDetail> details) {
+  private List<DictDetailDTO> assemble(List<DictDetail> details) {
     if (details.isEmpty()) return new ArrayList<>();
     Set<Long> ids = details.stream().map(DictDetail::getDictId).collect(Collectors.toSet());
     Map<Long, Dict> dicts =
             dictMapper.selectBatchIds(ids).stream()
                     .collect(Collectors.toMap(Dict::getId, Function.identity()));
-    List<DictDetailDto> result = assembler.toDtos(details);
+    List<DictDetailDTO> result = assembler.toDtos(details);
     result.forEach(
             detail -> detail.setDict(dictAssembler.toDto(dicts.get(detail.getDictId()))));
     return result;

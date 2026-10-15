@@ -16,7 +16,7 @@
 package fun.rooe.admin.modules.system.service.impl;
 
 import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
+import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import fun.rooe.admin.modules.system.utils.TemplateUtils;
@@ -43,8 +43,8 @@ public class VerifyServiceImpl implements VerifyService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public EmailDto sendEmail(String email, String key) {
-        EmailDto emailDto;
+    public EmailDTO sendEmail(String email, String key) {
+        EmailDTO emailDto;
         String content;
         String redisKey = key + email;
         // 如果不存在有效的验证码，就创建一个新的
@@ -60,7 +60,7 @@ public class VerifyServiceImpl implements VerifyService {
         } else {
             content = TemplateUtils.render("email.ftl", Map.of("code", oldCode));
         }
-        emailDto = new EmailDto(Collections.singletonList(email),"ROOE ADMIN后台管理系统",content);
+        emailDto = new EmailDTO(Collections.singletonList(email),"ROOE ADMIN后台管理系统",content);
         return emailDto;
     }
 

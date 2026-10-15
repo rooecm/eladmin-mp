@@ -9,10 +9,10 @@ import java.sql.Timestamp;
  * Dictionary-entry response model.
  */
 @Data
-public class DictDetailDto {
+public class DictDetailDTO {
     private Long id;
     private Long dictId;
-    private DictDto dict;
+    private DictDTO dict;
     private String label;
     private String value;
     private Integer dictSort;
