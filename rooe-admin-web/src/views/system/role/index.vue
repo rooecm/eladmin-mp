@@ -23,13 +23,13 @@
           <el-select v-model="form.dataScope" style="width: 140px" placeholder="请选择数据范围" @change="changeScope">
             <el-option
               v-for="item in dateScopes"
-              :key="item"
-              :label="item"
-              :value="item"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="form.dataScope === '自定义'" label="数据权限" prop="depts">
+        <el-form-item v-if="form.dataScope === 'CUSTOM'" label="数据权限" prop="depts">
           <treeselect
             v-model="deptDatas"
             :load-options="loadDepts"
@@ -61,7 +61,11 @@
           <el-table ref="table" v-loading="crud.loading" highlight-current-row style="width: 100%;" :data="crud.data" @selection-change="crud.selectionChangeHandler" @current-change="handleCurrentChange">
             <el-table-column :selectable="checkboxT" type="selection" width="55" />
             <el-table-column prop="name" label="名称" />
-            <el-table-column prop="dataScope" label="数据权限" />
+            <el-table-column label="数据权限" prop="dataScope">
+              <template slot-scope="scope">
+                {{ dataScopeLabels[scope.row.dataScope] || scope.row.dataScope }}
+              </template>
+            </el-table-column>
             <el-table-column prop="level" label="角色级别" />
             <el-table-column :show-overflow-tooltip="true" prop="description" label="描述">
               <template slot-scope="scope">
@@ -123,18 +127,17 @@
 <script>
 import crudRoles from '@/api/system/role'
 import { getDepts, getDeptSuperior } from '@/api/system/dept'
-import { getMenusTree, getChild } from '@/api/system/menu'
-import CRUD, { presenter, header, form, crud } from '@crud/crud'
+import { getChild, getMenusTree } from '@/api/system/menu'
+import CRUD, { crud, form, header, presenter } from '@crud/crud'
 import rrOperation from '@crud/RR.operation'
 import crudOperation from '@crud/CRUD.operation'
 import udOperation from '@crud/UD.operation'
 import pagination from '@crud/Pagination'
-import Treeselect from '@riophae/vue-treeselect'
+import Treeselect, { LOAD_CHILDREN_OPTIONS } from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
-import { LOAD_CHILDREN_OPTIONS } from '@riophae/vue-treeselect'
 import DateRangePicker from '@/components/DateRangePicker'
 
-const defaultForm = { id: null, name: null, depts: [], description: null, dataScope: '全部', level: 3 }
+const defaultForm = { id: null, name: null, depts: [], description: null, dataScope: 'ALL', level: 3 }
 export default {
   name: 'Role',
   components: { Treeselect, pagination, crudOperation, rrOperation, udOperation, DateRangePicker },
@@ -145,7 +148,21 @@ export default {
   data() {
     return {
       defaultProps: { children: 'children', label: 'label', isLeaf: 'leaf' },
-      dateScopes: ['全部', '本级', '自定义'], level: 3,
+      dateScopes: [
+        { value: 'ALL', label: '全部数据' },
+        { value: 'DEPT_AND_CHILD', label: '本部门及以下' },
+        { value: 'DEPT', label: '本部门' },
+        { value: 'SELF', label: '仅本人' },
+        { value: 'CUSTOM', label: '自定义' }
+      ],
+      dataScopeLabels: {
+        ALL: '全部数据',
+        DEPT_AND_CHILD: '本部门及以下',
+        DEPT: '本部门',
+        SELF: '仅本人',
+        CUSTOM: '自定义'
+      },
+      level: 3,
       currentId: 0, menuLoading: false, showButton: false,
       menus: [], menuIds: [], depts: [], deptDatas: [], // 多选时使用
       permission: {
@@ -184,7 +201,7 @@ export default {
     // 编辑前初始化自定义数据权限的部门信息
     [CRUD.HOOK.beforeToEdit](crud, form) {
       this.deptDatas = []
-      if (form.dataScope === '自定义') {
+      if (form.dataScope === 'CUSTOM') {
         this.getSupDepts(form.depts)
       }
       const _this = this
@@ -196,13 +213,13 @@ export default {
     },
     // 提交前做的操作
     [CRUD.HOOK.afterValidateCU](crud) {
-      if (crud.form.dataScope === '自定义' && this.deptDatas.length === 0) {
+      if (crud.form.dataScope === 'CUSTOM' && this.deptDatas.length === 0) {
         this.$message({
           message: '自定义数据权限不能为空',
           type: 'warning'
         })
         return false
-      } else if (crud.form.dataScope === '自定义') {
+      } else if (crud.form.dataScope === 'CUSTOM') {
         const depts = []
         this.deptDatas.forEach(function(data) {
           const dept = { id: data }
@@ -332,7 +349,7 @@ export default {
     },
     // 如果数据权限为自定义则获取部门数据
     changeScope() {
-      if (this.form.dataScope === '自定义') {
+      if (this.form.dataScope === 'CUSTOM') {
         this.getDepts()
       }
     },

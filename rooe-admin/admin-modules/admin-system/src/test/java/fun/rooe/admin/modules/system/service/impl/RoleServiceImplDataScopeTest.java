@@ -1,0 +1,90 @@
+package fun.rooe.admin.modules.system.service.impl;
+
+import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.modules.security.service.UserCacheManager;
+import fun.rooe.admin.modules.system.converter.DeptAssembler;
+import fun.rooe.admin.modules.system.converter.MenuAssembler;
+import fun.rooe.admin.modules.system.converter.RoleAssembler;
+import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.mapper.*;
+import fun.rooe.admin.modules.system.service.DataService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
+
+import static org.mockito.Mockito.*;
+
+class RoleServiceImplDataScopeTest {
+    private RoleMapper roleMapper;
+    private DeptMapper deptMapper;
+    private DataService dataService;
+    private RoleServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        roleMapper = mock(RoleMapper.class);
+        deptMapper = mock(DeptMapper.class);
+        dataService = mock(DataService.class);
+        service = new RoleServiceImpl(
+                roleMapper,
+                mock(RoleDeptMapper.class),
+                mock(RoleMenuMapper.class),
+                mock(UserRoleMapper.class),
+                deptMapper,
+                mock(MenuMapper.class),
+                mock(UserMapper.class),
+                mock(RedisUtils.class),
+                mock(UserCacheManager.class),
+                dataService,
+                mock(RoleAssembler.class),
+                mock(DeptAssembler.class),
+                mock(MenuAssembler.class));
+    }
+
+    @Test
+    void deptAndChildRoleChecksTheExpandedTargetDepartment() {
+        Role role = role(1L, DataScopeEnum.DEPT_AND_CHILD);
+        when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
+        when(dataService.expandDeptIds(List.of(10L))).thenReturn(Set.of(10L, 20L));
+
+        service.checkDataScopes(Set.of(1L), 10L);
+
+        verify(dataService).checkDeptAccess(Set.of(10L, 20L));
+    }
+
+    @Test
+    void customRoleChecksOnlyExplicitRoleDepartments() {
+        Role role = role(1L, DataScopeEnum.CUSTOM);
+        Dept dept = new Dept();
+        dept.setId(10L);
+        when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
+        when(deptMapper.findByRoleId(1L)).thenReturn(Set.of(dept));
+
+        service.checkDataScopes(Set.of(1L), 99L);
+
+        verify(dataService).checkDeptAccess(List.of(10L));
+        verify(dataService, never()).expandDeptIds(List.of(10L));
+    }
+
+    @Test
+    void selfRoleDoesNotRequireDepartmentManagementAccess() {
+        Role role = role(1L, DataScopeEnum.SELF);
+        when(roleMapper.selectBatchIds(Set.of(1L))).thenReturn(List.of(role));
+
+        service.checkDataScopes(Set.of(1L), 10L);
+
+        verify(dataService, never()).checkDeptAccess(10L);
+    }
+
+    private Role role(Long id, DataScopeEnum dataScope) {
+        Role role = new Role();
+        role.setId(id);
+        role.setName("role");
+        role.setDataScope(dataScope.getValue());
+        return role;
+    }
+}

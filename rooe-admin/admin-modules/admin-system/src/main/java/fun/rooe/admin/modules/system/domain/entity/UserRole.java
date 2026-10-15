@@ -1,18 +1,36 @@
 package fun.rooe.admin.modules.system.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
-@TableName("sys_users_roles")
+/**
+ * Persistence model for sys_user_role.
+ */
+@TableName("sys_user_role")
 public class UserRole {
+    /**
+     * Primary key.
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+
+    /**
+     * User ID.
+     */
     private Long userId;
+
+    /**
+     * Role ID.
+     */
     private Long roleId;
 
-    public UserRole() {
+    public Long getId() {
+        return id;
     }
 
-    public UserRole(Long userId, Long roleId) {
-        this.userId = userId;
-        this.roleId = roleId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getUserId() {

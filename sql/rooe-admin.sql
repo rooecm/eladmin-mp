@@ -315,90 +315,144 @@ CREATE TABLE `sys_role` (
 -- Records of sys_role
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_role` (`id`, `name`, `level`, `data_scope`, `description`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (1, '管理员', 1, '全部', NULL, NULL, 'admin', '2018-11-23 11:04:37', '2020-08-06 16:10:24');
-INSERT INTO `sys_role` (`id`, `name`, `level`, `data_scope`, `description`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (2, '普通用户', 2, '本级', NULL, NULL, 'admin', '2018-11-23 13:09:06', '2020-09-05 10:45:12');
+INSERT INTO `sys_role` (`id`, `name`, `level`, `data_scope`, `description`, `create_by`, `update_by`, `create_time`,
+                        `update_time`)
+VALUES (1, '管理员', 1, 'ALL', NULL, NULL, 'admin', '2018-11-23 11:04:37', '2020-08-06 16:10:24');
+INSERT INTO `sys_role` (`id`, `name`, `level`, `data_scope`, `description`, `create_by`, `update_by`, `create_time`,
+                        `update_time`)
+VALUES (2, '普通用户', 2, 'DEPT', NULL, NULL, 'admin', '2018-11-23 13:09:06', '2020-09-05 10:45:12');
 COMMIT;
 
 -- ----------------------------
--- Table structure for sys_roles_depts
+-- Table structure for sys_role_dept
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_roles_depts`;
-CREATE TABLE `sys_roles_depts` (
+DROP TABLE IF EXISTS `sys_role_dept`;
+CREATE TABLE `sys_role_dept`
+(
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
                                    `role_id` bigint(20) NOT NULL COMMENT '角色ID',
                                    `dept_id` bigint(20) NOT NULL COMMENT '部门ID',
-                                   PRIMARY KEY (`role_id`,`dept_id`) USING BTREE,
-                                   KEY `idx_role_id` (`role_id`),
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uniq_role_dept` (`role_id`,`dept_id`) USING BTREE,
                                    KEY `idx_dept_id` (`dept_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='角色部门关联';
 
 -- ----------------------------
--- Records of sys_roles_depts
+-- Records of sys_role_dept
 -- ----------------------------
 BEGIN;
 COMMIT;
 
 -- ----------------------------
--- Table structure for sys_roles_menus
+-- Table structure for sys_role_menu
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_roles_menus`;
-CREATE TABLE `sys_roles_menus` (
+DROP TABLE IF EXISTS `sys_role_menu`;
+CREATE TABLE `sys_role_menu`
+(
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
                                    `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
                                    `role_id` bigint(20) NOT NULL COMMENT '角色ID',
-                                   PRIMARY KEY (`menu_id`,`role_id`) USING BTREE,
-                                   KEY `idx_menu_id` (`menu_id`),
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uniq_menu_role` (`menu_id`,`role_id`) USING BTREE,
                                    KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='角色菜单关联';
 
 -- ----------------------------
--- Records of sys_roles_menus
+-- Records of sys_role_menu
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (1, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (1, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (2, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (2, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (3, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (5, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (6, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (6, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (7, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (7, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (9, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (9, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (14, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (14, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (18, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (28, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (32, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (32, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (35, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (36, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (36, 2);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (37, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (39, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (41, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (44, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (45, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (46, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (48, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (49, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (50, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (52, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (53, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (54, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (56, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (57, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (58, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (60, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (61, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (62, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (64, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (65, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (66, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (73, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (74, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (75, 1);
-INSERT INTO `sys_roles_menus` (`menu_id`, `role_id`) VALUES (79, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (1, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (1, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (2, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (2, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (3, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (5, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (6, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (6, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (7, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (7, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (9, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (9, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (14, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (14, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (18, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (28, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (32, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (32, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (35, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (36, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (36, 2);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (37, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (39, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (41, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (44, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (45, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (46, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (48, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (49, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (50, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (52, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (53, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (54, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (56, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (57, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (58, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (60, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (61, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (62, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (64, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (65, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (66, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (73, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (74, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (75, 1);
+INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
+VALUES (79, 1);
 COMMIT;
 
 -- ----------------------------
@@ -439,43 +493,51 @@ INSERT INTO `sys_user` (`id`, `dept_id`, `username`, `nick_name`, `gender`, `pho
 COMMIT;
 
 -- ----------------------------
--- Table structure for sys_users_jobs
+-- Table structure for sys_user_job
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_users_jobs`;
-CREATE TABLE `sys_users_jobs` (
+DROP TABLE IF EXISTS `sys_user_job`;
+CREATE TABLE `sys_user_job`
+(
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
                                   `user_id` bigint(20) NOT NULL COMMENT '用户ID',
                                   `job_id` bigint(20) NOT NULL COMMENT '岗位ID',
-                                  PRIMARY KEY (`user_id`,`job_id`),
-                                  KEY `idx_user_id` (`user_id`),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_user_job` (`user_id`,`job_id`),
                                   KEY `idx_job_id` (`job_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci COMMENT='用户与岗位关联表';
 
 -- ----------------------------
--- Records of sys_users_jobs
+-- Records of sys_user_job
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_users_jobs` (`user_id`, `job_id`) VALUES (1, 11);
-INSERT INTO `sys_users_jobs` (`user_id`, `job_id`) VALUES (2, 11);
+INSERT INTO `sys_user_job` (`user_id`, `job_id`)
+VALUES (1, 11);
+INSERT INTO `sys_user_job` (`user_id`, `job_id`)
+VALUES (2, 11);
 COMMIT;
 
 -- ----------------------------
--- Table structure for sys_users_roles
+-- Table structure for sys_user_role
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_users_roles`;
-CREATE TABLE `sys_users_roles` (
+DROP TABLE IF EXISTS `sys_user_role`;
+CREATE TABLE `sys_user_role`
+(
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
                                    `user_id` bigint(20) NOT NULL COMMENT '用户ID',
                                    `role_id` bigint(20) NOT NULL COMMENT '角色ID',
-                                   PRIMARY KEY (`user_id`,`role_id`) USING BTREE,
-                                   KEY `idx_user_id` (`user_id`),
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uniq_user_role` (`user_id`,`role_id`) USING BTREE,
                                    KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='用户角色关联';
 
 -- ----------------------------
--- Records of sys_users_roles
+-- Records of sys_user_role
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_users_roles` (`user_id`, `role_id`) VALUES (1, 1);
-INSERT INTO `sys_users_roles` (`user_id`, `role_id`) VALUES (2, 2);
+INSERT INTO `sys_user_role` (`user_id`, `role_id`)
+VALUES (1, 1);
+INSERT INTO `sys_user_role` (`user_id`, `role_id`)
+VALUES (2, 2);
 COMMIT;
 
 -- ----------------------------

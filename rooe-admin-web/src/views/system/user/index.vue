@@ -60,7 +60,7 @@
           <crudOperation show="" :permission="permission">
             <el-button
               slot="right"
-              v-permission="['admin','user:add']"
+              v-permission="['admin','user:edit']"
               :disabled="crud.selections.length === 0"
               class="filter-item"
               size="mini"

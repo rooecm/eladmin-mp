@@ -1,5 +1,6 @@
 package fun.rooe.admin;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
@@ -77,7 +78,8 @@ public class RooeAdminBootstrapApplicationTests {
 
     @Test
     public void mapsIdentifiersRequiredToLoadUserMenus() {
-        User user = userMapper.findByUsername("admin");
+        User user = userMapper.selectOne(
+                Wrappers.<User>lambdaQuery().eq(User::getUsername, "admin"));
         assertNotNull(user);
         assertNotNull(user.getId());
 

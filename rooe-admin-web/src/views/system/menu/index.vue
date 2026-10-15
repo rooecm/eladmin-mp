@@ -20,6 +20,15 @@
             <el-radio-button label="2">按钮</el-radio-button>
           </el-radio-group>
         </el-form-item>
+        <el-form-item v-show="form.type.toString() === '0'">
+          <el-alert
+            :closable="false"
+            description="顶级目录在侧边栏作分组展示，其下可挂载「菜单」类型的页面；非顶级目录下的页面菜单将无法显示。"
+            style="width: 450px;"
+            title="目录仅支持作为顶级菜单（上级类目选择「顶级类目」）"
+            type="info"
+          />
+        </el-form-item>
         <el-form-item v-show="form.type.toString() !== '2'" label="菜单图标" prop="icon">
           <el-popover
             placement="bottom-start"
@@ -150,9 +159,9 @@
 <script>
 import crudMenu from '@/api/system/menu'
 import IconSelect from '@/components/IconSelect'
-import Treeselect, {LOAD_CHILDREN_OPTIONS} from '@riophae/vue-treeselect'
+import Treeselect, { LOAD_CHILDREN_OPTIONS } from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
-import CRUD, {crud, form, header, presenter} from '@crud/crud'
+import CRUD, { crud, form, header, presenter } from '@crud/crud'
 import rrOperation from '@crud/RR.operation'
 import crudOperation from '@crud/CRUD.operation'
 import udOperation from '@crud/UD.operation'

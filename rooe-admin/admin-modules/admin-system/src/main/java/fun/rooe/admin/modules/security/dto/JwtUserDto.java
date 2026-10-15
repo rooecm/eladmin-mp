@@ -17,6 +17,7 @@ package fun.rooe.admin.modules.security.dto;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -41,8 +42,26 @@ public class JwtUserDto implements UserDetails {
     @Schema(description = "数据权限")
     private final List<Long> dataScopes;
 
+    @Schema(description = "Data scope mode")
+    private final UserDataScope.Mode dataScopeMode;
+
+    @Schema(description = "Whether the data scope also includes the current user")
+    private final boolean dataScopeIncludesSelf;
+
     @Schema(description = "角色")
     private final List<AuthorityDto> authorities;
+
+    public JwtUserDto(
+            UserLoginDto user, List<Long> dataScopes, List<AuthorityDto> authorities) {
+        this(
+                user,
+                dataScopes,
+                dataScopes == null || dataScopes.isEmpty()
+                        ? UserDataScope.Mode.NONE
+                        : UserDataScope.Mode.LIMITED,
+                false,
+                authorities);
+    }
 
     public Set<String> getRoles() {
         return authorities.stream().map(AuthorityDto::getAuthority).collect(Collectors.toSet());

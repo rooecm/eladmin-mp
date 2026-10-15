@@ -1,18 +1,36 @@
 package fun.rooe.admin.modules.system.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
-@TableName("sys_roles_depts")
+/**
+ * Persistence model for sys_role_dept.
+ */
+@TableName("sys_role_dept")
 public class RoleDept {
+    /**
+     * Primary key.
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+
+    /**
+     * Role ID.
+     */
     private Long roleId;
+
+    /**
+     * Department ID.
+     */
     private Long deptId;
 
-    public RoleDept() {
+    public Long getId() {
+        return id;
     }
 
-    public RoleDept(Long roleId, Long deptId) {
-        this.roleId = roleId;
-        this.deptId = deptId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getRoleId() {

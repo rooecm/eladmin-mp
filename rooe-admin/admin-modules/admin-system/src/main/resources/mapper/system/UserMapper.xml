@@ -4,7 +4,7 @@
     <select id="findByRoleId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
-                 join sys_users_roles ur on ur.user_id = u.id
+                 join sys_user_role ur on ur.user_id = u.id
         where ur.role_id = #{roleId}
         group by u.id
     </select>
@@ -12,8 +12,8 @@
     <select id="findByRoleDeptId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
-                 join sys_users_roles ur on ur.user_id = u.id
-                 join sys_roles_depts rd on rd.role_id = ur.role_id
+                 join sys_user_role ur on ur.user_id = u.id
+                 join sys_role_dept rd on rd.role_id = ur.role_id
         where rd.dept_id = #{deptId}
         group by u.id
     </select>
@@ -21,8 +21,8 @@
     <select id="findByMenuId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
-                 join sys_users_roles ur on ur.user_id = u.id
-                 join sys_roles_menus rm on rm.role_id = ur.role_id
+                 join sys_user_role ur on ur.user_id = u.id
+                 join sys_role_menu rm on rm.role_id = ur.role_id
         where rm.menu_id = #{menuId}
         group by u.id
     </select>

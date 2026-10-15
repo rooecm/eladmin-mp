@@ -18,15 +18,17 @@ package fun.rooe.admin.framework.utils;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.model.UserDataScope;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
@@ -80,11 +82,24 @@ public class SecurityUtils {
      * @return 级别
      */
     public static String getDataScopeType() {
-        List<Long> dataScopes = getCurrentUserDataScope();
-        if(dataScopes == null || dataScopes.isEmpty()){
-            return "";
+        return getCurrentUserDataScopeMode() == UserDataScope.Mode.ALL
+                ? DataScopeEnum.ALL.getValue()
+                : "";
+    }
+
+    public static UserDataScope.Mode getCurrentUserDataScopeMode() {
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(getCurrentUser());
+        String mode = jsonObject.getString("dataScopeMode");
+        if (mode == null) {
+            return getCurrentUserDataScope().isEmpty()
+                    ? UserDataScope.Mode.NONE
+                    : UserDataScope.Mode.LIMITED;
         }
-        return DataScopeEnum.ALL.getValue();
+        try {
+            return UserDataScope.Mode.valueOf(mode);
+        } catch (IllegalArgumentException exception) {
+            return UserDataScope.Mode.NONE;
+        }
     }
 
     /**

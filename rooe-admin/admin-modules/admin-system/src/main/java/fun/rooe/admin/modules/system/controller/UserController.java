@@ -100,6 +100,7 @@ public class UserController {
 
     @Operation(summary = "重置密码")
     @PutMapping("/resetPwd")
+    @PreAuthorize("@el.check('user:edit')")
     public void resetPwd(@Valid @RequestBody UserResetPasswordRequest request) {
       userService.resetPwd(request, "123456");
     }

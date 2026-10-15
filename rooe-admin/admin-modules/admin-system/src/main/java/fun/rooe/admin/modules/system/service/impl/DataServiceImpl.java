@@ -1,103 +1,194 @@
 /*
- *  Copyright 2019-2025 Zheng Jie
+ * Copyright 2019-2025 Zheng Jie
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.system.domain.entity.Dept;
 import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.mapper.DeptMapper;
+import fun.rooe.admin.modules.system.mapper.RoleMapper;
+import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.service.DataService;
-import fun.rooe.admin.modules.system.service.DeptService;
-import fun.rooe.admin.modules.system.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Zheng Jie
- * @description 数据权限服务实现
- * @date 2020-05-07
+ * Resolves and enforces the department data scope assigned to a user.
  */
 @Service
 @RequiredArgsConstructor
 public class DataServiceImpl implements DataService {
 
     private final RedisUtils redisUtils;
-    private final RoleService roleService;
-    private final DeptService deptService;
+    private final RoleMapper roleMapper;
+    private final DeptMapper deptMapper;
+    private final UserMapper userMapper;
 
-    /**
-     * 用户角色和用户部门改变时需清理缓存
-     *
-     * @param user /
-     * @return /
-     */
     @Override
-    public List<Long> getDeptIds(Long userId, Long deptId) {
+    public UserDataScope getDataScope(Long userId, Long deptId) {
         if (userId == null) {
-            return new ArrayList<>();
+            return UserDataScope.none();
         }
         String key = CacheKey.DATA_USER + userId;
-        List<Long> ids = redisUtils.getList(key, Long.class);
-        if (CollectionUtils.isEmpty(ids)) {
-            Set<Long> deptIds = new HashSet<>();
-            // 查询用户角色
-            List<Role> roleList = roleService.findByUsersId(userId);
-            // 获取对应的部门ID
-            for (Role role : roleList) {
-                DataScopeEnum dataScopeEnum = DataScopeEnum.find(role.getDataScope());
-                switch (Objects.requireNonNull(dataScopeEnum)) {
-                    case THIS_LEVEL:
-                        if (deptId != null) {
-                            deptIds.add(deptId);
-                        }
-                        break;
-                    case CUSTOMIZE:
-                        deptIds.addAll(getCustomize(deptIds, role));
-                        break;
-                    default:
-                        return new ArrayList<>();
-                }
-            }
-            ids = new ArrayList<>(deptIds);
-            redisUtils.set(key, ids, 1, TimeUnit.DAYS);
+        UserDataScope cached = redisUtils.get(key, UserDataScope.class);
+        if (cached != null) {
+            return cached;
         }
-        return ids;
+
+        List<Role> roles = roleMapper.findByUserId(userId);
+        if (roles.isEmpty()) {
+            return cache(key, UserDataScope.none());
+        }
+
+        Set<Long> deptIds = new LinkedHashSet<>();
+        boolean includeSelf = false;
+        for (Role role : roles) {
+            DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
+            if (configuredScope == null) {
+                throw new BadRequestException(
+                        "Invalid data scope configured for role: " + role.getName());
+            }
+            switch (configuredScope) {
+                case ALL -> {
+                    return cache(key, UserDataScope.all());
+                }
+                case DEPT_AND_CHILD -> {
+                    if (deptId != null) {
+                        deptIds.addAll(expandDeptIds(List.of(deptId)));
+                    }
+                }
+                case DEPT -> {
+                    if (deptId != null) {
+                        deptIds.add(deptId);
+                    }
+                }
+                case SELF -> includeSelf = true;
+                case CUSTOM -> addCustomDepartments(role.getId(), deptIds);
+            }
+        }
+        return cache(
+                key,
+                deptIds.isEmpty()
+                        ? (includeSelf
+                        ? UserDataScope.self(userId, deptId)
+                        : UserDataScope.none())
+                        : UserDataScope.limited(
+                        deptIds,
+                        includeSelf ? userId : null,
+                        includeSelf ? deptId : null));
     }
 
-    /**
-     * 获取自定义的数据权限
-     *
-     * @param deptIds 部门ID
-     * @param role 角色
-     * @return 数据权限ID
-     */
-    public Set<Long> getCustomize(Set<Long> deptIds, Role role) {
-        Set<Dept> depts = deptService.findByRoleId(role.getId());
-        for (Dept dept : depts) {
-            deptIds.add(dept.getId());
-            List<Dept> deptChildren = deptService.findByPid(dept.getId());
-            if (!CollectionUtils.isEmpty(deptChildren)) {
-                deptIds.addAll(deptService.getDeptChildren(deptChildren));
+    @Override
+    public UserDataScope getCurrentDataScope() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userMapper.selectById(userId);
+        return user == null ? UserDataScope.none() : getDataScope(userId, user.getDeptId());
+    }
+
+    @Override
+    public void checkDeptAccess(Long deptId) {
+        if (!getCurrentDataScope().permits(deptId)) {
+            throw new BadRequestException("No permission to access department: " + deptId);
+        }
+    }
+
+    @Override
+    public void checkDeptAccess(Collection<Long> deptIds) {
+        UserDataScope scope = getCurrentDataScope();
+        if (scope.isAll()) {
+            return;
+        }
+        if (deptIds == null || deptIds.stream().anyMatch(id -> !scope.permits(id))) {
+            throw new BadRequestException("Department data permission denied");
+        }
+    }
+
+    @Override
+    public void checkUserAccess(Long userId, Long deptId) {
+        if (!getCurrentDataScope().permitsUser(userId, deptId)) {
+            throw new BadRequestException("No permission to access user: " + userId);
+        }
+    }
+
+    @Override
+    public void checkDeptReadAccess(Collection<Long> deptIds) {
+        UserDataScope scope = getCurrentDataScope();
+        if (scope.isAll()) {
+            return;
+        }
+        if (deptIds == null || deptIds.stream().anyMatch(id -> !scope.permitsDeptRead(id))) {
+            throw new BadRequestException("Department data permission denied");
+        }
+    }
+
+    @Override
+    public Set<Long> expandDeptIds(Collection<Long> deptIds) {
+        Set<Long> result = new LinkedHashSet<>();
+        Deque<Long> pending = new ArrayDeque<>();
+        if (deptIds != null) {
+            for (Long deptId : deptIds) {
+                if (deptId != null && result.add(deptId)) {
+                    pending.add(deptId);
+                }
             }
         }
-        return deptIds;
+        addDescendants(pending, result);
+        return result;
+    }
+
+    private UserDataScope cache(String key, UserDataScope scope) {
+        redisUtils.set(key, scope, 1, TimeUnit.DAYS);
+        return scope;
+    }
+
+    private void addCustomDepartments(Long roleId, Set<Long> result) {
+        for (Dept dept : deptMapper.findByRoleId(roleId)) {
+            result.add(dept.getId());
+        }
+    }
+
+    private void addDescendants(Deque<Long> pending, Set<Long> result) {
+        while (!pending.isEmpty()) {
+            List<Long> parentIds = new ArrayList<>();
+            while (!pending.isEmpty()) {
+                parentIds.add(pending.removeFirst());
+            }
+            List<Dept> children = deptMapper.selectList(
+                    Wrappers.<Dept>lambdaQuery().in(Dept::getPid, parentIds));
+            for (Dept child : children) {
+                if (result.add(child.getId())) {
+                    pending.add(child.getId());
+                }
+            }
+        }
     }
 }

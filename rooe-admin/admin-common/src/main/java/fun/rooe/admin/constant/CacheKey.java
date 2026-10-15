@@ -30,7 +30,7 @@ public interface CacheKey {
     /**
      * 数据
      */
-    String DATA_USER = "data::user:";
+    String DATA_USER = "data::user:v3:";
 
     /**
      * 菜单

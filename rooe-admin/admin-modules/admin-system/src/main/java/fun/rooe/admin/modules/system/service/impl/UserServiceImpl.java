@@ -10,6 +10,7 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
@@ -70,48 +71,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public PageResult<UserDto> queryAll(UserQueryRequest request) {
-        Scope scope = resolveScope(request);
-        if (scope.empty()) return new PageResult<>(new ArrayList<>(), 0);
+        UserDataScope dataScope = dataService.getCurrentDataScope();
+        if (dataScope.isNone()) return new PageResult<>(new ArrayList<>(), 0);
         Page<User> page = new Page<>(request.getPage(), request.getSize());
-        userMapper.selectPage(page, wrapper(request, scope.ids()));
+        userMapper.selectPage(page, wrapper(request, requestedDeptIds(request), dataScope));
         return new PageResult<>(assemble(page.getRecords()), page.getTotal());
     }
 
     @Override
     public List<UserDto> queryList(UserQueryRequest request) {
-        Scope scope = resolveScope(request);
-        return scope.empty()
+        UserDataScope dataScope = dataService.getCurrentDataScope();
+        return dataScope.isNone()
                 ? new ArrayList<>()
-                : assemble(userMapper.selectList(wrapper(request, scope.ids())));
+                : assemble(userMapper.selectList(
+                wrapper(request, requestedDeptIds(request), dataScope)));
     }
 
-    /**
-     * Intersects an optional department filter with the current user's data scope. An empty allowed
-     * set means unrestricted access, matching {@link DataService}'s contract.
-     */
-    private Scope resolveScope(UserQueryRequest request) {
+    private Set<Long> requestedDeptIds(UserQueryRequest request) {
         Set<Long> requested = new LinkedHashSet<>();
         if (request.getDeptId() != null) {
             requested.add(request.getDeptId());
             requested.addAll(
                     deptService.getDeptChildren(deptService.findByPid(request.getDeptId())));
         }
-        User current = findByName(SecurityUtils.getCurrentUsername());
-        if (current == null) return new Scope(Collections.emptySet(), true);
-        Set<Long> allowed =
-                new LinkedHashSet<>(dataService.getDeptIds(current.getId(), current.getDeptId()));
-        if (!requested.isEmpty() && !allowed.isEmpty()) {
-            requested.retainAll(allowed);
-            return new Scope(requested, requested.isEmpty());
-        }
-        return new Scope(requested.isEmpty() ? allowed : requested, false);
+        return requested;
     }
 
-    private LambdaQueryWrapper<User> wrapper(UserQueryRequest request, Set<Long> deptIds) {
+    private LambdaQueryWrapper<User> wrapper(
+            UserQueryRequest request, Set<Long> requestedDeptIds, UserDataScope dataScope) {
         LambdaQueryWrapper<User> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(request.getId() != null, User::getId, request.getId())
                 .eq(request.getEnabled() != null, User::getEnabled, request.getEnabled())
-                .in(!deptIds.isEmpty(), User::getDeptId, deptIds)
+                .in(!requestedDeptIds.isEmpty(), User::getDeptId, requestedDeptIds)
                 .and(
                         StringUtils.isNotBlank(request.getBlurry()),
                         query ->
@@ -121,6 +112,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                                         .or()
                                         .like(User::getEmail, request.getBlurry()))
                 .orderByDesc(User::getId);
+        if (!dataScope.isAll()) {
+            wrapper.and(permission -> {
+                if (!dataScope.deptIds().isEmpty()) {
+                    permission.in(User::getDeptId, dataScope.deptIds());
+                }
+                if (dataScope.selfUserId() != null) {
+                    if (!dataScope.deptIds().isEmpty()) {
+                        permission.or();
+                    }
+                    permission.eq(User::getId, dataScope.selfUserId());
+                }
+            });
+        }
         if (request.getCreateTime() != null && request.getCreateTime().size() >= 2)
             wrapper.between(
                     User::getCreateTime,
@@ -160,7 +164,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(UserCreateRequest request) {
-        checkLevel(roleIds(request.getRoles()));
+        Long deptId = request.getDept().getId();
+        Set<Long> roleIds = roleIds(request.getRoles());
+        dataService.checkDeptAccess(deptId);
+        checkLevel(roleIds);
+        roleService.checkDataScopes(roleIds, deptId);
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), null);
         User user = assembler.toEntity(request);
         user.setPassword(userCredentialService.encode("123456"));
@@ -172,14 +180,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(UserUpdateRequest request) {
-        checkLevel(roleIds(request.getRoles()));
         User user = getById(request.getId());
+        checkUserAccess(user);
+        checkLevel(roleMapper.findByUserId(user.getId()).stream()
+                .map(Role::getId)
+                .collect(Collectors.toSet()));
+        Long newDeptId = request.getDept().getId();
+        if (!Objects.equals(user.getDeptId(), newDeptId)) {
+            dataService.checkDeptAccess(newDeptId);
+        }
+        Set<Long> newRoles = roleIds(request.getRoles());
+        checkLevel(newRoles);
+        roleService.checkDataScopes(newRoles, newDeptId);
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), user.getId());
         Set<Long> oldRoles =
                 roleMapper.findByUserId(user.getId()).stream()
                         .map(Role::getId)
                         .collect(Collectors.toSet());
-        Set<Long> newRoles = roleIds(request.getRoles());
         if (!oldRoles.equals(newRoles)) clearAuthorizationCaches(user.getId());
         if (!Objects.equals(user.getDeptId(), request.getDept().getId()))
             redisUtils.del(CacheKey.DATA_USER + user.getId());
@@ -217,6 +234,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void delete(UserDeleteRequest request) {
         int currentLevel = roleService.getCurrentUserLevel();
         for (Long id : request.getIds()) {
+            checkUserAccess(getById(id));
             int targetLevel =
                     roleService.findByUsersId(id).stream()
                             .map(Role::getLevel)
@@ -264,13 +282,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Set<Long> jobIds = ids(jobs);
         if (!jobIds.isEmpty()) {
             userJobMapper.insert(
-                    jobIds.stream().map(id -> new UserJob(userId, id)).toList());
+                    jobIds.stream().map(id -> toUserJob(userId, id)).toList());
         }
         Set<Long> roleIds = ids(roles);
         if (!roleIds.isEmpty()) {
             userRoleMapper.insert(
-                    roleIds.stream().map(id -> new UserRole(userId, id)).toList());
+                    roleIds.stream().map(id -> toUserRole(userId, id)).toList());
         }
+    }
+
+    private UserJob toUserJob(Long userId, Long jobId) {
+        UserJob relation = new UserJob();
+        relation.setUserId(userId);
+        relation.setJobId(jobId);
+        return relation;
+    }
+
+    private UserRole toUserRole(Long userId, Long roleId) {
+        UserRole relation = new UserRole();
+        relation.setUserId(userId);
+        relation.setRoleId(roleId);
+        return relation;
     }
 
     private Set<Long> roleIds(Set<IdReference> refs) {
@@ -319,6 +351,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional(rollbackFor = Exception.class)
     public void resetPwd(UserResetPasswordRequest request, String rawPassword) {
         List<User> users = userMapper.selectBatchIds(request.getIds());
+        if (users.size() != request.getIds().size()) {
+            throw new BadRequestException("User does not exist");
+        }
+        for (User user : users) {
+            checkUserAccess(user);
+            checkLevel(roleMapper.findByUserId(user.getId()).stream()
+                    .map(Role::getId)
+                    .collect(Collectors.toSet()));
+        }
         users.forEach(
                 user -> {
                     flushCache(user.getUsername());
@@ -404,6 +445,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userCacheManager.cleanUserCache(username);
     }
 
-    /** Resolved department IDs plus an explicit marker for an empty intersection. */
-    private record Scope(Set<Long> ids, boolean empty) {}
+    private void checkUserAccess(User user) {
+        if (user == null) {
+            throw new BadRequestException("User does not exist");
+        }
+        dataService.checkUserAccess(user.getId(), user.getDeptId());
+    }
 }

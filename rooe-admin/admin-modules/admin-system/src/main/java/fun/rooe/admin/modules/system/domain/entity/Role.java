@@ -30,7 +30,7 @@ public class Role implements Serializable {
     /**
      * Data access scope.
      */
-    private String dataScope = DataScopeEnum.THIS_LEVEL.getValue();
+    private String dataScope = DataScopeEnum.DEPT.getValue();
 
     /**
      * Role description.

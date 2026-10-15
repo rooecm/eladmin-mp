@@ -81,11 +81,6 @@ public interface MenuAssembler {
                             StringUtils.isEmpty(menu.getComponent())
                                     ? "Layout"
                                     : menu.getComponent());
-                } else if (Integer.valueOf(0).equals(menu.getType())) {
-                    item.setComponent(
-                            StringUtils.isEmpty(menu.getComponent())
-                                    ? "ParentView"
-                                    : menu.getComponent());
                 } else if (StringUtils.isNoneBlank(menu.getComponent())) {
                     item.setComponent(menu.getComponent());
                 }

@@ -76,6 +76,11 @@
             </dependency>
             <dependency>
                 <groupId>fun.rooe</groupId>
+                <artifactId>admin-quartz</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fun.rooe</groupId>
                 <artifactId>admin-system</artifactId>
                 <version>${project.version}</version>
             </dependency>

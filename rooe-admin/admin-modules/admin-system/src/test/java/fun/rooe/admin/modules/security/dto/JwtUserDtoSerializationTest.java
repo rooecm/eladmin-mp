@@ -2,6 +2,7 @@ package fun.rooe.admin.modules.security.dto;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONWriter;
+import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +19,12 @@ class JwtUserDtoSerializationTest {
         user.setUsername("admin");
         user.setEnabled(true);
         JwtUserDto principal =
-                new JwtUserDto(user, Collections.emptyList(), Collections.emptyList());
+                new JwtUserDto(
+                        user,
+                        Collections.emptyList(),
+                        UserDataScope.Mode.ALL,
+                        false,
+                        Collections.emptyList());
 
         String json = JSON.toJSONString(principal, JSONWriter.Feature.WriteClassName);
         JwtUserDto restored = JSON.parseObject(json, JwtUserDto.class);
@@ -26,5 +32,6 @@ class JwtUserDtoSerializationTest {
         assertFalse(json.contains("password"));
         assertEquals("admin", restored.getUsername());
         assertNull(restored.getPassword());
+        assertEquals(UserDataScope.Mode.ALL, restored.getDataScopeMode());
     }
 }

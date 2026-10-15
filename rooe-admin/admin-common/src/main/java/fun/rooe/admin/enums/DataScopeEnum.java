@@ -15,8 +15,10 @@
  */
 package fun.rooe.admin.enums;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * <p>
@@ -26,24 +28,31 @@ import lombok.Getter;
  * @date 2020-05-07
  */
 @Getter
-@AllArgsConstructor
 public enum DataScopeEnum {
 
-    /* 全部的数据权限 */
-    ALL("全部", "全部的数据权限"),
-
-    /* 自己部门的数据权限 */
-    THIS_LEVEL("本级", "自己部门的数据权限"),
-
-    /* 自定义的数据权限 */
-    CUSTOMIZE("自定义", "自定义的数据权限");
+    ALL("ALL", "全部数据", "全部", "全部数据"),
+    DEPT_AND_CHILD("DEPT_AND_CHILD", "本部门及以下", "本部门及以下"),
+    DEPT("DEPT", "本部门", "本级", "本部门"),
+    SELF("SELF", "仅本人", "仅本人"),
+    CUSTOM("CUSTOM", "自定义", "自定义");
 
     private final String value;
     private final String description;
+    private final Set<String> aliases;
+
+    DataScopeEnum(String value, String description, String... aliases) {
+        this.value = value;
+        this.description = description;
+        this.aliases = Set.copyOf(Arrays.asList(aliases));
+    }
 
     public static DataScopeEnum find(String val) {
+        if (val == null) {
+            return null;
+        }
         for (DataScopeEnum dataScopeEnum : DataScopeEnum.values()) {
-            if (dataScopeEnum.getValue().equals(val)) {
+            if (dataScopeEnum.getValue().equalsIgnoreCase(val)
+                    || dataScopeEnum.aliases.contains(val)) {
                 return dataScopeEnum;
             }
         }

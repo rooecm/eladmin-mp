@@ -30,6 +30,8 @@ public interface RoleService extends IService<Role> {
 
     Integer findByRoleIds(Set<Long> roleIds);
 
+    void checkDataScopes(Set<Long> roleIds, Long targetDeptId);
+
     int getCurrentUserLevel();
 
     List<AuthorityDto> buildPermissions(UserLoginDto user);

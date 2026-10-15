@@ -2,7 +2,7 @@ import router from './routers'
 import store from '@/store'
 import Config from '@/settings'
 import NProgress from 'nprogress' // progress bar
-import 'nprogress/nprogress.css'// progress bar style
+import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // getToken from cookie
 import { buildMenus } from '@/api/system/menu'
 import { filterAsyncRouter } from '@/store/modules/permission'
@@ -56,7 +56,7 @@ export const loadMenus = (next, to) => {
     const sdata = JSON.parse(JSON.stringify(res))
     const rdata = JSON.parse(JSON.stringify(res))
     const sidebarRoutes = filterAsyncRouter(sdata)
-    const rewriteRoutes = filterAsyncRouter(rdata, false, true)
+    const rewriteRoutes = filterAsyncRouter(rdata)
     rewriteRoutes.push({ path: '*', redirect: '/404', hidden: true })
 
     store.dispatch('GenerateRoutes', rewriteRoutes).then(() => { // 存储路由

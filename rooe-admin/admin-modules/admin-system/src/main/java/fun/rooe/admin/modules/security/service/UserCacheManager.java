@@ -16,13 +16,14 @@
 package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.framework.config.security.config.LoginProperties;
-import fun.rooe.admin.modules.security.dto.JwtUserDto;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.modules.security.dto.JwtUserDto;
 import fun.rooe.admin.utils.StringUtils;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import jakarta.annotation.Resource;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -81,5 +82,12 @@ public class UserCacheManager {
             // 清除数据
             redisUtils.del(LoginProperties.cacheKey + userName);
         }
+    }
+
+    /**
+     * Clears cached principals after a department hierarchy change.
+     */
+    public void cleanAllUserCaches() {
+        redisUtils.scanDel(LoginProperties.cacheKey + "*");
     }
 }

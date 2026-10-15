@@ -1,28 +1,9 @@
-server:
-  port: 8000
-  http2:
-    # 启用 HTTP/2 支持，提升传输效率
-    enabled: true
-  compression:
-    # 启用 GZIP 压缩，减少传输数据量
-    enabled: true
-    # 需要压缩的 MIME 类型
-    mime-types: text/html, text/xml, text/plain, application/json
-    # 最小压缩响应大小（字节）
-    min-response-size: 1024
-
-mybatis-plus:
-  configuration:
-    # 关闭二级缓存
-    cache-enabled: false
-    # 设置本地缓存作用域
-    local-cache-scope: SESSION
-
 spring:
+  application:
+    name: rooe-admin
   freemarker:
     check-template-location: false
-  profiles:
-    # 激活的环境，如果需要 quartz 分布式支持，需要修改 active: dev,quartz
+  profiles: # 激活的环境，如果需要 quartz 分布式支持，需要修改 active: dev,quartz
     active: dev
   data:
     redis:
@@ -46,6 +27,27 @@ spring:
           max-idle: 20
           # 连接池中的最小空闲连接数
           min-idle: 1
+
+server:
+  port: 8000
+  http2:
+    # 启用 HTTP/2 支持，提升传输效率
+    enabled: true
+  compression:
+    # 启用 GZIP 压缩，减少传输数据量
+    enabled: true
+    # 需要压缩的 MIME 类型
+    mime-types: text/html, text/xml, text/plain, application/json
+    # 最小压缩响应大小（字节）
+    min-response-size: 1024
+
+mybatis-plus:
+  configuration:
+    # 关闭二级缓存
+    cache-enabled: false
+    # 设置本地缓存作用域
+    local-cache-scope: SESSION
+
 #  pid:
 #    file: /自行指定位置/rooe-admin.pid
 

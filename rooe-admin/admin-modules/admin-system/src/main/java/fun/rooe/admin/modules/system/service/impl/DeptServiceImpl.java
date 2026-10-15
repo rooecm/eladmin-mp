@@ -19,10 +19,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.model.UserDataScope;
+import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
 import fun.rooe.admin.modules.system.domain.entity.Dept;
@@ -32,6 +32,7 @@ import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.mapper.RoleDeptMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
+import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -56,32 +57,40 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private final RedisUtils redisUtils;
     private final RoleDeptMapper roleDeptMapper;
     private final DeptAssembler deptAssembler;
+    private final DataService dataService;
+    private final UserCacheManager userCacheManager;
 
     @Override
     public List<DeptDto> queryAll(DeptQueryRequest request) {
-        String dataScopeType = SecurityUtils.getDataScopeType();
-        List<Long> dataScopeIds = SecurityUtils.getCurrentUserDataScope();
-        LambdaQueryWrapper<Dept> queryWrapper = buildQueryWrapper(request, dataScopeIds, dataScopeType);
+        UserDataScope dataScope = dataService.getCurrentDataScope();
+        if (dataScope.isNone()
+                || (dataScope.isSelf() && dataScope.selfDeptId() == null)) {
+            return List.of();
+        }
+        LambdaQueryWrapper<Dept> queryWrapper = buildQueryWrapper(request, dataScope);
         List<Dept> list = deptMapper.selectList(queryWrapper);
-        // 如果为空，就代表为自定义权限或者本级权限，就需要去重，不理解可以注释掉，看查询结果
-        if(StringUtils.isBlank(dataScopeType)){
+        // Restricted scopes return only the highest visible nodes for tree rendering.
+        if (!dataScope.isAll()) {
             list = deduplication(list);
         }
         return deptAssembler.toDtos(list);
     }
 
-    private LambdaQueryWrapper<Dept> buildQueryWrapper(DeptQueryRequest request,
-                                                        List<Long> dataScopeIds,
-                                                        String dataScopeType) {
+    private LambdaQueryWrapper<Dept> buildQueryWrapper(
+            DeptQueryRequest request, UserDataScope dataScope) {
         boolean hasExplicitCondition = request.getName() != null
                 || request.getPid() != null
                 || request.getCreateTime() != null;
         boolean queryRootDept = !hasExplicitCondition
-                && (DataScopeEnum.ALL.getValue().equals(dataScopeType)
+                && (dataScope.isAll()
                 || Boolean.TRUE.equals(request.getPidIsNull()));
 
+        Set<Long> visibleDeptIds = new LinkedHashSet<>(dataScope.deptIds());
+        if (dataScope.selfDeptId() != null) {
+            visibleDeptIds.add(dataScope.selfDeptId());
+        }
         LambdaQueryWrapper<Dept> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.in(!CollectionUtils.isEmpty(dataScopeIds), Dept::getId, dataScopeIds)
+        queryWrapper.in(!dataScope.isAll(), Dept::getId, visibleDeptIds)
                 .like(StringUtils.isNotBlank(request.getName()), Dept::getName, request.getName())
                 .eq(request.getEnabled() != null, Dept::getEnabled, request.getEnabled())
                 .eq(request.getPid() != null, Dept::getPid, request.getPid())
@@ -118,20 +127,25 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(DeptCreateRequest request) {
+        dataService.checkDeptAccess(request.getPid());
         Dept dept = deptAssembler.toDept(request);
         save(dept);
         // 清理缓存
         updateSubCnt(dept.getPid());
         // 清理自定义角色权限的datascope缓存
-        delCaches(dept.getPid());
+        delCaches();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(DeptUpdateRequest request) {
+        dataService.checkDeptAccess(request.getId());
         // 旧的部门
         Long oldPid = findById(request.getId()).getPid();
         Long newPid = request.getPid();
+        if (!Objects.equals(oldPid, newPid)) {
+            dataService.checkDeptAccess(newPid);
+        }
         if(request.getPid() != null && request.getId().equals(request.getPid())) {
             throw new BadRequestException("上级不能为自己");
         }
@@ -142,7 +156,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         updateSubCnt(oldPid);
         updateSubCnt(newPid);
         // 清理缓存
-        delCaches(request.getId());
+        delCaches();
     }
 
     @Override
@@ -156,13 +170,14 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 collectDeleteDepts(findByPid(id), deptById);
             }
         }
+        dataService.checkDeptAccess(deptById.keySet());
         verification(deptById.values());
         for (Dept dept : deptById.values()) {
             // 清理缓存
-            delCaches(dept.getId());
             deptMapper.deleteById(dept.getId());
             updateSubCnt(dept.getPid());
         }
+        delCaches();
     }
 
     private void collectDeleteDepts(List<Dept> deptList, Map<Long, Dept> deptById) {
@@ -195,6 +210,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     public List<DeptDto> getSuperior(DeptSuperiorRequest request) {
         List<Long> ids = request.getIds();
+        UserDataScope dataScope = dataService.getCurrentDataScope();
+        dataService.checkDeptReadAccess(ids);
+        Set<Long> hierarchyIds = getHierarchyIds(ids);
         Map<Long, Dept> deptById = new LinkedHashMap<>();
         Set<Long> adjustedParentIds = new HashSet<>();
         for (Long id : ids) {
@@ -207,7 +225,10 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 // 编辑部门时不显示自己以及自己下级的数据，避免出现PID数据环形问题
                 depts = depts.stream().filter(item -> !ids.contains(item.getId())).toList();
             }
-            depts.forEach(item -> deptById.putIfAbsent(item.getId(), item));
+            depts.stream()
+                    .filter(item -> dataScope.permits(item.getId())
+                            || hierarchyIds.contains(item.getId()))
+                    .forEach(item -> deptById.putIfAbsent(item.getId(), item));
         }
         List<DeptDto> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptById.values()));
         deptDtos.stream()
@@ -215,6 +236,17 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 .forEach(dept -> dept.setSubCount(Math.max(0,
                         Optional.ofNullable(dept.getSubCount()).orElse(0) - 1)));
         return deptAssembler.toTree(deptDtos);
+    }
+
+    private Set<Long> getHierarchyIds(Collection<Long> deptIds) {
+        Set<Long> hierarchyIds = new HashSet<>();
+        for (Long deptId : deptIds) {
+            Dept current = findById(deptId);
+            while (current != null && hierarchyIds.add(current.getId())) {
+                current = current.getPid() == null ? null : findById(current.getPid());
+            }
+        }
+        return hierarchyIds;
     }
 
     private List<Dept> getSuperiorDepts(Dept dept, List<Dept> depts) {
@@ -267,13 +299,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     /**
-     * 清理缓存
-     * @param id /
+     * Clears all scope-dependent caches after a department hierarchy change.
      */
-    public void delCaches(Long id){
-        List<User> users = userMapper.findByRoleDeptId(id);
+    public void delCaches() {
+        redisUtils.scanDel(CacheKey.DATA_USER + "*");
+        redisUtils.scanDel(CacheKey.DEPT_ID + "*");
+        userCacheManager.cleanAllUserCaches();
         // 删除数据权限
-        redisUtils.delByKeys(CacheKey.DATA_USER, users.stream().map(User::getId).collect(Collectors.toSet()));
-        redisUtils.del(CacheKey.DEPT_ID + id);
     }
 }

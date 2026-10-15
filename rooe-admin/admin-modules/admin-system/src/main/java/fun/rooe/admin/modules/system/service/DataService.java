@@ -15,7 +15,10 @@
  */
 package fun.rooe.admin.modules.system.service;
 
-import java.util.List;
+import fun.rooe.admin.model.UserDataScope;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * 数据权限服务类
@@ -32,5 +35,17 @@ public interface DataService {
      * @param deptId current department ID
      * @return /
      */
-    List<Long> getDeptIds(Long userId, Long deptId);
+    UserDataScope getDataScope(Long userId, Long deptId);
+
+    UserDataScope getCurrentDataScope();
+
+    void checkDeptAccess(Long deptId);
+
+    void checkDeptAccess(Collection<Long> deptIds);
+
+    void checkDeptReadAccess(Collection<Long> deptIds);
+
+    void checkUserAccess(Long userId, Long deptId);
+
+    Set<Long> expandDeptIds(Collection<Long> deptIds);
 }

@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
+import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.dto.AuthorityDto;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
@@ -19,6 +21,7 @@ import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
 import fun.rooe.admin.modules.system.domain.entity.*;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
+import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.StringUtils;
@@ -46,6 +49,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private final UserMapper userMapper;
     private final RedisUtils redisUtils;
     private final UserCacheManager userCacheManager;
+    private final DataService dataService;
     private final RoleAssembler assembler;
     private final DeptAssembler deptAssembler;
     private final MenuAssembler menuAssembler;
@@ -83,6 +87,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private List<RoleDto> assemble(List<Role> roles) {
         List<RoleDto> result = assembler.toDtos(roles);
         for (RoleDto dto : result) {
+            DataScopeEnum dataScope = DataScopeEnum.find(dto.getDataScope());
+            if (dataScope != null) {
+                dto.setDataScope(dataScope.getValue());
+            }
             dto.setDepts(
                     new LinkedHashSet<>(
                             deptAssembler.toDtos(
@@ -116,9 +124,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public void create(RoleCreateRequest request) {
         checkLevel(request.getLevel());
         checkName(request.getName(), null);
+        DataScopeEnum dataScope = validateDataScope(
+                request.getDataScope(), request.getDepts(), null);
         Role role = assembler.toEntity(request);
+        role.setDataScope(dataScope.getValue());
         save(role);
-        insertDepts(role.getId(), request.getDepts());
+        if (dataScope == DataScopeEnum.CUSTOM) {
+            insertDepts(role.getId(), request.getDepts());
+        }
     }
 
     @Override
@@ -128,12 +141,17 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         checkLevel(role.getLevel());
         checkLevel(request.getLevel());
         checkName(request.getName(), request.getId());
+        DataScopeEnum dataScope = validateDataScope(
+                request.getDataScope(), request.getDepts(), role.getId());
         assembler.updateEntity(request, role);
+        role.setDataScope(dataScope.getValue());
         updateById(role);
         // Custom data-scope rows represent the complete request state.
         roleDeptMapper.delete(
                 Wrappers.<RoleDept>lambdaQuery().eq(RoleDept::getRoleId, role.getId()));
-        insertDepts(role.getId(), request.getDepts());
+        if (dataScope == DataScopeEnum.CUSTOM) {
+            insertDepts(role.getId(), request.getDepts());
+        }
         delCaches(role.getId(), null);
     }
 
@@ -149,7 +167,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         Set<Long> menuIds = ids(request.getMenus());
         if (!menuIds.isEmpty()) {
             roleMenuMapper.insert(
-                    menuIds.stream().map(id -> new RoleMenu(role.getId(), id)).toList());
+                    menuIds.stream().map(id -> toRoleMenu(role.getId(), id)).toList());
         }
         delCaches(role.getId(), users);
     }
@@ -179,14 +197,103 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         Set<Long> deptIds = ids(refs);
         if (!deptIds.isEmpty()) {
             roleDeptMapper.insert(
-                    deptIds.stream().map(id -> new RoleDept(roleId, id)).toList());
+                    deptIds.stream().map(id -> toRoleDept(roleId, id)).toList());
         }
+    }
+
+    private RoleMenu toRoleMenu(Long roleId, Long menuId) {
+        RoleMenu relation = new RoleMenu();
+        relation.setRoleId(roleId);
+        relation.setMenuId(menuId);
+        return relation;
+    }
+
+    private RoleDept toRoleDept(Long roleId, Long deptId) {
+        RoleDept relation = new RoleDept();
+        relation.setRoleId(roleId);
+        relation.setDeptId(deptId);
+        return relation;
     }
 
     private Set<Long> ids(Set<IdReference> refs) {
         return refs == null
                 ? Collections.emptySet()
                 : refs.stream().map(IdReference::getId).collect(Collectors.toSet());
+    }
+
+    private DataScopeEnum validateDataScope(
+            String value, Set<IdReference> refs, Long existingRoleId) {
+        DataScopeEnum configuredScope = DataScopeEnum.find(value);
+        if (configuredScope == null) {
+            throw new BadRequestException("Invalid data scope: " + value);
+        }
+        UserDataScope currentScope = dataService.getCurrentDataScope();
+        if (configuredScope == DataScopeEnum.ALL && !currentScope.isAll()) {
+            throw new BadRequestException("Cannot grant a data scope broader than your own");
+        }
+        if (configuredScope == DataScopeEnum.CUSTOM) {
+            Set<Long> deptIds = ids(refs);
+            if (deptIds.isEmpty()) {
+                throw new BadRequestException("Custom data scope departments cannot be empty");
+            }
+            if (deptMapper.selectBatchIds(deptIds).size() != deptIds.size()) {
+                throw new BadRequestException("Data scope contains a department that does not exist");
+            }
+            dataService.checkDeptAccess(deptIds);
+        }
+        if (existingRoleId != null
+                && (configuredScope == DataScopeEnum.DEPT
+                || configuredScope == DataScopeEnum.DEPT_AND_CHILD)) {
+            for (User user : userMapper.findByRoleId(existingRoleId)) {
+                checkConfiguredScope(configuredScope, existingRoleId, user.getDeptId());
+            }
+        }
+        return configuredScope;
+    }
+
+    @Override
+    public void checkDataScopes(Set<Long> roleIds, Long targetDeptId) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return;
+        }
+        List<Role> roles = roleMapper.selectBatchIds(roleIds);
+        if (roles.size() != roleIds.size()) {
+            throw new BadRequestException("Role does not exist");
+        }
+        for (Role role : roles) {
+            DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
+            if (configuredScope == null) {
+                throw new BadRequestException(
+                        "Invalid data scope configured for role: " + role.getName());
+            }
+            checkConfiguredScope(configuredScope, role.getId(), targetDeptId);
+        }
+    }
+
+    private void checkConfiguredScope(
+            DataScopeEnum configuredScope, Long roleId, Long targetDeptId) {
+        switch (configuredScope) {
+            case ALL -> {
+                if (!dataService.getCurrentDataScope().isAll()) {
+                    throw new BadRequestException(
+                            "Cannot grant a data scope broader than your own");
+                }
+            }
+            case DEPT -> dataService.checkDeptAccess(targetDeptId);
+            case DEPT_AND_CHILD -> {
+                if (targetDeptId == null) {
+                    dataService.checkDeptAccess((Long) null);
+                } else {
+                    dataService.checkDeptAccess(
+                            dataService.expandDeptIds(List.of(targetDeptId)));
+                }
+            }
+            case CUSTOM -> dataService.checkDeptAccess(
+                    deptMapper.findByRoleId(roleId).stream().map(Dept::getId).toList());
+            case SELF -> {
+                // Self-only access does not grant access to another user's data.
+            }
+        }
     }
 
     @Override
