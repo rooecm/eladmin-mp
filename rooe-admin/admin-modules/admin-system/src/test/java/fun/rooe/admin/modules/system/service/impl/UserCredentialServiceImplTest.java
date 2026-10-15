@@ -1,6 +1,10 @@
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import fun.rooe.admin.modules.system.domain.entity.User;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +20,8 @@ class UserCredentialServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoHelper.initTableInfo(
+                new MapperBuilderAssistant(new MybatisConfiguration(), "test"), User.class);
         userMapper = mock(UserMapper.class);
         passwordEncoder = mock(PasswordEncoder.class);
         service = new UserCredentialServiceImpl(userMapper, passwordEncoder);
@@ -23,7 +29,7 @@ class UserCredentialServiceImplTest {
 
     @Test
     void matchesCurrentDatabaseHash() {
-        when(userMapper.findPasswordHashByUsername("admin")).thenReturn("stored-hash");
+        when(userMapper.selectOne(any())).thenReturn(userWithPassword("stored-hash"));
         when(passwordEncoder.matches("raw-password", "stored-hash")).thenReturn(true);
 
         assertTrue(service.matches("admin", "raw-password"));
@@ -33,7 +39,7 @@ class UserCredentialServiceImplTest {
 
     @Test
     void rejectsPasswordThatDoesNotMatchCurrentHash() {
-        when(userMapper.findPasswordHashByUsername("admin")).thenReturn("stored-hash");
+        when(userMapper.selectOne(any())).thenReturn(userWithPassword("stored-hash"));
         when(passwordEncoder.matches("wrong-password", "stored-hash")).thenReturn(false);
 
         assertFalse(service.matches("admin", "wrong-password"));
@@ -43,10 +49,16 @@ class UserCredentialServiceImplTest {
 
     @Test
     void rejectsUnknownUserWithoutCallingEncoder() {
-        when(userMapper.findPasswordHashByUsername("missing")).thenReturn(null);
+        when(userMapper.selectOne(any())).thenReturn(null);
 
         assertFalse(service.matches("missing", "raw-password"));
 
         verifyNoInteractions(passwordEncoder);
+    }
+
+    private User userWithPassword(String password) {
+        User user = new User();
+        user.setPassword(password);
+        return user;
     }
 }
