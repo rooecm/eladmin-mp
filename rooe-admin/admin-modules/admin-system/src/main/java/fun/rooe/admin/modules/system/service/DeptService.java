@@ -17,7 +17,9 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.Dept;
+import fun.rooe.admin.modules.system.domain.dto.DeptDto;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
+import fun.rooe.admin.response.PageResult;
 import java.util.List;
 import java.util.Set;
 
@@ -30,11 +32,10 @@ public interface DeptService extends IService<Dept> {
     /**
      * 查询所有数据
      * @param criteria 条件
-     * @param isQuery /
      * @throws Exception /
      * @return /
      */
-    List<Dept> queryAll(DeptQueryCriteria criteria, Boolean isQuery) throws Exception;
+    PageResult<DeptDto> queryAll(DeptQueryCriteria criteria) throws Exception;
 
     /**
      * 根据ID查询
@@ -86,18 +87,11 @@ public interface DeptService extends IService<Dept> {
 
     /**
      * 根据ID获取同级与上级数据
-     * @param dept /
-     * @param depts /
+     * @param ids 部门ID
+     * @param exclude 是否排除指定部门及其下级
      * @return /
      */
-    List<Dept> getSuperior(Dept dept, List<Dept> depts);
-
-    /**
-     * 构建树形数据
-     * @param depts /
-     * @return /
-     */
-    Object buildTree(List<Dept> depts);
+    PageResult<DeptDto> getSuperior(List<Long> ids, Boolean exclude);
 
     /**
      * 获取

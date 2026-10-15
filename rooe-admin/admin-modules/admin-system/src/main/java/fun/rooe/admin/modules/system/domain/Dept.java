@@ -31,7 +31,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -79,10 +78,6 @@ public class Dept implements Serializable {
     @Schema(description = "角色")
     private Set<Role> roles;
 
-    @TableField(exist = false)
-    @Schema(description = "子部门")
-    private List<Dept> children;
-
     @Schema(description = "排序")
     private Integer deptSort;
 
@@ -118,19 +113,4 @@ public class Dept implements Serializable {
         return Objects.hash(id, name);
     }
 
-    @Schema(description = "是否有子节点")
-    public Boolean getHasChildren() {
-        return subCount > 0;
-    }
-
-
-    @Schema(description = "是否为叶子")
-    public Boolean getLeaf() {
-        return subCount <= 0;
-    }
-
-    @Schema(description = "标签名称")
-    public String getLabel() {
-        return name;
-    }
 }

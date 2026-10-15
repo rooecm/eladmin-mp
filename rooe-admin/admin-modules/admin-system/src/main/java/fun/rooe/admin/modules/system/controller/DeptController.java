@@ -21,15 +21,14 @@ import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dept;
+import fun.rooe.admin.modules.system.domain.dto.DeptDto;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
 import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -48,31 +47,16 @@ public class DeptController {
     @Operation(summary = "查询部门")
     @GetMapping
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public PageResult<Dept> queryDept(DeptQueryCriteria criteria) throws Exception {
-        List<Dept> depts = deptService.queryAll(criteria, true);
-        return PageUtil.toPage(depts);
+    public PageResult<DeptDto> queryDept(DeptQueryCriteria criteria) throws Exception {
+        return deptService.queryAll(criteria);
     }
 
     @Operation(summary = "查询部门:根据ID获取同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public Object getDeptSuperior(@RequestBody List<Long> ids, @RequestParam(defaultValue = "false") Boolean exclude) {
-        Set<Dept> deptSet  = new LinkedHashSet<>();
-        for (Long id : ids) {
-            Dept dept = deptService.findById(id);
-            List<Dept> depts = deptService.getSuperior(dept, new ArrayList<>());
-            if(exclude){
-                for (Dept data : depts) {
-                    if(data.getId().equals(dept.getPid())) {
-                        data.setSubCount(data.getSubCount() - 1);
-                    }
-                }
-                // 编辑部门时不显示自己以及自己下级的数据，避免出现PID数据环形问题
-                depts = depts.stream().filter(i -> !ids.contains(i.getId())).toList();
-            }
-            deptSet.addAll(depts);
-        }
-        return deptService.buildTree(new ArrayList<>(deptSet));
+    public PageResult<DeptDto> getDeptSuperior(@RequestBody List<Long> ids,
+                                               @RequestParam(defaultValue = "false") Boolean exclude) {
+        return deptService.getSuperior(ids, exclude);
     }
 
     @Log("新增部门")

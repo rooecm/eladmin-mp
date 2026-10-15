@@ -19,17 +19,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.domain.User;
+import fun.rooe.admin.modules.system.domain.dto.DeptDto;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.response.PageResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.lang.reflect.Field;
@@ -51,27 +55,26 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private final UserMapper userMapper;
     private final RedisUtils redisUtils;
     private final RoleMapper roleMapper;
+    private final DeptAssembler deptAssembler;
 
     @Override
-    public List<Dept> queryAll(DeptQueryCriteria criteria, Boolean isQuery) throws Exception {
+    public PageResult<DeptDto> queryAll(DeptQueryCriteria criteria) throws Exception {
         String dataScopeType = SecurityUtils.getDataScopeType();
-        if (isQuery) {
-            if(dataScopeType.equals(DataScopeEnum.ALL.getValue())){
-                criteria.setPidIsNull(true);
+        if(dataScopeType.equals(DataScopeEnum.ALL.getValue())){
+            criteria.setPidIsNull(true);
+        }
+        List<Field> fields = List.of(FieldUtils.getAllFields(criteria.getClass()));
+        List<String> fieldNames = new ArrayList<String>(){{ add("pidIsNull");add("enabled");}};
+        for (Field field : fields) {
+            //设置对象的访问权限，保证对private的属性的访问
+            field.setAccessible(true);
+            Object val = field.get(criteria);
+            if(fieldNames.contains(field.getName())){
+                continue;
             }
-            List<Field> fields = List.of(FieldUtils.getAllFields(criteria.getClass()));
-            List<String> fieldNames = new ArrayList<String>(){{ add("pidIsNull");add("enabled");}};
-            for (Field field : fields) {
-                //设置对象的访问权限，保证对private的属性的访问
-                field.setAccessible(true);
-                Object val = field.get(criteria);
-                if(fieldNames.contains(field.getName())){
-                    continue;
-                }
-                if (Objects.nonNull(val)) {
-                    criteria.setPidIsNull(null);
-                    break;
-                }
+            if (Objects.nonNull(val)) {
+                criteria.setPidIsNull(null);
+                break;
             }
         }
         // 数据权限
@@ -79,9 +82,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         List<Dept> list = deptMapper.findAll(criteria);
         // 如果为空，就代表为自定义权限或者本级权限，就需要去重，不理解可以注释掉，看查询结果
         if(StringUtils.isBlank(dataScopeType)){
-            return deduplication(list);
+            list = deduplication(list);
         }
-        return list;
+        return PageUtil.toPage(deptAssembler.toDtos(list));
     }
 
     @Override
@@ -174,49 +177,36 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public List<Dept> getSuperior(Dept dept, List<Dept> depts) {
+    public PageResult<DeptDto> getSuperior(List<Long> ids, Boolean exclude) {
+        Set<Dept> deptSet = new LinkedHashSet<>();
+        Set<Long> adjustedParentIds = new HashSet<>();
+        for (Long id : ids) {
+            Dept dept = findById(id);
+            List<Dept> depts = getSuperiorDepts(dept, new ArrayList<>());
+            if (Boolean.TRUE.equals(exclude)) {
+                if (dept.getPid() != null) {
+                    adjustedParentIds.add(dept.getPid());
+                }
+                // 编辑部门时不显示自己以及自己下级的数据，避免出现PID数据环形问题
+                depts = depts.stream().filter(item -> !ids.contains(item.getId())).toList();
+            }
+            deptSet.addAll(depts);
+        }
+        List<DeptDto> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptSet));
+        deptDtos.stream()
+                .filter(dept -> adjustedParentIds.contains(dept.getId()))
+                .forEach(dept -> dept.setSubCount(Math.max(0,
+                        Optional.ofNullable(dept.getSubCount()).orElse(0) - 1)));
+        return deptAssembler.toTree(deptDtos);
+    }
+
+    private List<Dept> getSuperiorDepts(Dept dept, List<Dept> depts) {
         if(dept.getPid() == null){
             depts.addAll(deptMapper.findByPidIsNull());
             return depts;
         }
         depts.addAll(deptMapper.findByPid(dept.getPid()));
-        return getSuperior(findById(dept.getPid()), depts);
-    }
-
-    @Override
-    public Object buildTree(List<Dept> deptList) {
-        Set<Dept> trees = new LinkedHashSet<>();
-        Set<Dept> depts= new LinkedHashSet<>();
-        List<String> deptNames = deptList.stream().map(Dept::getName).collect(Collectors.toList());
-        boolean isChild;
-        for (Dept dept : deptList) {
-            isChild = false;
-            if (dept.getPid() == null) {
-                trees.add(dept);
-            }
-            for (Dept it : deptList) {
-                if (it.getPid() != null && dept.getId().equals(it.getPid())) {
-                    isChild = true;
-                    if (dept.getChildren() == null) {
-                        dept.setChildren(new ArrayList<>());
-                    }
-                    dept.getChildren().add(it);
-                }
-            }
-            if(isChild) {
-                depts.add(dept);
-            } else if(dept.getPid() != null &&  !deptNames.contains(findById(dept.getPid()).getName())) {
-                depts.add(dept);
-            }
-        }
-
-        if (CollectionUtils.isEmpty(trees)) {
-            trees = depts;
-        }
-        Map<String,Object> map = new HashMap<>(2);
-        map.put("totalElements",depts.size());
-        map.put("content",CollectionUtils.isEmpty(trees)? depts :trees);
-        return map;
+        return getSuperiorDepts(findById(dept.getPid()), depts);
     }
 
     @Override
