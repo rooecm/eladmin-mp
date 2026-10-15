@@ -24,7 +24,6 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.dto.MenuVo;
 import fun.rooe.admin.modules.system.service.MenuService;
 import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.framework.utils.SecurityUtils;
@@ -58,43 +57,43 @@ public class MenuController {
 
     @GetMapping(value = "/build")
     @Operation(summary = "获取前端所需菜单")
-    public ApiResult<List<MenuVo>> buildMenus(){
+    public List<MenuVo> buildMenus(){
         List<Menu> menuList = menuService.findByUser(SecurityUtils.getCurrentUserId());
         List<Menu> menus = menuService.buildTree(menuList);
-        return ApiResult.success(menuService.buildMenus(menus));
+        return menuService.buildMenus(menus);
     }
 
     @Operation(summary = "返回全部的菜单")
     @GetMapping(value = "/lazy")
     @PreAuthorize("@el.check('menu:list','roles:list')")
-    public ApiResult<List<Menu>> queryAllMenu(@RequestParam Long pid){
-        return ApiResult.success(menuService.getMenus(pid));
+    public List<Menu> queryAllMenu(@RequestParam Long pid){
+        return menuService.getMenus(pid);
     }
 
     @Operation(summary = "根据菜单ID返回所有子节点ID，包含自身ID")
     @GetMapping(value = "/child")
     @PreAuthorize("@el.check('menu:list','roles:list')")
-    public ApiResult<Set<Long>> childMenu(@RequestParam Long id){
+    public Set<Long> childMenu(@RequestParam Long id){
         Set<Menu> menuSet = new HashSet<>();
         List<Menu> menuList = menuService.getMenus(id);
         menuSet.add(menuService.getById(id));
         menuSet = menuService.getChildMenus(menuList, menuSet);
         Set<Long> ids = menuSet.stream().map(Menu::getId).collect(Collectors.toSet());
-        return ApiResult.success(ids);
+        return ids;
     }
 
     @GetMapping
     @Operation(summary = "查询菜单")
     @PreAuthorize("@el.check('menu:list')")
-    public ApiResult<PageResult<Menu>> queryMenu(MenuQueryCriteria criteria) throws Exception {
+    public PageResult<Menu> queryMenu(MenuQueryCriteria criteria) throws Exception {
         List<Menu> menuList = menuService.queryAll(criteria, true);
-        return ApiResult.success(PageUtil.toPage(menuList));
+        return PageUtil.toPage(menuList);
     }
 
     @Operation(summary = "查询菜单:根据ID获取同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('menu:list')")
-    public ApiResult<List<Menu>> getMenuSuperior(@RequestBody List<Long> ids) {
+    public List<Menu> getMenuSuperior(@RequestBody List<Long> ids) {
         Set<Menu> menus = new LinkedHashSet<>();
         if(!CollectionUtils.isEmpty(ids)){
             for (Long id : ids) {
@@ -109,37 +108,35 @@ public class MenuController {
             }
             // 编辑菜单时不显示自己以及自己下级的数据，避免出现PID数据环形问题
             menus = menus.stream().filter(i -> !ids.contains(i.getId())).collect(Collectors.toSet());
-            return ApiResult.success(menuService.buildTree(new ArrayList<>(menus)));
+            return menuService.buildTree(new ArrayList<>(menus));
         }
-        return ApiResult.success(menuService.getMenus(null));
+        return menuService.getMenus(null);
     }
 
     @Log("新增菜单")
     @Operation(summary = "新增菜单")
     @PostMapping
     @PreAuthorize("@el.check('menu:add')")
-    public ApiResult<Void> createMenu(@Validated @RequestBody Menu resources){
+    public void createMenu(@Validated @RequestBody Menu resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         menuService.create(resources);
-        return ApiResult.success();
     }
 
     @Log("修改菜单")
     @Operation(summary = "修改菜单")
     @PutMapping
     @PreAuthorize("@el.check('menu:edit')")
-    public ApiResult<Void> updateMenu(@Validated(Menu.Update.class) @RequestBody Menu resources){
+    public void updateMenu(@Validated(Menu.Update.class) @RequestBody Menu resources){
         menuService.update(resources);
-        return ApiResult.success();
     }
 
     @Log("删除菜单")
     @Operation(summary = "删除菜单")
     @DeleteMapping
     @PreAuthorize("@el.check('menu:del')")
-    public ApiResult<Void> deleteMenu(@RequestBody Set<Long> ids){
+    public void deleteMenu(@RequestBody Set<Long> ids){
         Set<Menu> menuSet = new HashSet<>();
         for (Long id : ids) {
             List<Menu> menuList = menuService.getMenus(id);
@@ -147,6 +144,5 @@ public class MenuController {
             menuSet = menuService.getChildMenus(menuList, menuSet);
         }
         menuService.delete(menuSet);
-        return ApiResult.success();
     }
 }

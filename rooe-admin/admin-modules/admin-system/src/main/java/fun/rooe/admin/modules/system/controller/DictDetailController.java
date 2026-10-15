@@ -24,7 +24,6 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.DictDetail;
 import fun.rooe.admin.modules.system.service.DictDetailService;
 import fun.rooe.admin.modules.system.domain.dto.DictDetailQueryCriteria;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -48,49 +47,46 @@ public class DictDetailController {
 
     @Operation(summary = "查询字典详情")
     @GetMapping
-    public ApiResult<PageResult<DictDetail>> queryDictDetail(DictDetailQueryCriteria criteria){
+    public PageResult<DictDetail> queryDictDetail(DictDetailQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(dictDetailService.queryAll(criteria, page));
+        return dictDetailService.queryAll(criteria, page);
     }
 
     @Operation(summary = "查询多个字典详情")
     @GetMapping(value = "/map")
-    public ApiResult<Map<String, List<DictDetail>>> getDictDetailMaps(@RequestParam String dictName){
+    public Map<String, List<DictDetail>> getDictDetailMaps(@RequestParam String dictName){
         String[] names = dictName.split("[,，]");
         Map<String, List<DictDetail>> dictMap = new HashMap<>(16);
         for (String name : names) {
             dictMap.put(name, dictDetailService.getDictByName(name));
         }
-        return ApiResult.success(dictMap);
+        return dictMap;
     }
 
     @Log("新增字典详情")
     @Operation(summary = "新增字典详情")
     @PostMapping
     @PreAuthorize("@el.check('dict:add')")
-    public ApiResult<Void> createDictDetail(@Validated @RequestBody DictDetail resources){
+    public void createDictDetail(@Validated @RequestBody DictDetail resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         dictDetailService.create(resources);
-        return ApiResult.success();
     }
 
     @Log("修改字典详情")
     @Operation(summary = "修改字典详情")
     @PutMapping
     @PreAuthorize("@el.check('dict:edit')")
-    public ApiResult<Void> updateDictDetail(@Validated(DictDetail.Update.class) @RequestBody DictDetail resources){
+    public void updateDictDetail(@Validated(DictDetail.Update.class) @RequestBody DictDetail resources){
         dictDetailService.update(resources);
-        return ApiResult.success();
     }
 
     @Log("删除字典详情")
     @Operation(summary = "删除字典详情")
     @DeleteMapping(value = "/{id}")
     @PreAuthorize("@el.check('dict:del')")
-    public ApiResult<Void> deleteDictDetail(@PathVariable Long id){
+    public void deleteDictDetail(@PathVariable Long id){
         dictDetailService.delete(id);
-        return ApiResult.success();
     }
 }

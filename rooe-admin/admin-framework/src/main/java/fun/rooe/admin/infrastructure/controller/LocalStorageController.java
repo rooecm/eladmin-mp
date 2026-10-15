@@ -23,7 +23,6 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.infrastructure.service.LocalStorageService;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
 import fun.rooe.admin.utils.FileUtil;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -49,9 +48,9 @@ public class LocalStorageController {
     @GetMapping
     @Operation(summary = "查询文件")
     @PreAuthorize("@el.check('storage:list')")
-    public ApiResult<PageResult<LocalStorage>> queryFile(LocalStorageQueryCriteria criteria){
+    public PageResult<LocalStorage> queryFile(LocalStorageQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(localStorageService.queryAll(criteria,page));
+        return localStorageService.queryAll(criteria,page);
     }
 
     @Operation(summary = "导出数据")
@@ -63,37 +62,34 @@ public class LocalStorageController {
 
     @PostMapping
     @Operation(summary = "上传文件")
-    public ApiResult<Void> createFile(@RequestParam String name, @RequestParam("file") MultipartFile file){
+    public void createFile(@RequestParam String name, @RequestParam("file") MultipartFile file){
         localStorageService.create(name, file);
-        return ApiResult.success();
     }
 
     @Operation(summary = "上传图片")
     @PostMapping("/pictures")
-    public ApiResult<LocalStorage> uploadPicture(@RequestParam MultipartFile file){
+    public LocalStorage uploadPicture(@RequestParam MultipartFile file){
         // 判断文件是否为图片
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
         if(!FileUtil.IMAGE.equals(FileUtil.getFileType(suffix))){
             throw new BadRequestException("只能上传图片");
         }
         LocalStorage localStorage = localStorageService.create(null, file);
-        return ApiResult.success(localStorage);
+        return localStorage;
     }
 
     @PutMapping
     @Log("修改文件")
     @Operation(summary = "修改文件")
-    public ApiResult<Void> updateFile(@Validated @RequestBody LocalStorage resources){
+    public void updateFile(@Validated @RequestBody LocalStorage resources){
         localStorageService.update(resources);
-        return ApiResult.success();
     }
 
     @Log("删除文件")
     @DeleteMapping
     @Operation(summary = "多选删除")
     @PreAuthorize("@el.check('storage:del')")
-    public ApiResult<Void> deleteFile(@RequestBody Long[] ids) {
+    public void deleteFile(@RequestBody Long[] ids) {
         localStorageService.deleteAll(ids);
-        return ApiResult.success();
     }
 }

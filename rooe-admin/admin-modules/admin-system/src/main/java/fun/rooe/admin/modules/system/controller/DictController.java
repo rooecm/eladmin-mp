@@ -24,7 +24,6 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dict;
 import fun.rooe.admin.modules.system.service.DictService;
 import fun.rooe.admin.modules.system.domain.dto.DictQueryCriteria;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -57,45 +56,42 @@ public class DictController {
     @Operation(summary = "查询字典")
     @GetMapping(value = "/all")
     @PreAuthorize("@el.check('dict:list')")
-    public ApiResult<List<Dict>> queryAllDict(){
-        return ApiResult.success(dictService.queryAll(new DictQueryCriteria()));
+    public List<Dict> queryAllDict(){
+        return dictService.queryAll(new DictQueryCriteria());
     }
 
     @Operation(summary = "查询字典")
     @GetMapping
     @PreAuthorize("@el.check('dict:list')")
-    public ApiResult<PageResult<Dict>> queryDict(DictQueryCriteria criteria){
+    public PageResult<Dict> queryDict(DictQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(dictService.queryAll(criteria, page));
+        return dictService.queryAll(criteria, page);
     }
 
     @Log("新增字典")
     @Operation(summary = "新增字典")
     @PostMapping
     @PreAuthorize("@el.check('dict:add')")
-    public ApiResult<Void> createDict(@Validated @RequestBody Dict resources){
+    public void createDict(@Validated @RequestBody Dict resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         dictService.create(resources);
-        return ApiResult.success();
     }
 
     @Log("修改字典")
     @Operation(summary = "修改字典")
     @PutMapping
     @PreAuthorize("@el.check('dict:edit')")
-    public ApiResult<Void> updateDict(@Validated(Dict.Update.class) @RequestBody Dict resources){
+    public void updateDict(@Validated(Dict.Update.class) @RequestBody Dict resources){
         dictService.update(resources);
-        return ApiResult.success();
     }
 
     @Log("删除字典")
     @Operation(summary = "删除字典")
     @DeleteMapping
     @PreAuthorize("@el.check('dict:del')")
-    public ApiResult<Void> deleteDict(@RequestBody Set<Long> ids){
+    public void deleteDict(@RequestBody Set<Long> ids){
         dictService.delete(ids);
-        return ApiResult.success();
     }
 }

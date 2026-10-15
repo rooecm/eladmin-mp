@@ -31,8 +31,7 @@ service.interceptors.response.use(
   response => {
     const result = response.data
     // 识别 ApiResult，在请求层解包，供 CRUD 和业务页面统一使用
-    if (result && typeof result.status === 'number' &&
-      typeof result.code === 'string' && typeof result.message === 'string' &&
+    if (result && typeof result.code === 'string' && typeof result.message === 'string' &&
       Object.prototype.hasOwnProperty.call(result, 'data')) {
       if (result.code === '0') {
         return result.data
@@ -61,9 +60,9 @@ service.interceptors.response.use(
         })
       }
     } else {
-      let code = 0
+      let status = 0
       try {
-        code = error.response.data.status
+        status = error.response.status
       } catch (e) {
         if (error.toString().indexOf('Error: timeout') !== -1) {
           Notification.error({
@@ -73,15 +72,15 @@ service.interceptors.response.use(
           return Promise.reject(error)
         }
       }
-      console.log(code)
-      if (code) {
-        if (code === 401) {
+      console.log(status)
+      if (status) {
+        if (status === 401) {
           store.dispatch('LogOut').then(() => {
             // 用户登录界面提示
             Cookies.set('point', 401)
             location.reload()
           })
-        } else if (code === 403) {
+        } else if (status === 403) {
           router.push({ path: '/401' })
         } else {
           const errorMsg = error.response.data.message

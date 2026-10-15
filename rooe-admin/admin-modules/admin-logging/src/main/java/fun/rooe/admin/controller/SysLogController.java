@@ -23,7 +23,6 @@ import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.domain.SysLog;
 import fun.rooe.admin.service.SysLogService;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -64,51 +63,49 @@ public class SysLogController {
     @GetMapping
     @Operation(summary = "日志查询")
     @PreAuthorize("@el.check()")
-    public ApiResult<PageResult<SysLog>> queryLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLog> queryLog(SysLogQueryCriteria criteria){
         criteria.setLogType("INFO");
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(sysLogService.queryAll(criteria,page));
+        return sysLogService.queryAll(criteria,page);
     }
 
     @GetMapping(value = "/user")
     @Operation(summary = "用户日志查询")
-    public ApiResult<PageResult<SysLog>> queryUserLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLog> queryUserLog(SysLogQueryCriteria criteria){
         criteria.setLogType("INFO");
         criteria.setUsername(SecurityUtils.getCurrentUsername());
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(sysLogService.queryAllByUser(criteria,page));
+        return sysLogService.queryAllByUser(criteria,page);
     }
 
     @GetMapping(value = "/error")
     @Operation(summary = "错误日志查询")
     @PreAuthorize("@el.check()")
-    public ApiResult<PageResult<SysLog>> queryErrorLog(SysLogQueryCriteria criteria){
+    public PageResult<SysLog> queryErrorLog(SysLogQueryCriteria criteria){
         criteria.setLogType("ERROR");
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(sysLogService.queryAll(criteria,page));
+        return sysLogService.queryAll(criteria,page);
     }
 
     @GetMapping(value = "/error/{id}")
     @Operation(summary = "日志异常详情查询")
     @PreAuthorize("@el.check()")
-    public ApiResult<Object> queryErrorLogDetail(@PathVariable Long id){
-        return ApiResult.success(sysLogService.findByErrDetail(id));
+    public Object queryErrorLogDetail(@PathVariable Long id){
+        return sysLogService.findByErrDetail(id);
     }
     @DeleteMapping(value = "/del/error")
     @Log("删除所有ERROR日志")
     @Operation(summary = "删除所有ERROR日志")
     @PreAuthorize("@el.check()")
-    public ApiResult<Void> delAllErrorLog(){
+    public void delAllErrorLog(){
         sysLogService.delAllByError();
-        return ApiResult.success();
     }
 
     @DeleteMapping(value = "/del/info")
     @Log("删除所有INFO日志")
     @Operation(summary = "删除所有INFO日志")
     @PreAuthorize("@el.check()")
-    public ApiResult<Void> delAllInfoLog(){
+    public void delAllInfoLog(){
         sysLogService.delAllByInfo();
-        return ApiResult.success();
     }
 }

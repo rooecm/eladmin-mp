@@ -24,7 +24,6 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Job;
 import fun.rooe.admin.modules.system.service.JobService;
 import fun.rooe.admin.modules.system.domain.dto.JobQueryCriteria;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -56,40 +55,37 @@ public class JobController {
     @Operation(summary = "查询岗位")
     @GetMapping
     @PreAuthorize("@el.check('job:list','user:list')")
-    public ApiResult<PageResult<Job>> queryJob(JobQueryCriteria criteria){
+    public PageResult<Job> queryJob(JobQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return ApiResult.success(jobService.queryAll(criteria, page));
+        return jobService.queryAll(criteria, page);
     }
 
     @Log("新增岗位")
     @Operation(summary = "新增岗位")
     @PostMapping
     @PreAuthorize("@el.check('job:add')")
-    public ApiResult<Void> createJob(@Validated @RequestBody Job resources){
+    public void createJob(@Validated @RequestBody Job resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         jobService.create(resources);
-        return ApiResult.success();
     }
 
     @Log("修改岗位")
     @Operation(summary = "修改岗位")
     @PutMapping
     @PreAuthorize("@el.check('job:edit')")
-    public ApiResult<Void> updateJob(@Validated(Job.Update.class) @RequestBody Job resources){
+    public void updateJob(@Validated(Job.Update.class) @RequestBody Job resources){
         jobService.update(resources);
-        return ApiResult.success();
     }
 
     @Log("删除岗位")
     @Operation(summary = "删除岗位")
     @DeleteMapping
     @PreAuthorize("@el.check('job:del')")
-    public ApiResult<Void> deleteJob(@RequestBody Set<Long> ids){
+    public void deleteJob(@RequestBody Set<Long> ids){
         // 验证是否被用户关联
         jobService.verification(ids);
         jobService.delete(ids);
-        return ApiResult.success();
     }
 }

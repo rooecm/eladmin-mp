@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.dto.OnlineUserDto;
 import fun.rooe.admin.utils.EncryptUtils;
-import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,8 +43,8 @@ public class OnlineController {
     @Operation(summary = "查询在线用户")
     @GetMapping
     @PreAuthorize("@el.check()")
-    public ApiResult<PageResult<OnlineUserDto>> queryOnlineUser(String username, Pageable pageable){
-        return ApiResult.success(onlineUserService.getAll(username, pageable));
+    public PageResult<OnlineUserDto> queryOnlineUser(String username, Pageable pageable){
+        return onlineUserService.getAll(username, pageable);
     }
 
     @Operation(summary = "导出数据")
@@ -58,12 +57,11 @@ public class OnlineController {
     @Operation(summary = "踢出用户")
     @DeleteMapping
     @PreAuthorize("@el.check()")
-    public ApiResult<Void> deleteOnlineUser(@RequestBody Set<String> keys) throws Exception {
+    public void deleteOnlineUser(@RequestBody Set<String> keys) throws Exception {
         for (String token : keys) {
             // 解密Key
             token = EncryptUtils.desDecrypt(token);
             onlineUserService.logout(token);
         }
-        return ApiResult.success();
     }
 }

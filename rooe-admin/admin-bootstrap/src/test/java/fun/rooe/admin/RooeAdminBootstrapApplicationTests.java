@@ -3,7 +3,7 @@ package fun.rooe.admin;
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
-import fun.rooe.admin.framework.exception.handler.GlobalExceptionHandler;
+import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
@@ -66,7 +66,7 @@ public class RooeAdminBootstrapApplicationTests {
         assertNotNull(applicationContext.getBean(SpringContextConfig.class));
         assertNotNull(applicationContext.getBean(MybatisPlusConfig.class));
         assertNotNull(applicationContext.getBean(SpringSecurityConfig.class));
-        assertNotNull(applicationContext.getBean(GlobalExceptionHandler.class));
+        assertNotNull(applicationContext.getBean(GlobalExceptionAdvice.class));
         assertNotNull(applicationContext.getBean(LimitAspect.class));
         assertSame(applicationContext.getBean(OnlineUserService.class),
                 applicationContext.getBean(OnlineSessionService.class));

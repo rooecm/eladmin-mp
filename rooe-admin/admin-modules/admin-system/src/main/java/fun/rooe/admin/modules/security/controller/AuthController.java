@@ -39,7 +39,6 @@ import fun.rooe.admin.utils.RsaUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.utils.StringUtils;
-import fun.rooe.admin.response.ApiResult;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -77,7 +76,7 @@ public class AuthController {
     @Log("用户登录")
     @Operation(summary = "登录授权")
     @AnonymousPostMapping(value = "/login")
-    public ApiResult<Map<String, Object>> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
+    public Map<String, Object> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
         // 密码解密
         String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, authUser.getPassword());
         // 查询验证码
@@ -112,19 +111,19 @@ public class AuthController {
         // 保存在线信息
         onlineUserService.save(jwtUser, token, request);
         // 返回登录信息
-        return ApiResult.success(authInfo);
+        return authInfo;
     }
 
     @Operation(summary = "获取用户信息")
     @GetMapping(value = "/info")
-    public ApiResult<UserDetails> getUserInfo() {
+    public UserDetails getUserInfo() {
         JwtUserDto jwtUser = (JwtUserDto) SecurityUtils.getCurrentUser();
-        return ApiResult.success(jwtUser);
+        return jwtUser;
     }
 
     @Operation(summary = "获取验证码")
     @AnonymousGetMapping(value = "/code")
-    public ApiResult<Map<String, Object>> getCode() {
+    public Map<String, Object> getCode() {
         // 获取运算的结果
         Captcha captcha = captchaConfig.getCaptcha();
         String uuid = properties.getCodeKey() + UUID.randomUUID().toString().replace("-", "");
@@ -140,14 +139,13 @@ public class AuthController {
             put("img", captcha.toBase64());
             put("uuid", uuid);
         }};
-        return ApiResult.success(imgResult);
+        return imgResult;
     }
 
     @Operation(summary = "退出登录")
     @AnonymousDeleteMapping(value = "/logout")
-    public ApiResult<Void> logout(HttpServletRequest request) {
+    public void logout(HttpServletRequest request) {
         String token = tokenProvider.getToken(request);
         onlineUserService.logout(token);
-        return ApiResult.success();
     }
 }

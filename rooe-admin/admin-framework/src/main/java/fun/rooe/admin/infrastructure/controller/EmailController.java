@@ -22,7 +22,6 @@ import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
 import fun.rooe.admin.infrastructure.domain.EmailConfig;
 import fun.rooe.admin.infrastructure.service.EmailService;
-import fun.rooe.admin.response.ApiResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,23 +39,21 @@ public class EmailController {
     private final EmailService emailService;
 
     @GetMapping
-    public ApiResult<EmailConfig> queryEmailConfig(){
-        return ApiResult.success(emailService.find());
+    public EmailConfig queryEmailConfig(){
+        return emailService.find();
     }
 
     @Log("配置邮件")
     @PutMapping
     @Operation(summary = "配置邮件")
-    public ApiResult<Void> updateEmailConfig(@Validated @RequestBody EmailConfig emailConfig) throws Exception {
+    public void updateEmailConfig(@Validated @RequestBody EmailConfig emailConfig) throws Exception {
         emailService.config(emailConfig, emailService.find());
-        return ApiResult.success();
     }
 
     @Log("发送邮件")
     @PostMapping
     @Operation(summary = "发送邮件")
-    public ApiResult<Void> sendEmail(@Validated @RequestBody EmailDto emailDto){
+    public void sendEmail(@Validated @RequestBody EmailDto emailDto){
         emailService.send(emailDto,emailService.find());
-        return ApiResult.success();
     }
 }

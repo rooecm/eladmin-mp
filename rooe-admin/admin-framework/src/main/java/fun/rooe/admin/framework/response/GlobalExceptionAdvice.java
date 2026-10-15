@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.framework.exception.handler;
+package fun.rooe.admin.framework.response;
 
 import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
@@ -37,7 +37,7 @@ import static org.springframework.http.HttpStatus.*;
  */
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionAdvice {
 
     /**
      * 处理所有不可知的异常
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleException(Throwable e){
         // 打印堆栈信息
         log.error(ExceptionUtils.getStackTrace(e));
-        return buildResponseEntity(ApiResult.error(e.getMessage()));
+        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
     /**
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
         // 打印堆栈信息
         String message = "坏的凭证".equals(e.getMessage()) ? "用户名或密码不正确" : e.getMessage();
         log.error(message);
-        return buildResponseEntity(ApiResult.error(message));
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, message);
     }
 
     /**
@@ -67,7 +67,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
         // 打印堆栈信息
         log.error(ExceptionUtils.getStackTrace(e));
-        return buildResponseEntity(ApiResult.error(e.getStatus(),e.getMessage()));
+		return buildResponseEntity(HttpStatus.valueOf(e.getStatus()), e.getMessage());
 	}
 
     /**
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> entityExistException(EntityExistException e) {
         // 打印堆栈信息
         log.error(ExceptionUtils.getStackTrace(e));
-        return buildResponseEntity(ApiResult.error(e.getMessage()));
+        return buildResponseEntity(HttpStatus.CONFLICT, e.getMessage());
     }
 
     /**
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> entityNotFoundException(EntityNotFoundException e) {
         // 打印堆栈信息
         log.error(ExceptionUtils.getStackTrace(e));
-        return buildResponseEntity(ApiResult.error(NOT_FOUND.value(),e.getMessage()));
+        return buildResponseEntity(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
     /**
@@ -102,13 +102,13 @@ public class GlobalExceptionHandler {
         if (objectError instanceof FieldError) {
             message = ((FieldError) objectError).getField() + ": " + message;
         }
-        return buildResponseEntity(ApiResult.error(message));
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, message);
     }
 
     /**
      * 统一返回
      */
-    private ResponseEntity<ApiResult<Void>> buildResponseEntity(ApiResult<Void> apiResult) {
-        return new ResponseEntity<>(apiResult, HttpStatus.valueOf(apiResult.getStatus()));
+    private ResponseEntity<ApiResult<Void>> buildResponseEntity(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(ApiResult.error(status.value(), message));
     }
 }

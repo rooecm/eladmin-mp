@@ -23,7 +23,6 @@ import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import fun.rooe.admin.enums.CodeBiEnum;
 import fun.rooe.admin.enums.CodeEnum;
-import fun.rooe.admin.response.ApiResult;
 import org.springframework.web.bind.annotation.*;
 import java.util.Objects;
 
@@ -42,23 +41,21 @@ public class VerifyController {
 
     @PostMapping(value = "/resetEmail")
     @Operation(summary = "重置邮箱，发送验证码")
-    public ApiResult<Void> resetEmail(@RequestParam String email){
+    public void resetEmail(@RequestParam String email){
         EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey());
         emailService.send(emailDto,emailService.find());
-        return ApiResult.success();
     }
 
     @PostMapping(value = "/email/resetPass")
     @Operation(summary = "重置密码，发送验证码")
-    public ApiResult<Void> resetPass(@RequestParam String email){
+    public void resetPass(@RequestParam String email){
         EmailDto emailDto = verificationCodeService.sendEmail(email, CodeEnum.EMAIL_RESET_PWD_CODE.getKey());
         emailService.send(emailDto,emailService.find());
-        return ApiResult.success();
     }
 
     @GetMapping(value = "/validated")
     @Operation(summary = "验证码验证")
-    public ApiResult<Void> validated(@RequestParam String email, @RequestParam String code, @RequestParam Integer codeBi){
+    public void validated(@RequestParam String email, @RequestParam String code, @RequestParam Integer codeBi){
         CodeBiEnum biEnum = CodeBiEnum.find(codeBi);
         switch (Objects.requireNonNull(biEnum)){
             case ONE:
@@ -70,6 +67,5 @@ public class VerifyController {
             default:
                 break;
         }
-        return ApiResult.success();
     }
 }

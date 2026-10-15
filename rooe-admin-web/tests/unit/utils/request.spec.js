@@ -36,7 +36,7 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('部门列表的通用 CRUD 查询和部门树查询都能读取分页数据', async() => {
-    respondWith({ status: 200, code: '0', message: 'success', data: page })
+    respondWith({ code: '0', message: 'success', data: page })
 
     expect(await initData('api/dept', { page: 0 })).toEqual(page)
     expect(await getDepts({ pid: 1 })).toEqual(page)
@@ -44,13 +44,13 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('部门、用户、角色页面的上级部门查询能读取树数据', async() => {
-    respondWith({ status: 200, code: '0', message: 'success', data: page })
+    respondWith({ code: '0', message: 'success', data: page })
 
     expect(await getDeptSuperior([1], true)).toEqual(page)
   })
 
   it('新增、修改、删除成功时允许 data 为 null', async() => {
-    respondWith({ status: 200, code: '0', message: 'success', data: null })
+    respondWith({ code: '0', message: 'success', data: null })
 
     expect(await add({ name: '部门' })).toBeNull()
     expect(await edit({ id: 1, name: '部门' })).toBeNull()
@@ -77,7 +77,7 @@ describe('ApiResult 响应适配', () => {
   it('直接使用 Axios 的图片上传也能读取业务数据', async() => {
     const file = { id: 1, type: 'image', realName: 'test.png' }
     axios.defaults.adapter = config => Promise.resolve({
-      data: { status: 200, code: '0', message: 'success', data: file },
+      data: { code: '0', message: 'success', data: file },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -88,7 +88,7 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('业务失败时显示消息并拒绝 Promise，避免触发成功处理', async() => {
-    const failure = { status: 400, code: 'DEPT_IN_USE', message: '部门已被关联', data: null }
+    const failure = { code: 'DEPT_IN_USE', message: '部门已被关联', data: null }
     respondWith(failure)
 
     await expect(del([1])).rejects.toMatchObject({
@@ -100,7 +100,7 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('HTTP 错误仍然使用服务端的错误消息', async() => {
-    const data = { status: 400, code: '400', message: '部门名称不能为空', data: null }
+    const data = { code: '400', message: '部门名称不能为空', data: null }
     const error = Object.assign(new Error('Request failed'), { response: { status: 400, data }})
     request.defaults.adapter = () => Promise.reject(error)
 

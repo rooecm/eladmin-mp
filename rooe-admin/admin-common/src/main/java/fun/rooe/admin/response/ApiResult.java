@@ -30,11 +30,6 @@ import java.io.Serializable;
 public class ApiResult<T> implements Serializable {
 
     /**
-     * HTTP 状态码
-     */
-    private final Integer status;
-
-    /**
      * 业务响应码，"0" 表示成功
      */
     private final String code;
@@ -50,22 +45,22 @@ public class ApiResult<T> implements Serializable {
     private final T data;
 
     public static <T> ApiResult<T> success(T data) {
-        return new ApiResult<>(200, "0", "success", data);
+        return new ApiResult<>("0", "success", data);
     }
 
     public static ApiResult<Void> success() {
-        return new ApiResult<>(200, "0", "success", null);
+        return new ApiResult<>("0", "success", null);
     }
 
     public static <T> ApiResult<T> failure(String code, String message) {
-        return new ApiResult<>(400, code, message, null);
+        return new ApiResult<>(code, message, null);
     }
 
     public static ApiResult<Void> error(String message) {
         return error(400, message);
     }
 
-    public static ApiResult<Void> error(Integer status, String message) {
-        return new ApiResult<>(status, String.valueOf(status), message, null);
+    public static ApiResult<Void> error(Integer code, String message) {
+        return new ApiResult<>(String.valueOf(code), message, null);
     }
 }
