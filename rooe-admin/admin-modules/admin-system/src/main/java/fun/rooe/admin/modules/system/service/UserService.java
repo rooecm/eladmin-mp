@@ -1,8 +1,10 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.UserDto;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;

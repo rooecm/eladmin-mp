@@ -1,9 +1,13 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.DictDetail;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.entity.DictDetail;
+import fun.rooe.admin.modules.system.domain.request.DictDetailCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDetailQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDetailUpdateRequest;
 import fun.rooe.admin.response.PageResult;
+
 import java.util.List;
 
 public interface DictDetailService extends IService<DictDetail> {

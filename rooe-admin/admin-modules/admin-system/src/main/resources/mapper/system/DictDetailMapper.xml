@@ -9,7 +9,7 @@
         dd.create_by, dd.update_by, dd.create_time, dd.update_time
     </sql>
 
-    <select id="findAll" resultType="fun.rooe.admin.modules.system.domain.DictDetail">
+    <select id="findAll" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetail">
         select
         <include refid="Columns"/>
         from sys_dict_detail dd
@@ -25,7 +25,7 @@
         order by dd.dict_sort, dd.id desc
     </select>
 
-    <select id="findByDictName" resultType="fun.rooe.admin.modules.system.domain.DictDetail">
+    <select id="findByDictName" resultType="fun.rooe.admin.modules.system.domain.entity.DictDetail">
         select
         <include refid="Columns"/>
         from sys_dict_detail dd
@@ -37,11 +37,4 @@
         </where>
         order by dd.dict_sort
     </select>
-
-    <delete id="deleteByDictBatchIds">
-        delete from sys_dict_detail where dict_id in
-        <foreach collection="dictIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </delete>
 </mapper>

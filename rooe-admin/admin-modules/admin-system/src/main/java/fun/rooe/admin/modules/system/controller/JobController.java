@@ -1,7 +1,11 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.JobDeleteRequest;
+import fun.rooe.admin.modules.system.domain.request.JobQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.JobUpdateRequest;
 import fun.rooe.admin.modules.system.service.JobService;
 import fun.rooe.admin.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 
 /**

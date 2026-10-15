@@ -1,7 +1,8 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.RoleDto;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;

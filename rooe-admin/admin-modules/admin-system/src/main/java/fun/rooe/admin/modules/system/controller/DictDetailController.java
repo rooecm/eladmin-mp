@@ -1,7 +1,10 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.request.DictDetailCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDetailQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDetailUpdateRequest;
 import fun.rooe.admin.modules.system.service.DictDetailService;
 import fun.rooe.admin.response.PageResult;
 import io.swagger.v3.oas.annotations.Operation;

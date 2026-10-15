@@ -1,31 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="fun.rooe.admin.modules.system.mapper.UserMapper">
-    <select id="findByUsername" resultType="fun.rooe.admin.modules.system.domain.User">
-        select *
-        from sys_user
-        where username = #{username}
-    </select>
-
-    <select id="findPasswordHashByUsername" resultType="java.lang.String">
-        select password
-        from sys_user
-        where username = #{username}
-    </select>
-
-    <select id="findByEmail" resultType="fun.rooe.admin.modules.system.domain.User">
-        select id, username
-        from sys_user
-        where email = #{email}
-    </select>
-
-    <select id="findByPhone" resultType="fun.rooe.admin.modules.system.domain.User">
-        select id, username
-        from sys_user
-        where phone = #{phone}
-    </select>
-
-    <select id="findByRoleId" resultType="fun.rooe.admin.modules.system.domain.User">
+    <select id="findByRoleId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
                  join sys_users_roles ur on ur.user_id = u.id
@@ -33,7 +9,7 @@
         group by u.id
     </select>
 
-    <select id="findByRoleDeptId" resultType="fun.rooe.admin.modules.system.domain.User">
+    <select id="findByRoleDeptId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
                  join sys_users_roles ur on ur.user_id = u.id
@@ -42,7 +18,7 @@
         group by u.id
     </select>
 
-    <select id="findByMenuId" resultType="fun.rooe.admin.modules.system.domain.User">
+    <select id="findByMenuId" resultType="fun.rooe.admin.modules.system.domain.entity.User">
         select u.*
         from sys_user u
                  join sys_users_roles ur on ur.user_id = u.id
@@ -51,44 +27,4 @@
         group by u.id
     </select>
 
-    <select id="countByJobs" resultType="int">
-        select count(*) from sys_users_jobs where job_id in
-        <foreach collection="jobIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </select>
-
-    <select id="countByDepts" resultType="int">
-        select count(*) from sys_user where dept_id in
-        <foreach collection="deptIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </select>
-
-    <select id="countByRoles" resultType="int">
-        select count(*) from sys_users_roles where role_id in
-        <foreach collection="roleIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </select>
-
-    <update id="updatePass">
-        update sys_user
-        set password       = #{password},
-            pwd_reset_time = #{lastPasswordResetTime}
-        where username = #{username}
-    </update>
-
-    <update id="updateEmail">
-        update sys_user
-        set email = #{email}
-        where username = #{username}
-    </update>
-
-    <update id="resetPwd">
-        update sys_user set password = #{pwd} where id in
-        <foreach collection="userIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </update>
 </mapper>

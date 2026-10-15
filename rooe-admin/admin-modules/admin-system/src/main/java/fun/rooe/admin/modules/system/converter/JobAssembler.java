@@ -1,9 +1,9 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.Job;
-import fun.rooe.admin.modules.system.domain.dto.JobCreateRequest;
 import fun.rooe.admin.modules.system.domain.dto.JobDto;
-import fun.rooe.admin.modules.system.domain.dto.JobUpdateRequest;
+import fun.rooe.admin.modules.system.domain.entity.Job;
+import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.JobUpdateRequest;
 import org.mapstruct.*;
 
 import java.util.List;

@@ -1,10 +1,15 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.Dict;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.entity.Dict;
+import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDeleteRequest;
+import fun.rooe.admin.modules.system.domain.request.DictQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.DictUpdateRequest;
 import fun.rooe.admin.response.PageResult;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.List;
 

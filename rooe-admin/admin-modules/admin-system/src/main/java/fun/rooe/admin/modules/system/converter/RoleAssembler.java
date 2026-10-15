@@ -1,9 +1,9 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.dto.RoleCreateRequest;
 import fun.rooe.admin.modules.system.domain.dto.RoleDto;
-import fun.rooe.admin.modules.system.domain.dto.RoleUpdateRequest;
+import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.request.RoleCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.RoleUpdateRequest;
 import org.mapstruct.*;
 
 import java.util.List;

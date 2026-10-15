@@ -16,13 +16,10 @@
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.system.domain.Dept;
-import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptDeleteRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptSuperiorRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
+import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.request.*;
+
 import java.util.List;
 import java.util.Set;
 

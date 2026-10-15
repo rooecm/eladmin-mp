@@ -1,7 +1,9 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.MenuDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.MenuService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,38 +28,38 @@ import java.util.Set;
 public class MenuController {
     private final MenuService menuService;
 
-  @GetMapping("/build")
+    @GetMapping("/build")
     @Operation(summary = "获取前端所需菜单")
-  public List<MenuVo> buildMenus() {
-    return menuService.buildCurrentUserMenus();
-  }
+    public List<MenuRouterDto> buildMenus() {
+        return menuService.buildCurrentUserMenus();
+    }
 
-  @Operation(summary = "懒加载菜单")
-  @GetMapping("/lazy")
+    @Operation(summary = "懒加载菜单")
+    @GetMapping("/lazy")
     @PreAuthorize("@el.check('menu:list','roles:list')")
-  public List<MenuDto> queryAllMenu(@RequestParam Long pid) {
+    public List<MenuDto> queryAllMenu(@RequestParam Long pid) {
         return menuService.getMenus(pid);
-  }
+    }
 
-  @Operation(summary = "获取菜单及全部子节点 ID")
-  @GetMapping("/child")
+    @Operation(summary = "获取菜单及全部子节点 ID")
+    @GetMapping("/child")
     @PreAuthorize("@el.check('menu:list','roles:list')")
-  public Set<Long> childMenu(@RequestParam @Positive Long id) {
-    return menuService.getChildIds(id);
+    public Set<Long> childMenu(@RequestParam @Positive Long id) {
+        return menuService.getChildIds(id);
     }
 
     @GetMapping
     @Operation(summary = "查询菜单")
     @PreAuthorize("@el.check('menu:list')")
     public List<MenuDto> queryMenu(@Valid MenuQueryRequest request) {
-      return menuService.queryAll(request);
+        return menuService.queryAll(request);
     }
 
-  @Operation(summary = "查询菜单同级与上级数据")
+    @Operation(summary = "查询菜单同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('menu:list')")
-  public List<MenuDto> getMenuSuperior(@Valid @RequestBody MenuSuperiorRequest request) {
-    return menuService.getSuperior(request);
+    public List<MenuDto> getMenuSuperior(@Valid @RequestBody MenuSuperiorRequest request) {
+        return menuService.getSuperior(request);
     }
 
     @Log("新增菜单")
@@ -65,7 +67,7 @@ public class MenuController {
     @PostMapping
     @PreAuthorize("@el.check('menu:add')")
     public void createMenu(@Valid @RequestBody MenuCreateRequest request) {
-      menuService.create(request);
+        menuService.create(request);
     }
 
     @Log("修改菜单")
@@ -73,7 +75,7 @@ public class MenuController {
     @PutMapping
     @PreAuthorize("@el.check('menu:edit')")
     public void updateMenu(@Valid @RequestBody MenuUpdateRequest request) {
-      menuService.update(request);
+        menuService.update(request);
     }
 
     @Log("删除菜单")
@@ -81,6 +83,6 @@ public class MenuController {
     @DeleteMapping
     @PreAuthorize("@el.check('menu:del')")
     public void deleteMenu(@Valid @RequestBody MenuDeleteRequest request) {
-      menuService.delete(request);
+        menuService.delete(request);
     }
 }

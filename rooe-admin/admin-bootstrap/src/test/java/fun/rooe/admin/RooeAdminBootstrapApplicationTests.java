@@ -2,15 +2,15 @@ package fun.rooe.admin;
 
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
-import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
-import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
-import fun.rooe.admin.modules.security.service.OnlineUserService;
+import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
+import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
 import fun.rooe.admin.modules.quartz.config.JobRunner;
-import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
+import fun.rooe.admin.modules.security.service.OnlineUserService;
+import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.User;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
@@ -28,11 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = RooeAdminApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,

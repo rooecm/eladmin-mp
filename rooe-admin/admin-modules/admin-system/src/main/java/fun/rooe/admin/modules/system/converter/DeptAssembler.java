@@ -15,25 +15,13 @@
  */
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.Dept;
-import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.IterableMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValueMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.request.DeptCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DeptUpdateRequest;
+import org.mapstruct.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Converts department persistence objects into API response objects.

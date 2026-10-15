@@ -9,10 +9,13 @@ import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
-import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.MenuDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.RoleMenu;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
 import fun.rooe.admin.modules.system.mapper.RoleMenuMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
@@ -73,9 +76,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     @Override
-    public List<MenuVo> buildCurrentUserMenus() {
+    public List<MenuRouterDto> buildCurrentUserMenus() {
         List<Menu> menus = findByUser(SecurityUtils.getCurrentUserId());
-        return buildMenus(assembler.toTree(assembler.toDtos(menus)));
+        return assembler.toRouterDtos(assembler.toTree(assembler.toDtos(menus)));
     }
 
     private Menu findById(long id) {
@@ -163,18 +166,17 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         request.getIds().forEach(id -> collect(findById(id), byId));
         for (Menu menu : byId.values()) {
             delCaches(menu.getId());
-            roleMenuMapper.deleteByMenuId(menu.getId());
+            roleMenuMapper.delete(
+                    Wrappers.<RoleMenu>lambdaQuery().eq(RoleMenu::getMenuId, menu.getId()));
             menuMapper.deleteById(menu.getId());
             updateSubCnt(menu.getPid());
         }
     }
 
-    /**
-     * Collects a menu subtree once per ID so overlapping delete selections remain idempotent.
-     */
+    /** Collects a menu subtree once per ID so overlapping delete selections remain idempotent. */
     private void collect(Menu menu, Map<Long, Menu> byId) {
         if (menu == null || byId.putIfAbsent(menu.getId(), menu) != null) return;
-        menuMapper.findByPidOrderByMenuSort(menu.getId()).forEach(child -> collect(child, byId));
+        getMenuEntities(menu.getId()).forEach(child -> collect(child, byId));
     }
 
     @Override
@@ -183,9 +185,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     private List<Menu> getMenuEntities(Long pid) {
-        return pid != null && !pid.equals(0L)
-                ? menuMapper.findByPidOrderByMenuSort(pid)
-                : menuMapper.findByPidIsNullOrderByMenuSort();
+        LambdaQueryWrapper<Menu> wrapper = Wrappers.lambdaQuery();
+        if (pid != null && !pid.equals(0L)) {
+            wrapper.eq(Menu::getPid, pid);
+        } else {
+            wrapper.isNull(Menu::getPid);
+        }
+        return menuMapper.selectList(wrapper.orderByAsc(Menu::getMenuSort));
     }
 
     @Override
@@ -231,69 +237,21 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
 
     private List<Menu> getSuperiorEntities(Menu menu, List<Menu> result) {
         if (menu.getPid() == null) {
-            result.addAll(menuMapper.findByPidIsNullOrderByMenuSort());
+            result.addAll(getMenuEntities(null));
             return result;
         }
-        result.addAll(menuMapper.findByPidOrderByMenuSort(menu.getPid()));
+        result.addAll(getMenuEntities(menu.getPid()));
         return getSuperiorEntities(findById(menu.getPid()), result);
     }
 
-    /**
-     * Converts the administrative menu tree into the router model expected by the frontend.
-     */
-    private List<MenuVo> buildMenus(List<MenuDto> menus) {
-        List<MenuVo> result = new LinkedList<>();
-        for (MenuDto menu : menus) {
-            MenuVo item = new MenuVo();
-            item.setName(
-                    org.springframework.util.StringUtils.hasText(menu.getComponentName())
-                            ? menu.getComponentName()
-                            : menu.getTitle());
-            item.setPath(menu.getPid() == null ? "/" + menu.getPath() : menu.getPath());
-            item.setHidden(menu.getHidden());
-            if (!Boolean.TRUE.equals(menu.getIFrame())) {
-                if (menu.getPid() == null)
-                    item.setComponent(
-                            StringUtils.isEmpty(menu.getComponent())
-                                    ? "Layout"
-                                    : menu.getComponent());
-                else if (Integer.valueOf(0).equals(menu.getType()))
-                    item.setComponent(
-                            StringUtils.isEmpty(menu.getComponent())
-                                    ? "ParentView"
-                                    : menu.getComponent());
-                else if (StringUtils.isNoneBlank(menu.getComponent()))
-                    item.setComponent(menu.getComponent());
-            }
-            item.setMeta(
-                    new MenuMetaVo(
-                            menu.getTitle(),
-                            menu.getIcon(),
-                            !Boolean.TRUE.equals(menu.getCache())));
-            if (!CollectionUtils.isEmpty(menu.getChildren())) {
-                item.setAlwaysShow(true);
-                item.setRedirect("noredirect");
-                item.setChildren(buildMenus(menu.getChildren()));
-            } else if (menu.getPid() == null) {
-                MenuVo child = new MenuVo();
-                child.setMeta(item.getMeta());
-                if (!Boolean.TRUE.equals(menu.getIFrame())) {
-                    child.setPath("index");
-                    child.setName(item.getName());
-                    child.setComponent(item.getComponent());
-                } else child.setPath(menu.getPath());
-                item.setName(null);
-                item.setMeta(null);
-                item.setComponent("Layout");
-                item.setChildren(List.of(child));
-            }
-            result.add(item);
-        }
-        return result;
-    }
-
     private void updateSubCnt(Long id) {
-        if (id != null) menuMapper.updateSubCntById(menuMapper.countByPid(id), id);
+        if (id != null) {
+            long count = menuMapper.selectCount(
+                    Wrappers.<Menu>lambdaQuery().eq(Menu::getPid, id));
+            menuMapper.update(Wrappers.<Menu>lambdaUpdate()
+                    .eq(Menu::getId, id)
+                    .set(Menu::getSubCount, Math.toIntExact(count)));
+        }
     }
 
     private void delCaches(Long id) {

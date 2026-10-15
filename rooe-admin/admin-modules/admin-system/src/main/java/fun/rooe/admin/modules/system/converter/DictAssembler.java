@@ -1,9 +1,9 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.Dict;
-import fun.rooe.admin.modules.system.domain.dto.DictCreateRequest;
 import fun.rooe.admin.modules.system.domain.dto.DictDto;
-import fun.rooe.admin.modules.system.domain.dto.DictUpdateRequest;
+import fun.rooe.admin.modules.system.domain.entity.Dict;
+import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DictUpdateRequest;
 import org.mapstruct.*;
 
 import java.util.List;

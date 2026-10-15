@@ -16,13 +16,11 @@
 package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import fun.rooe.admin.modules.system.domain.Menu;
+import fun.rooe.admin.modules.system.domain.entity.Menu;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,20 +34,4 @@ public interface MenuMapper extends BaseMapper<Menu> {
             @Param("roleIds") Set<Long> roleIds, @Param("type") Integer type);
 
     Set<Menu> findByRoleId(@Param("roleId") Long roleId);
-
-    List<Menu> findByPidIsNullOrderByMenuSort();
-
-    List<Menu> findByPidOrderByMenuSort(@Param("pid") Long pid);
-
-    @Select("SELECT id FROM sys_menu WHERE title = #{title}")
-    Menu findByTitle(@Param("title") String title);
-
-    @Select("SELECT id FROM sys_menu WHERE name = #{name}")
-    Menu findByComponentName(@Param("name") String name);
-
-    @Select("SELECT count(*) FROM sys_menu WHERE pid = #{pid}")
-    int countByPid(@Param("pid") Long pid);
-
-    @Select("update sys_menu set sub_count = #{count} where id = #{menuId} ")
-    void updateSubCntById(@Param("count") int count, @Param("menuId") Long menuId);
 }

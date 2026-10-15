@@ -1,8 +1,14 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.MenuDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterDto;
+import fun.rooe.admin.modules.system.domain.dto.MenuRouterMetaDto;
+import fun.rooe.admin.modules.system.domain.entity.Menu;
+import fun.rooe.admin.modules.system.domain.request.MenuCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.MenuUpdateRequest;
+import fun.rooe.admin.utils.StringUtils;
 import org.mapstruct.*;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -36,9 +42,7 @@ public interface MenuAssembler {
     @InheritConfiguration(name = "toEntity")
     void updateEntity(MenuUpdateRequest request, @MappingTarget Menu entity);
 
-    /**
-     * Builds a forest from a flat menu list while preserving the source query order.
-     */
+    /** Builds a forest from a flat menu list while preserving the source query order. */
     default List<MenuDto> toTree(List<MenuDto> menus) {
         if (menus == null || menus.isEmpty()) return new ArrayList<>();
         Map<Long, MenuDto> byId = new LinkedHashMap<>();
@@ -56,5 +60,62 @@ public interface MenuAssembler {
         }
         if (!roots.isEmpty()) return roots;
         return byId.values().stream().filter(menu -> !childIds.contains(menu.getId())).toList();
+    }
+
+    /**
+     * Converts the administrative menu tree into the route contract consumed by the frontend.
+     */
+    default List<MenuRouterDto> toRouterDtos(List<MenuDto> menus) {
+        List<MenuRouterDto> result = new LinkedList<>();
+        for (MenuDto menu : menus) {
+            MenuRouterDto item = new MenuRouterDto();
+            item.setName(
+                    StringUtils.isNotBlank(menu.getComponentName())
+                            ? menu.getComponentName()
+                            : menu.getTitle());
+            item.setPath(menu.getPid() == null ? "/" + menu.getPath() : menu.getPath());
+            item.setHidden(menu.getHidden());
+            if (!Boolean.TRUE.equals(menu.getIFrame())) {
+                if (menu.getPid() == null) {
+                    item.setComponent(
+                            StringUtils.isEmpty(menu.getComponent())
+                                    ? "Layout"
+                                    : menu.getComponent());
+                } else if (Integer.valueOf(0).equals(menu.getType())) {
+                    item.setComponent(
+                            StringUtils.isEmpty(menu.getComponent())
+                                    ? "ParentView"
+                                    : menu.getComponent());
+                } else if (StringUtils.isNoneBlank(menu.getComponent())) {
+                    item.setComponent(menu.getComponent());
+                }
+            }
+            item.setMeta(
+                    new MenuRouterMetaDto(
+                            menu.getTitle(),
+                            menu.getIcon(),
+                            !Boolean.TRUE.equals(menu.getCache())));
+            if (!CollectionUtils.isEmpty(menu.getChildren())) {
+                item.setAlwaysShow(true);
+                item.setRedirect("noredirect");
+                item.setChildren(toRouterDtos(menu.getChildren()));
+            } else if (menu.getPid() == null) {
+                MenuRouterDto child = new MenuRouterDto();
+                child.setMeta(item.getMeta());
+                if (!Boolean.TRUE.equals(menu.getIFrame())) {
+                    child.setPath("index");
+                    child.setName(item.getName());
+                    child.setComponent(item.getComponent());
+                } else {
+                    child.setPath(menu.getPath());
+                }
+                item.setName(null);
+                item.setMeta(null);
+                item.setComponent("Layout");
+                item.setChildren(List.of(child));
+            }
+            result.add(item);
+        }
+        return result;
     }
 }

@@ -16,9 +16,15 @@ import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
 import fun.rooe.admin.modules.system.converter.UserAssembler;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.dto.RoleDto;
+import fun.rooe.admin.modules.system.domain.dto.UserDto;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.entity.Role;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.entity.UserJob;
+import fun.rooe.admin.modules.system.domain.entity.UserRole;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
 import fun.rooe.admin.modules.system.service.*;
 import fun.rooe.admin.response.PageResult;
@@ -183,8 +189,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateById(user);
         delCaches(user.getId(), user.getUsername());
         // Relation rows represent the complete request state, so replace them atomically.
-        userJobMapper.deleteByUserId(user.getId());
-        userRoleMapper.deleteByUserId(user.getId());
+        userJobMapper.delete(
+                Wrappers.<UserJob>lambdaQuery().eq(UserJob::getUserId, user.getId()));
+        userRoleMapper.delete(
+                Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, user.getId()));
         insertRelations(user.getId(), request.getJobs(), request.getRoles());
     }
 
@@ -194,7 +202,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!request.getId().equals(SecurityUtils.getCurrentUserId()))
             throw new BadRequestException("不能修改他人资料");
         User user = getById(request.getId());
-        User duplicate = userMapper.findByPhone(request.getPhone());
+        User duplicate =
+                userMapper.selectOne(
+                        Wrappers.<User>lambdaQuery().eq(User::getPhone, request.getPhone()));
         if (duplicate != null && !user.getId().equals(duplicate.getId()))
             throw new EntityExistException(User.class, "phone", request.getPhone());
         assembler.updateCenter(request, user);
@@ -220,8 +230,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (user != null) delCaches(user.getId(), user.getUsername());
         }
         userMapper.deleteBatchIds(request.getIds());
-        userJobMapper.deleteByUserIds(request.getIds());
-        userRoleMapper.deleteByUserIds(request.getIds());
+        userJobMapper.delete(
+                Wrappers.<UserJob>lambdaQuery().in(UserJob::getUserId, request.getIds()));
+        userRoleMapper.delete(
+                Wrappers.<UserRole>lambdaQuery().in(UserRole::getUserId, request.getIds()));
     }
 
     private void checkLevel(Set<Long> roleIds) {
@@ -230,9 +242,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     private void checkUnique(String username, String email, String phone, Long currentId) {
-        checkDuplicate(userMapper.findByUsername(username), currentId, "username", username);
-        checkDuplicate(userMapper.findByEmail(email), currentId, "email", email);
-        checkDuplicate(userMapper.findByPhone(phone), currentId, "phone", phone);
+        checkDuplicate(findByUsername(username), currentId, "username", username);
+        checkDuplicate(
+                userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getEmail, email)),
+                currentId,
+                "email",
+                email);
+        checkDuplicate(
+                userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getPhone, phone)),
+                currentId,
+                "phone",
+                phone);
     }
 
     private void checkDuplicate(User duplicate, Long currentId, String field, String value) {
@@ -242,9 +262,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private void insertRelations(Long userId, Set<IdReference> jobs, Set<IdReference> roles) {
         Set<Long> jobIds = ids(jobs);
-        if (!jobIds.isEmpty()) userJobMapper.insertData(userId, jobIds);
+        if (!jobIds.isEmpty()) {
+            userJobMapper.insert(
+                    jobIds.stream().map(id -> new UserJob(userId, id)).toList());
+        }
         Set<Long> roleIds = ids(roles);
-        if (!roleIds.isEmpty()) userRoleMapper.insertData(userId, roleIds);
+        if (!roleIds.isEmpty()) {
+            userRoleMapper.insert(
+                    roleIds.stream().map(id -> new UserRole(userId, id)).toList());
+        }
     }
 
     private Set<Long> roleIds(Set<IdReference> refs) {
@@ -259,12 +285,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User findByName(String userName) {
-        return userMapper.findByUsername(userName);
+        return findByUsername(userName);
+    }
+
+    private User findByUsername(String username) {
+        return userMapper.selectOne(
+                Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
     }
 
     @Override
     public UserLoginDto getLoginData(String userName) {
-        User user = userMapper.findByUsername(userName);
+        User user = findByUsername(userName);
         if (user == null) return null;
         UserLoginDto dto = assembler.toLoginDto(user);
         if (user.getDeptId() != null)
@@ -277,7 +308,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePass(String username, String rawPassword) {
-        userMapper.updatePass(username, userCredentialService.encode(rawPassword), new Date());
+        userMapper.update(Wrappers.<User>lambdaUpdate()
+                .eq(User::getUsername, username)
+                .set(User::getPassword, userCredentialService.encode(rawPassword))
+                .set(User::getPwdResetTime, new Date()));
         flushCache(username);
     }
 
@@ -290,7 +324,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     flushCache(user.getUsername());
                     onlineUserService.kickOutForUsername(user.getUsername());
                 });
-        userMapper.resetPwd(request.getIds(), userCredentialService.encode(rawPassword));
+        userMapper.update(Wrappers.<User>lambdaUpdate()
+                .in(User::getId, request.getIds())
+                .set(User::getPassword, userCredentialService.encode(rawPassword)));
     }
 
     @Override
@@ -301,7 +337,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
         if (fileType != null && !image.contains(fileType))
             throw new BadRequestException("文件格式错误，仅支持 " + image);
-        User user = userMapper.findByUsername(SecurityUtils.getCurrentUsername());
+        User user = findByUsername(SecurityUtils.getCurrentUsername());
         String oldPath = user.getAvatarPath();
         File file;
         try {
@@ -324,7 +360,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateEmail(String username, String email) {
-        userMapper.updateEmail(username, email);
+        userMapper.update(Wrappers.<User>lambdaUpdate()
+                .eq(User::getUsername, username)
+                .set(User::getEmail, email));
         flushCache(username);
     }
 

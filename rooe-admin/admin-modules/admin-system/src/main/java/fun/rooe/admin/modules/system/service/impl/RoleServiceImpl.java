@@ -14,10 +14,10 @@ import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
-import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.RoleDto;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.entity.*;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.response.PageResult;
@@ -40,6 +40,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private final RoleMapper roleMapper;
     private final RoleDeptMapper roleDeptMapper;
     private final RoleMenuMapper roleMenuMapper;
+    private final UserRoleMapper userRoleMapper;
     private final DeptMapper deptMapper;
     private final MenuMapper menuMapper;
     private final UserMapper userMapper;
@@ -130,7 +131,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         assembler.updateEntity(request, role);
         updateById(role);
         // Custom data-scope rows represent the complete request state.
-        roleDeptMapper.deleteByRoleId(role.getId());
+        roleDeptMapper.delete(
+                Wrappers.<RoleDept>lambdaQuery().eq(RoleDept::getRoleId, role.getId()));
         insertDepts(role.getId(), request.getDepts());
         delCaches(role.getId(), null);
     }
@@ -142,9 +144,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         checkLevel(role.getLevel());
         List<User> users = userMapper.findByRoleId(role.getId());
         // Menu assignments are replaced as one transaction to avoid partial authorization state.
-        roleMenuMapper.deleteByRoleId(role.getId());
+        roleMenuMapper.delete(
+                Wrappers.<RoleMenu>lambdaQuery().eq(RoleMenu::getRoleId, role.getId()));
         Set<Long> menuIds = ids(request.getMenus());
-        if (!menuIds.isEmpty()) roleMenuMapper.insertData(role.getId(), menuIds);
+        if (!menuIds.isEmpty()) {
+            roleMenuMapper.insert(
+                    menuIds.stream().map(id -> new RoleMenu(role.getId(), id)).toList());
+        }
         delCaches(role.getId(), users);
     }
 
@@ -152,12 +158,15 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Transactional(rollbackFor = Exception.class)
     public void delete(RoleDeleteRequest request) {
         for (Long id : request.getIds()) checkLevel(findById(id).getLevel());
-        if (userMapper.countByRoles(request.getIds()) > 0)
+        if (userRoleMapper.selectCount(
+                Wrappers.<UserRole>lambdaQuery().in(UserRole::getRoleId, request.getIds())) > 0)
             throw new BadRequestException("所选角色存在用户关联，请解除关联后再试");
         request.getIds().forEach(id -> delCaches(id, null));
         removeBatchByIds(request.getIds());
-        roleDeptMapper.deleteByRoleIds(request.getIds());
-        roleMenuMapper.deleteByRoleIds(request.getIds());
+        roleDeptMapper.delete(
+                Wrappers.<RoleDept>lambdaQuery().in(RoleDept::getRoleId, request.getIds()));
+        roleMenuMapper.delete(
+                Wrappers.<RoleMenu>lambdaQuery().in(RoleMenu::getRoleId, request.getIds()));
     }
 
     private void checkName(String name, Long currentId) {
@@ -168,7 +177,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     private void insertDepts(Long roleId, Set<IdReference> refs) {
         Set<Long> deptIds = ids(refs);
-        if (!deptIds.isEmpty()) roleDeptMapper.insertData(roleId, deptIds);
+        if (!deptIds.isEmpty()) {
+            roleDeptMapper.insert(
+                    deptIds.stream().map(id -> new RoleDept(roleId, id)).toList());
+        }
     }
 
     private Set<Long> ids(Set<IdReference> refs) {

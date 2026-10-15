@@ -19,31 +19,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
+import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.utils.*;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
-import fun.rooe.admin.modules.system.domain.Dept;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptDeleteRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.modules.system.domain.dto.DeptSuperiorRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
-import fun.rooe.admin.modules.system.mapper.RoleMapper;
-import fun.rooe.admin.modules.system.mapper.UserMapper;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryRequest;
+import fun.rooe.admin.modules.system.domain.entity.Dept;
+import fun.rooe.admin.modules.system.domain.entity.RoleDept;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
+import fun.rooe.admin.modules.system.mapper.RoleDeptMapper;
+import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.service.DeptService;
-import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.springframework.util.CollectionUtils;
 
 /**
 * @author Zheng Jie
@@ -56,7 +54,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private final DeptMapper deptMapper;
     private final UserMapper userMapper;
     private final RedisUtils redisUtils;
-    private final RoleMapper roleMapper;
+    private final RoleDeptMapper roleDeptMapper;
     private final DeptAssembler deptAssembler;
 
     @Override
@@ -109,7 +107,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
     @Override
     public List<Dept> findByPid(long pid) {
-        return deptMapper.findByPid(pid);
+        return deptMapper.selectList(Wrappers.<Dept>lambdaQuery().eq(Dept::getPid, pid));
     }
 
     @Override
@@ -170,7 +168,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private void collectDeleteDepts(List<Dept> deptList, Map<Long, Dept> deptById) {
         for (Dept dept : deptList) {
             if (deptById.putIfAbsent(dept.getId(), dept) == null) {
-                List<Dept> children = deptMapper.findByPid(dept.getId());
+                List<Dept> children = findByPid(dept.getId());
                 if (!CollectionUtils.isEmpty(children)) {
                     collectDeleteDepts(children, deptById);
                 }
@@ -183,7 +181,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         List<Long> list = new ArrayList<>();
         deptList.forEach(dept -> {
                     if (dept!=null && dept.getEnabled()) {
-                        List<Dept> depts = deptMapper.findByPid(dept.getId());
+                        List<Dept> depts = findByPid(dept.getId());
                         if (!CollectionUtils.isEmpty(depts)) {
                             list.addAll(getDeptChildren(depts));
                         }
@@ -221,27 +219,33 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
     private List<Dept> getSuperiorDepts(Dept dept, List<Dept> depts) {
         if(dept.getPid() == null){
-            depts.addAll(deptMapper.findByPidIsNull());
+            depts.addAll(deptMapper.selectList(
+                    Wrappers.<Dept>lambdaQuery().isNull(Dept::getPid)));
             return depts;
         }
-        depts.addAll(deptMapper.findByPid(dept.getPid()));
+        depts.addAll(findByPid(dept.getPid()));
         return getSuperiorDepts(findById(dept.getPid()), depts);
     }
 
     private void verification(Collection<Dept> depts) {
         Set<Long> deptIds = depts.stream().map(Dept::getId).collect(Collectors.toSet());
-        if(userMapper.countByDepts(deptIds) > 0){
+        if (userMapper.selectCount(
+                Wrappers.<User>lambdaQuery().in(User::getDeptId, deptIds)) > 0) {
             throw new BadRequestException("所选部门存在用户关联，请解除后再试！");
         }
-        if(roleMapper.countByDepts(deptIds) > 0){
+        if (roleDeptMapper.selectCount(
+                Wrappers.<RoleDept>lambdaQuery().in(RoleDept::getDeptId, deptIds)) > 0) {
             throw new BadRequestException("所选部门存在角色关联，请解除后再试！");
         }
     }
 
     private void updateSubCnt(Long deptId){
         if(deptId != null){
-            int count = deptMapper.countByPid(deptId);
-            deptMapper.updateSubCntById(count, deptId);
+            long count = deptMapper.selectCount(
+                    Wrappers.<Dept>lambdaQuery().eq(Dept::getPid, deptId));
+            deptMapper.update(Wrappers.<Dept>lambdaUpdate()
+                    .eq(Dept::getId, deptId)
+                    .set(Dept::getSubCount, Math.toIntExact(count)));
         }
     }
 

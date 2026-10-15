@@ -9,10 +9,15 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
-import fun.rooe.admin.modules.system.domain.Job;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.JobDto;
+import fun.rooe.admin.modules.system.domain.entity.Job;
+import fun.rooe.admin.modules.system.domain.entity.UserJob;
+import fun.rooe.admin.modules.system.domain.request.JobCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.JobDeleteRequest;
+import fun.rooe.admin.modules.system.domain.request.JobQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.JobUpdateRequest;
 import fun.rooe.admin.modules.system.mapper.JobMapper;
-import fun.rooe.admin.modules.system.mapper.UserMapper;
+import fun.rooe.admin.modules.system.mapper.UserJobMapper;
 import fun.rooe.admin.modules.system.service.JobService;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.ExcelUtil;
@@ -21,8 +26,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobService {
     private final JobMapper jobMapper;
     private final RedisUtils redisUtils;
-    private final UserMapper userMapper;
+    private final UserJobMapper userJobMapper;
     private final JobAssembler assembler;
 
     @Override
@@ -102,7 +111,8 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(JobDeleteRequest request) {
-        if (userMapper.countByJobs(request.getIds()) > 0) {
+        if (userJobMapper.selectCount(
+                Wrappers.<UserJob>lambdaQuery().in(UserJob::getJobId, request.getIds())) > 0) {
             throw new BadRequestException("所选岗位存在用户关联，请解除关联后再试");
         }
         removeBatchByIds(request.getIds());

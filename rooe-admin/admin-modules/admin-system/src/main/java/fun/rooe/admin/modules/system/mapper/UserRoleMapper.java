@@ -15,20 +15,14 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import fun.rooe.admin.modules.system.domain.entity.UserRole;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.Set;
 
 /**
  * @author Zheng Jie
  * @date 2023-06-20
  */
 @Mapper
-public interface UserRoleMapper {
-    void insertData(@Param("userId") Long userId, @Param("roles") Set<Long> roles);
-
-    void deleteByUserId(@Param("userId") Long userId);
-
-    void deleteByUserIds(@Param("userIds") Set<Long> userIds);
+public interface UserRoleMapper extends BaseMapper<UserRole> {
 }

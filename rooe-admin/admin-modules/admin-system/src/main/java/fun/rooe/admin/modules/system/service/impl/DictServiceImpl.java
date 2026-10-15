@@ -7,9 +7,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.DictAssembler;
-import fun.rooe.admin.modules.system.domain.Dict;
-import fun.rooe.admin.modules.system.domain.DictDetail;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.DictDto;
+import fun.rooe.admin.modules.system.domain.entity.Dict;
+import fun.rooe.admin.modules.system.domain.entity.DictDetail;
+import fun.rooe.admin.modules.system.domain.request.DictCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.DictDeleteRequest;
+import fun.rooe.admin.modules.system.domain.request.DictQueryRequest;
+import fun.rooe.admin.modules.system.domain.request.DictUpdateRequest;
 import fun.rooe.admin.modules.system.mapper.DictDetailMapper;
 import fun.rooe.admin.modules.system.mapper.DictMapper;
 import fun.rooe.admin.modules.system.service.DictService;
@@ -20,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -85,7 +90,9 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
         List<Dict> dicts = dictMapper.selectBatchIds(request.getIds());
         dicts.forEach(this::delCaches);
         dictMapper.deleteBatchIds(request.getIds());
-        dictDetailMapper.deleteByDictBatchIds(request.getIds());
+        dictDetailMapper.delete(
+                Wrappers.<DictDetail>lambdaQuery()
+                        .in(DictDetail::getDictId, request.getIds()));
     }
 
     @Override

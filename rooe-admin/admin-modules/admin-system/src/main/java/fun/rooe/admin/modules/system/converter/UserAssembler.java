@@ -1,7 +1,11 @@
 package fun.rooe.admin.modules.system.converter;
 
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.domain.dto.UserDto;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
+import fun.rooe.admin.modules.system.domain.entity.User;
+import fun.rooe.admin.modules.system.domain.request.UserCenterUpdateRequest;
+import fun.rooe.admin.modules.system.domain.request.UserCreateRequest;
+import fun.rooe.admin.modules.system.domain.request.UserUpdateRequest;
 import org.mapstruct.*;
 
 import java.util.List;

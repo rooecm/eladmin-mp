@@ -15,20 +15,14 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import fun.rooe.admin.modules.system.domain.entity.RoleDept;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.Set;
 
 /**
  * @author Zheng Jie
  * @date 2023-06-20
  */
 @Mapper
-public interface RoleDeptMapper {
-    void insertData(@Param("roleId") Long roleId, @Param("depts") Set<Long> depts);
-
-    void deleteByRoleId(@Param("roleId") Long roleId);
-
-    void deleteByRoleIds(@Param("roleIds") Set<Long> roleIds);
+public interface RoleDeptMapper extends BaseMapper<RoleDept> {
 }

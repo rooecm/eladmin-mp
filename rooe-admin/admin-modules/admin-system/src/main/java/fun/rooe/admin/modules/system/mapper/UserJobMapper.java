@@ -15,21 +15,14 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import fun.rooe.admin.modules.system.domain.entity.UserJob;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.Set;
 
 /**
  * @author Zheng Jie
  * @date 2023-06-20
  */
 @Mapper
-public interface UserJobMapper {
-
-    void insertData(@Param("userId") Long userId, @Param("jobs") Set<Long> jobs);
-
-    void deleteByUserId(@Param("userId") Long userId);
-
-    void deleteByUserIds(@Param("userIds") Set<Long> userIds);
+public interface UserJobMapper extends BaseMapper<UserJob> {
 }

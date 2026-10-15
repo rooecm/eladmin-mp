@@ -15,15 +15,16 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
+import fun.rooe.admin.enums.CodeBiEnum;
+import fun.rooe.admin.enums.CodeEnum;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDto;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.modules.system.service.VerifyService;
-import fun.rooe.admin.enums.CodeBiEnum;
-import fun.rooe.admin.enums.CodeEnum;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Objects;
 
 /**

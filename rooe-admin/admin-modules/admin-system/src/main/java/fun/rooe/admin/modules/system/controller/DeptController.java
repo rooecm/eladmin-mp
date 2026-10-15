@@ -15,20 +15,17 @@
  */
 package fun.rooe.admin.modules.system.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptDeleteRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.modules.system.domain.dto.DeptSuperiorRequest;
-import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
+import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.service.DeptService;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 /**
