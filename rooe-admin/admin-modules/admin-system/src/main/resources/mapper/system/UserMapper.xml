@@ -7,6 +7,12 @@
         where username = #{username}
     </select>
 
+    <select id="findPasswordHashByUsername" resultType="java.lang.String">
+        select password
+        from sys_user
+        where username = #{username}
+    </select>
+
     <select id="findByEmail" resultType="fun.rooe.admin.modules.system.domain.User">
         select id, username
         from sys_user

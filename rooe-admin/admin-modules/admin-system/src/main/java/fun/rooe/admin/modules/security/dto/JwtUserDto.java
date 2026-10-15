@@ -52,7 +52,9 @@ public class JwtUserDto implements UserDetails {
     @JsonIgnore
     @JSONField(serialize = false)
     public String getPassword() {
-        return user.getPassword();
+        // Passwords are verified through UserCredentialService and never enter the cached
+        // principal.
+        return null;
     }
 
     @Override

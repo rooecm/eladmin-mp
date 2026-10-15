@@ -6,6 +6,7 @@ import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.config.properties.RsaProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.service.UserCredentialService;
 import fun.rooe.admin.modules.system.service.UserService;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import fun.rooe.admin.response.PageResult;
@@ -16,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +31,7 @@ import java.util.Map;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final PasswordEncoder passwordEncoder;
+  private final UserCredentialService userCredentialService;
     private final UserService userService;
     private final VerifyService verificationCodeService;
 
@@ -89,18 +89,18 @@ public class UserController {
               RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getOldPass());
       String newPass =
               RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getNewPass());
-      UserLoginDto user = userService.getLoginData(SecurityUtils.getCurrentUsername());
-      if (!passwordEncoder.matches(oldPass, user.getPassword()))
+      String username = SecurityUtils.getCurrentUsername();
+      if (!userCredentialService.matches(username, oldPass))
         throw new BadRequestException("旧密码错误");
-      if (passwordEncoder.matches(newPass, user.getPassword()))
+      if (userCredentialService.matches(username, newPass))
             throw new BadRequestException("新密码不能与旧密码相同");
-      userService.updatePass(user.getUsername(), passwordEncoder.encode(newPass));
+      userService.updatePass(username, newPass);
     }
 
     @Operation(summary = "重置密码")
     @PutMapping("/resetPwd")
     public void resetPwd(@Valid @RequestBody UserResetPasswordRequest request) {
-      userService.resetPwd(request, passwordEncoder.encode("123456"));
+      userService.resetPwd(request, "123456");
     }
 
     @Operation(summary = "修改头像")
@@ -117,11 +117,11 @@ public class UserController {
             throws Exception {
       String password =
               RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getPassword());
-      UserLoginDto user = userService.getLoginData(SecurityUtils.getCurrentUsername());
-      if (!passwordEncoder.matches(password, user.getPassword()))
+      String username = SecurityUtils.getCurrentUsername();
+      if (!userCredentialService.matches(username, password))
             throw new BadRequestException("密码错误");
       verificationCodeService.validated(
               CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey() + request.getEmail(), code);
-      userService.updateEmail(user.getUsername(), request.getEmail());
+      userService.updateEmail(username, request.getEmail());
     }
 }

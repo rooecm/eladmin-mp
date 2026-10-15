@@ -30,9 +30,9 @@ public interface UserService extends IService<User> {
 
     void delete(UserDeleteRequest request);
 
-    void resetPwd(UserResetPasswordRequest request, String pwd);
+    void resetPwd(UserResetPasswordRequest request, String rawPassword);
 
-    void updatePass(String username, String encryptPassword);
+    void updatePass(String username, String rawPassword);
 
     Map<String, String> updateAvatar(MultipartFile file);
 

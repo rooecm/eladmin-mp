@@ -13,6 +13,8 @@ import java.util.Set;
 public interface UserMapper extends BaseMapper<User> {
     User findByUsername(@Param("username") String username);
 
+    String findPasswordHashByUsername(@Param("username") String username);
+
     User findByEmail(@Param("email") String email);
 
     User findByPhone(@Param("phone") String phone);

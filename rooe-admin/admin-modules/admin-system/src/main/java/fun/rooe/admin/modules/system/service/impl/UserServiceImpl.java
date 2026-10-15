@@ -20,17 +20,13 @@ import fun.rooe.admin.modules.system.domain.Role;
 import fun.rooe.admin.modules.system.domain.User;
 import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.mapper.*;
-import fun.rooe.admin.modules.system.service.DataService;
-import fun.rooe.admin.modules.system.service.DeptService;
-import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.modules.system.service.UserService;
+import fun.rooe.admin.modules.system.service.*;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.ExcelUtil;
 import fun.rooe.admin.utils.FileUtil;
 import fun.rooe.admin.utils.StringUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,7 +56,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final RedisUtils redisUtils;
     private final UserCacheManager userCacheManager;
     private final OnlineUserService onlineUserService;
-    private final PasswordEncoder passwordEncoder;
+    private final UserCredentialService userCredentialService;
     private final UserAssembler assembler;
     private final DeptAssembler deptAssembler;
     private final RoleAssembler roleAssembler;
@@ -161,7 +157,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         checkLevel(roleIds(request.getRoles()));
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), null);
         User user = assembler.toEntity(request);
-        user.setPassword(passwordEncoder.encode("123456"));
+        user.setPassword(userCredentialService.encode("123456"));
         user.setIsAdmin(false);
         save(user);
         insertRelations(user.getId(), request.getJobs(), request.getRoles());
@@ -280,21 +276,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePass(String username, String pass) {
-        userMapper.updatePass(username, pass, new Date());
+    public void updatePass(String username, String rawPassword) {
+        userMapper.updatePass(username, userCredentialService.encode(rawPassword), new Date());
         flushCache(username);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void resetPwd(UserResetPasswordRequest request, String pwd) {
+    public void resetPwd(UserResetPasswordRequest request, String rawPassword) {
         List<User> users = userMapper.selectBatchIds(request.getIds());
         users.forEach(
                 user -> {
                     flushCache(user.getUsername());
                     onlineUserService.kickOutForUsername(user.getUsername());
                 });
-        userMapper.resetPwd(request.getIds(), pwd);
+        userMapper.resetPwd(request.getIds(), userCredentialService.encode(rawPassword));
     }
 
     @Override
@@ -370,8 +366,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userCacheManager.cleanUserCache(username);
     }
 
-    /**
-     * Resolved department IDs plus an explicit marker for an empty intersection.
-     */
+    /** Resolved department IDs plus an explicit marker for an empty intersection. */
     private record Scope(Set<Long> ids, boolean empty) {}
 }
