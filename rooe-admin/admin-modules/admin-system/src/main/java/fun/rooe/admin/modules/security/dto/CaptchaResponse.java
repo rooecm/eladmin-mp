@@ -16,29 +16,21 @@
 package fun.rooe.admin.modules.security.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
-import jakarta.validation.constraints.NotBlank;
+
+import java.io.Serializable;
 
 /**
- * @author Zheng Jie
- * @date 2018-11-30
+ * 验证码响应：Base64 图片与校验用 key。
  */
 @Getter
-@Setter
-public class AuthUserDto {
+@AllArgsConstructor
+public class CaptchaResponse implements Serializable {
 
-    @NotBlank
-    @Schema(description = "用户名")
-    private String username;
-
-    @NotBlank
-    @Schema(description = "密码")
-    private String password;
-
-    @Schema(description = "验证码")
-    private String code;
+    @Schema(description = "验证码图片（Base64）")
+    private final String img;
 
     @Schema(description = "验证码的key")
-    private String uuid = "";
+    private final String uuid;
 }

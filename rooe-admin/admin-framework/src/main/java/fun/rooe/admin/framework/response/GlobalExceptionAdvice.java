@@ -15,12 +15,11 @@
  */
 package fun.rooe.admin.framework.response;
 
-import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.exception.EntityNotFoundException;
 import fun.rooe.admin.response.ApiResult;
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,7 +28,6 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import static org.springframework.http.HttpStatus.*;
 
 /**
  * @author Zheng Jie
@@ -43,9 +41,8 @@ public class GlobalExceptionAdvice {
      * 处理所有不可知的异常
      */
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ApiResult<Void>> handleException(Throwable e){
-        // 打印堆栈信息
-        log.error(ExceptionUtils.getStackTrace(e));
+    public ResponseEntity<ApiResult<Void>> handleException(Throwable e) {
+        log.error("系统异常", e);
         return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
@@ -53,8 +50,7 @@ public class GlobalExceptionAdvice {
      * BadCredentialsException
      */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResult<Void>> badCredentialsException(BadCredentialsException e){
-        // 打印堆栈信息
+    public ResponseEntity<ApiResult<Void>> badCredentialsException(BadCredentialsException e) {
         String message = "坏的凭证".equals(e.getMessage()) ? "用户名或密码不正确" : e.getMessage();
         log.error(message);
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, message);
@@ -63,20 +59,18 @@ public class GlobalExceptionAdvice {
     /**
      * 处理自定义异常
      */
-	@ExceptionHandler(value = BadRequestException.class)
-	public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
-        // 打印堆栈信息
-        log.error(ExceptionUtils.getStackTrace(e));
-		return buildResponseEntity(HttpStatus.valueOf(e.getStatus()), e.getMessage());
-	}
+    @ExceptionHandler(value = BadRequestException.class)
+    public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
+        log.error(e.getMessage());
+        return buildResponseEntity(HttpStatus.valueOf(e.getStatus()), e.getMessage());
+    }
 
     /**
      * 处理 EntityExist
      */
     @ExceptionHandler(value = EntityExistException.class)
     public ResponseEntity<ApiResult<Void>> entityExistException(EntityExistException e) {
-        // 打印堆栈信息
-        log.error(ExceptionUtils.getStackTrace(e));
+        log.error(e.getMessage());
         return buildResponseEntity(HttpStatus.CONFLICT, e.getMessage());
     }
 
@@ -85,8 +79,7 @@ public class GlobalExceptionAdvice {
      */
     @ExceptionHandler(value = EntityNotFoundException.class)
     public ResponseEntity<ApiResult<Void>> entityNotFoundException(EntityNotFoundException e) {
-        // 打印堆栈信息
-        log.error(ExceptionUtils.getStackTrace(e));
+        log.error(e.getMessage());
         return buildResponseEntity(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
@@ -94,14 +87,13 @@ public class GlobalExceptionAdvice {
      * 处理所有接口数据验证异常
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
-        // 打印堆栈信息
-        log.error(ExceptionUtils.getStackTrace(e));
+    public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         ObjectError objectError = e.getBindingResult().getAllErrors().get(0);
         String message = objectError.getDefaultMessage();
         if (objectError instanceof FieldError) {
             message = ((FieldError) objectError).getField() + ": " + message;
         }
+        log.error(message);
         return buildResponseEntity(HttpStatus.BAD_REQUEST, message);
     }
 

@@ -15,19 +15,24 @@
  */
 package fun.rooe.admin.modules.security.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
-import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.dto.OnlineUserDto;
-import fun.rooe.admin.utils.EncryptUtils;
+import fun.rooe.admin.modules.security.request.OnlineUserDeleteRequest;
+import fun.rooe.admin.modules.security.request.OnlineUserQueryRequest;
+import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.response.PageResult;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Zheng Jie
@@ -43,25 +48,23 @@ public class OnlineController {
     @Operation(summary = "查询在线用户")
     @GetMapping
     @PreAuthorize("@el.check()")
-    public PageResult<OnlineUserDto> queryOnlineUser(String username, Pageable pageable){
-        return onlineUserService.getAll(username, pageable);
+    public PageResult<OnlineUserDto> queryOnlineUser(@Valid OnlineUserQueryRequest request) {
+        return onlineUserService.getAll(request);
     }
 
     @Operation(summary = "导出数据")
     @GetMapping(value = "/download")
     @PreAuthorize("@el.check()")
-    public void exportOnlineUser(HttpServletResponse response, String username) throws IOException {
-        onlineUserService.download(onlineUserService.getAll(username), response);
+    public void exportOnlineUser(
+            HttpServletResponse response, @Valid OnlineUserQueryRequest request)
+            throws IOException {
+        onlineUserService.download(onlineUserService.getAll(request.getUsername()), response);
     }
 
     @Operation(summary = "踢出用户")
     @DeleteMapping
     @PreAuthorize("@el.check()")
-    public void deleteOnlineUser(@RequestBody Set<String> keys) throws Exception {
-        for (String token : keys) {
-            // 解密Key
-            token = EncryptUtils.desDecrypt(token);
-            onlineUserService.logout(token);
-        }
+    public void deleteOnlineUser(@Valid @RequestBody OnlineUserDeleteRequest request) {
+        onlineUserService.logout(request);
     }
 }

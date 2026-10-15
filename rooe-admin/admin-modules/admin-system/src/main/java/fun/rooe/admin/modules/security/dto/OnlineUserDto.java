@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -28,7 +30,9 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OnlineUserDto {
+public class OnlineUserDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Schema(description = "Token编号")
     private String uid;

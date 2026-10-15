@@ -15,13 +15,17 @@
  */
 package fun.rooe.admin.modules.security.service;
 
+import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.framework.config.security.security.TokenProvider;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.modules.security.converter.OnlineUserAssembler;
 import fun.rooe.admin.modules.security.dto.JwtUserDto;
 import fun.rooe.admin.modules.security.dto.OnlineUserDto;
+import fun.rooe.admin.modules.security.request.OnlineUserDeleteRequest;
+import fun.rooe.admin.modules.security.request.OnlineUserQueryRequest;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.utils.EncryptUtils;
 import fun.rooe.admin.utils.ExcelUtil;
@@ -30,11 +34,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,6 +57,7 @@ public class OnlineUserService implements OnlineSessionService {
     private final SecurityProperties properties;
     private final TokenProvider tokenProvider;
     private final RedisUtils redisUtils;
+    private final OnlineUserAssembler assembler;
 
     /**
      * 保存在线用户信息
@@ -68,17 +77,10 @@ public class OnlineUserService implements OnlineSessionService {
         String address = StringUtils.getCityInfo(ip);
         OnlineUserDto onlineUserDto = null;
         try {
+            String key = EncryptUtils.desEncrypt(token);
             onlineUserDto =
-                    new OnlineUserDto(
-                            id,
-                            jwtUserDto.getUsername(),
-                            jwtUserDto.getUser().getNickName(),
-                            dept,
-                            browser,
-                            ip,
-                            address,
-                            EncryptUtils.desEncrypt(token),
-                            new Date());
+                    assembler.toOnlineUser(
+                            jwtUserDto, id, dept, browser, ip, address, key, new Date());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -91,17 +93,15 @@ public class OnlineUserService implements OnlineSessionService {
     }
 
     /**
-     * 查询全部数据
+     * 分页查询在线用户
      *
-     * @param username /
-     * @param pageable /
+     * @param request 查询条件
      * @return /
      */
-    public PageResult<OnlineUserDto> getAll(String username, Pageable pageable) {
-        List<OnlineUserDto> onlineUserDtos = getAll(username);
-        int pageNumber = pageable.getPageNumber() - 1;
+    public PageResult<OnlineUserDto> getAll(OnlineUserQueryRequest request) {
+        List<OnlineUserDto> onlineUserDtos = getAll(request.getUsername());
         return PageUtil.toPage(
-                PageUtil.paging(pageNumber, pageable.getPageSize(), onlineUserDtos),
+                PageUtil.paging(request.getPage(), request.getSize(), onlineUserDtos),
                 onlineUserDtos.size());
     }
 
@@ -132,6 +132,21 @@ public class OnlineUserService implements OnlineSessionService {
     public void logout(String token) {
         String loginKey = tokenProvider.loginKey(token);
         redisUtils.del(loginKey);
+    }
+
+    /**
+     * 根据待强退的加密会话标识批量下线用户
+     *
+     * @param request 强退请求
+     */
+    public void logout(OnlineUserDeleteRequest request) {
+        for (String key : request.getKeys()) {
+            try {
+                logout(EncryptUtils.desDecrypt(key));
+            } catch (Exception e) {
+                throw new BadRequestException("无效的会话标识");
+            }
+        }
     }
 
     /**

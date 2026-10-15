@@ -29,8 +29,10 @@ import fun.rooe.admin.framework.config.security.config.enums.LoginCodeEnum;
 import fun.rooe.admin.framework.config.security.security.TokenProvider;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.security.dto.AuthUserDto;
+import fun.rooe.admin.modules.security.dto.CaptchaResponse;
 import fun.rooe.admin.modules.security.dto.JwtUserDto;
+import fun.rooe.admin.modules.security.dto.LoginResponse;
+import fun.rooe.admin.modules.security.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.UserDetailsServiceImpl;
 import fun.rooe.admin.modules.system.service.UserCredentialService;
@@ -39,20 +41,18 @@ import fun.rooe.admin.utils.StringUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -73,87 +73,73 @@ public class AuthController {
     private final TokenProvider tokenProvider;
     private final CaptchaConfig captchaConfig;
     private final LoginProperties loginProperties;
-  private final UserCredentialService userCredentialService;
+    private final UserCredentialService userCredentialService;
     private final UserDetailsServiceImpl userDetailsService;
 
     @Log("用户登录")
     @Operation(summary = "登录授权")
     @AnonymousPostMapping(value = "/login")
-    public Map<String, Object> login(
-            @Validated @RequestBody AuthUserDto authUser, HttpServletRequest request)
+    public LoginResponse login(
+            @Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest)
             throws Exception {
         // 密码解密
-      String password =
-              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, authUser.getPassword());
+        String password =
+                RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getPassword());
         // 查询验证码
-        String code = redisUtils.get(authUser.getUuid(), String.class);
+        String code = redisUtils.get(request.getUuid(), String.class);
         // 清除验证码
-        redisUtils.del(authUser.getUuid());
+        redisUtils.del(request.getUuid());
         if (StringUtils.isBlank(code)) {
             throw new BadRequestException("验证码不存在或已过期");
         }
-        if (StringUtils.isBlank(authUser.getCode()) || !authUser.getCode().equalsIgnoreCase(code)) {
+        if (StringUtils.isBlank(request.getCode())
+                || !request.getCode().equalsIgnoreCase(code)) {
             throw new BadRequestException("验证码错误");
         }
         // 获取用户信息
-        JwtUserDto jwtUser = userDetailsService.loadUserByUsername(authUser.getUsername());
+        JwtUserDto jwtUser = userDetailsService.loadUserByUsername(request.getUsername());
         // 验证用户密码
-      if (!userCredentialService.matches(authUser.getUsername(), password)) {
+        if (!userCredentialService.matches(request.getUsername(), password)) {
             throw new BadRequestException("登录密码错误");
         }
-      Authentication authentication =
-              new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // 生成令牌
         String token = tokenProvider.createToken(jwtUser.getUser().getId(), jwtUser.getUsername());
-        // 返回 token 与 用户信息
-      Map<String, Object> authInfo =
-              new HashMap<String, Object>(2) {
-                {
-                  put("token", properties.getTokenStartWith() + token);
-                  put("user", jwtUser);
-                }
-              };
+        String fullToken = properties.getTokenStartWith() + token;
         if (loginProperties.isSingleLogin()) {
             // 踢掉之前已经登录的token
-            onlineUserService.kickOutForUsername(authUser.getUsername());
+            onlineUserService.kickOutForUsername(request.getUsername());
         }
         // 保存在线信息
-        onlineUserService.save(jwtUser, token, request);
+        onlineUserService.save(jwtUser, token, httpRequest);
         // 返回登录信息
-        return authInfo;
+        return new LoginResponse(fullToken, jwtUser);
     }
 
     @Operation(summary = "获取用户信息")
     @GetMapping(value = "/info")
     public UserDetails getUserInfo() {
-        JwtUserDto jwtUser = (JwtUserDto) SecurityUtils.getCurrentUser();
-        return jwtUser;
+        return (JwtUserDto) SecurityUtils.getCurrentUser();
     }
 
     @Operation(summary = "获取验证码")
     @AnonymousGetMapping(value = "/code")
-    public Map<String, Object> getCode() {
+    public CaptchaResponse getCode() {
         // 获取运算的结果
         Captcha captcha = captchaConfig.getCaptcha();
         String uuid = properties.getCodeKey() + UUID.randomUUID().toString().replace("-", "");
-      // 当验证码类型为 arithmetic时且长度 >= 2 时，captcha.text()的结果有几率为浮点型
+        // 当验证码类型为 arithmetic时且长度 >= 2 时，captcha.text()的结果有几率为浮点型
         String captchaValue = captcha.text();
-      if (captcha.getCharType() - 1 == LoginCodeEnum.ARITHMETIC.ordinal()
-              && captchaValue.contains(".")) {
+        if (captcha.getCharType() - 1 == LoginCodeEnum.ARITHMETIC.ordinal()
+                && captchaValue.contains(".")) {
             captchaValue = captchaValue.split("\\.")[0];
         }
         // 保存
         redisUtils.set(uuid, captchaValue, captchaConfig.getExpiration(), TimeUnit.MINUTES);
         // 验证码信息
-      Map<String, Object> imgResult =
-              new HashMap<String, Object>(2) {
-                {
-                  put("img", captcha.toBase64());
-                  put("uuid", uuid);
-                }
-              };
-        return imgResult;
+        return new CaptchaResponse(captcha.toBase64(), uuid);
     }
 
     @Operation(summary = "退出登录")
