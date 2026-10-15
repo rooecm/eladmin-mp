@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
-import fun.rooe.admin.modules.system.domain.Dept;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.Set;
 
 /**
@@ -26,7 +26,7 @@ import java.util.Set;
  */
 @Mapper
 public interface RoleDeptMapper {
-    void insertData(@Param("roleId") Long roleId, @Param("depts") Set<Dept> depts);
+    void insertData(@Param("roleId") Long roleId, @Param("depts") Set<Long> depts);
 
     void deleteByRoleId(@Param("roleId") Long roleId);
 

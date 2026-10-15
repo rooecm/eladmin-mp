@@ -1,69 +1,73 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
-import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.utils.*;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
+import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.domain.Job;
-import fun.rooe.admin.modules.system.mapper.UserMapper;
-import fun.rooe.admin.modules.system.domain.dto.JobQueryCriteria;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.mapper.JobMapper;
+import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.service.JobService;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.ExcelUtil;
+import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
-* @author Zheng Jie
-* @date 2019-03-29
-*/
+ * Coordinates job persistence, usage validation, exports, and job caches.
+ */
 @Service
 @RequiredArgsConstructor
 public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobService {
-
     private final JobMapper jobMapper;
     private final RedisUtils redisUtils;
     private final UserMapper userMapper;
+    private final JobAssembler assembler;
 
     @Override
-    public PageResult<Job> queryAll(JobQueryCriteria criteria, Page<Object> page) {
-        return PageUtil.toPage(jobMapper.findAll(criteria, page));
+    public PageResult<JobDto> queryAll(JobQueryRequest request) {
+        Page<Job> page = new Page<>(request.getPage(), request.getSize());
+        jobMapper.selectPage(page, wrapper(request));
+        return new PageResult<>(assembler.toDtos(page.getRecords()), page.getTotal());
     }
 
     @Override
-    public List<Job> queryAll(JobQueryCriteria criteria) {
-        return jobMapper.findAll(criteria);
+    public List<JobDto> queryList(JobQueryRequest request) {
+        return assembler.toDtos(jobMapper.selectList(wrapper(request)));
+    }
+
+    private LambdaQueryWrapper<Job> wrapper(JobQueryRequest request) {
+        LambdaQueryWrapper<Job> wrapper = Wrappers.lambdaQuery();
+        wrapper.like(StringUtils.isNotBlank(request.getName()), Job::getName, request.getName())
+                .eq(request.getEnabled() != null, Job::getEnabled, request.getEnabled())
+                .orderByAsc(Job::getJobSort)
+                .orderByDesc(Job::getId);
+        if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
+            wrapper.between(
+                    Job::getCreateTime,
+                    request.getCreateTime().get(0),
+                    request.getCreateTime().get(1));
+        }
+        return wrapper;
     }
 
     @Override
     public Job findById(Long id) {
         String key = CacheKey.JOB_ID + id;
         Job job = redisUtils.get(key, Job.class);
-        if(job == null){
+        if (job == null) {
             job = getById(id);
             redisUtils.set(key, job, 1, TimeUnit.DAYS);
         }
@@ -72,59 +76,56 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(Job resources) {
-        Job job = jobMapper.findByName(resources.getName());
-        if(job != null){
-            throw new EntityExistException(Job.class,"name",resources.getName());
+    public void create(JobCreateRequest request) {
+        if (jobMapper.selectOne(Wrappers.<Job>lambdaQuery().eq(Job::getName, request.getName()))
+                != null) {
+            throw new EntityExistException(Job.class, "name", request.getName());
         }
-        save(resources);
+        save(assembler.toEntity(request));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(Job resources) {
-        Job job = getById(resources.getId());
-        Job old = jobMapper.findByName(resources.getName());
-        if(old != null && !old.getId().equals(resources.getId())){
-            throw new EntityExistException(Job.class,"name",resources.getName());
+    public void update(JobUpdateRequest request) {
+        Job job = getById(request.getId());
+        Job duplicate =
+                jobMapper.selectOne(
+                        Wrappers.<Job>lambdaQuery().eq(Job::getName, request.getName()));
+        if (duplicate != null && !duplicate.getId().equals(request.getId())) {
+            throw new EntityExistException(Job.class, "name", request.getName());
         }
-        resources.setId(job.getId());
-        saveOrUpdate(resources);
-        // 删除缓存
-        delCaches(resources.getId());
+        assembler.updateEntity(request, job);
+        updateById(job);
+        delCaches(job.getId());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Set<Long> ids) {
-        removeBatchByIds(ids);
-        // 删除缓存
-        ids.forEach(this::delCaches);
+    public void delete(JobDeleteRequest request) {
+        if (userMapper.countByJobs(request.getIds()) > 0) {
+            throw new BadRequestException("所选岗位存在用户关联，请解除关联后再试");
+        }
+        removeBatchByIds(request.getIds());
+        request.getIds().forEach(this::delCaches);
     }
 
     @Override
-    public void download(List<Job> jobs, HttpServletResponse response) throws IOException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Job job : jobs) {
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("岗位名称", job.getName());
-            map.put("岗位状态", job.getEnabled() ? "启用" : "停用");
-            map.put("创建日期", job.getCreateTime());
-            list.add(map);
+    public void download(List<JobDto> jobs, HttpServletResponse response) throws IOException {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (JobDto job : jobs) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("岗位名称", job.getName());
+            row.put("岗位状态", Boolean.TRUE.equals(job.getEnabled()) ? "启用" : "停用");
+            row.put("创建日期", job.getCreateTime());
+            rows.add(row);
         }
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setContentType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        ExcelUtil.write(list, response.getOutputStream());
+        ExcelUtil.write(rows, response.getOutputStream());
     }
 
-    @Override
-    public void verification(Set<Long> ids) {
-        if(userMapper.countByJobs(ids) > 0){
-            throw new BadRequestException("所选的岗位中存在用户关联，请解除关联再试！");
-        }
-    }
-
-    public void delCaches(Long id){
+    private void delCaches(Long id) {
         redisUtils.del(CacheKey.JOB_ID + id);
     }
 }

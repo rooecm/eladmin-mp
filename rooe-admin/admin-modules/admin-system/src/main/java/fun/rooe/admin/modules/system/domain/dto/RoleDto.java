@@ -1,0 +1,29 @@
+package fun.rooe.admin.modules.system.domain.dto;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+
+import java.sql.Timestamp;
+import java.util.Set;
+
+/**
+ * Role response model with optional menu and department associations.
+ */
+@Data
+public class RoleDto {
+    private Long id;
+    private String name;
+    private Integer level;
+    private String dataScope;
+    private String description;
+    private Set<MenuDto> menus;
+    private Set<DeptDto> depts;
+    private String createBy;
+    private String updateBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp createTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp updateTime;
+}

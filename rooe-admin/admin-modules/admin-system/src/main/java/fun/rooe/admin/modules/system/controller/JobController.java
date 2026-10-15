@@ -1,91 +1,64 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.modules.system.domain.Job;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.service.JobService;
-import fun.rooe.admin.modules.system.domain.dto.JobQueryCriteria;
 import fun.rooe.admin.response.PageResult;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
-import java.util.Set;
 
 /**
-* @author Zheng Jie
-* @date 2019-03-29
-*/
+ * HTTP endpoints for job administration and exports.
+ */
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "系统：岗位管理")
 @RequestMapping("/api/job")
 public class JobController {
-
     private final JobService jobService;
-    private static final String ENTITY_NAME = "job";
 
     @Operation(summary = "导出岗位数据")
-    @GetMapping(value = "/download")
+    @GetMapping("/download")
     @PreAuthorize("@el.check('job:list')")
-    public void exportJob(HttpServletResponse response, JobQueryCriteria criteria) throws IOException {
-        jobService.download(jobService.queryAll(criteria), response);
+    public void exportJob(HttpServletResponse response, @Valid JobQueryRequest request)
+            throws IOException {
+      jobService.download(jobService.queryList(request), response);
     }
 
     @Operation(summary = "查询岗位")
     @GetMapping
     @PreAuthorize("@el.check('job:list','user:list')")
-    public PageResult<Job> queryJob(JobQueryCriteria criteria){
-        Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return jobService.queryAll(criteria, page);
+    public PageResult<JobDto> queryJob(@Valid JobQueryRequest request) {
+      return jobService.queryAll(request);
     }
 
     @Log("新增岗位")
     @Operation(summary = "新增岗位")
     @PostMapping
     @PreAuthorize("@el.check('job:add')")
-    public void createJob(@Validated @RequestBody Job resources){
-        if (resources.getId() != null) {
-            throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
-        }
-        jobService.create(resources);
+    public void createJob(@Valid @RequestBody JobCreateRequest request) {
+      jobService.create(request);
     }
 
     @Log("修改岗位")
     @Operation(summary = "修改岗位")
     @PutMapping
     @PreAuthorize("@el.check('job:edit')")
-    public void updateJob(@Validated(Job.Update.class) @RequestBody Job resources){
-        jobService.update(resources);
+    public void updateJob(@Valid @RequestBody JobUpdateRequest request) {
+      jobService.update(request);
     }
 
     @Log("删除岗位")
     @Operation(summary = "删除岗位")
     @DeleteMapping
     @PreAuthorize("@el.check('job:del')")
-    public void deleteJob(@RequestBody Set<Long> ids){
-        // 验证是否被用户关联
-        jobService.verification(ids);
-        jobService.delete(ids);
+    public void deleteJob(@Valid @RequestBody JobDeleteRequest request) {
+      jobService.delete(request);
     }
 }

@@ -17,10 +17,10 @@ package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,9 +32,10 @@ import java.util.Set;
 @Mapper
 public interface MenuMapper extends BaseMapper<Menu> {
 
-    List<Menu> findAll(@Param("criteria") MenuQueryCriteria criteria);
+    LinkedHashSet<Menu> findByRoleIdsAndTypeNot(
+            @Param("roleIds") Set<Long> roleIds, @Param("type") Integer type);
 
-    LinkedHashSet<Menu> findByRoleIdsAndTypeNot(@Param("roleIds") Set<Long> roleIds, @Param("type") Integer type);
+    Set<Menu> findByRoleId(@Param("roleId") Long roleId);
 
     List<Menu> findByPidIsNullOrderByMenuSort();
 

@@ -1,206 +1,127 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
-import fun.rooe.admin.utils.RsaUtils;
-import fun.rooe.admin.framework.utils.SecurityUtils;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
+import fun.rooe.admin.enums.CodeEnum;
+import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.config.properties.RsaProperties;
-import fun.rooe.admin.modules.system.domain.Dept;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.service.DataService;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.modules.system.domain.dto.UserPassVo;
-import fun.rooe.admin.modules.system.service.DeptService;
-import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.modules.system.domain.dto.UserQueryCriteria;
-import fun.rooe.admin.modules.system.service.VerifyService;
+import fun.rooe.admin.framework.utils.SecurityUtils;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.service.UserService;
-import fun.rooe.admin.enums.CodeEnum;
+import fun.rooe.admin.modules.system.service.VerifyService;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.RsaUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
- * @author Zheng Jie
- * @date 2018-11-23
+ * HTTP endpoints for user administration and self-service account operations.
  */
 @Tag(name = "系统：用户管理")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
-    private final DataService dataService;
-    private final DeptService deptService;
-    private final RoleService roleService;
     private final VerifyService verificationCodeService;
 
     @Operation(summary = "导出用户数据")
-    @GetMapping(value = "/download")
+    @GetMapping("/download")
     @PreAuthorize("@el.check('user:list')")
-    public void exportUser(HttpServletResponse response, UserQueryCriteria criteria) throws IOException {
-        userService.download(userService.queryAll(criteria), response);
+    public void exportUser(HttpServletResponse response, @Valid UserQueryRequest request)
+            throws IOException {
+      userService.download(userService.queryList(request), response);
     }
 
     @Operation(summary = "查询用户")
     @GetMapping
     @PreAuthorize("@el.check('user:list')")
-    public PageResult<User> queryUser(UserQueryCriteria criteria){
-        Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        if (!ObjectUtils.isEmpty(criteria.getDeptId())) {
-            criteria.getDeptIds().add(criteria.getDeptId());
-            // 先查找是否存在子节点
-            List<Dept> data = deptService.findByPid(criteria.getDeptId());
-            // 然后把子节点的ID都加入到集合中
-            criteria.getDeptIds().addAll(deptService.getDeptChildren(data));
-        }
-        // 数据权限
-        User currentUser = userService.findByName(SecurityUtils.getCurrentUsername());
-        if (currentUser == null) {
-            return PageUtil.noData();
-        }
-        List<Long> dataScopes = dataService.getDeptIds(currentUser);
-        // criteria.getDeptIds() 不为空并且数据权限不为空则取交集
-        if (!CollectionUtils.isEmpty(criteria.getDeptIds()) && !CollectionUtils.isEmpty(dataScopes)){
-            // 取交集
-            criteria.getDeptIds().retainAll(dataScopes);
-            if(!CollectionUtils.isEmpty(criteria.getDeptIds())){
-                return userService.queryAll(criteria,page);
-            }
-        } else {
-            // 否则取并集
-            criteria.getDeptIds().addAll(dataScopes);
-            return userService.queryAll(criteria,page);
-        }
-        return PageUtil.noData();
+    public PageResult<UserDto> queryUser(@Valid UserQueryRequest request) {
+      return userService.queryAll(request);
     }
 
     @Log("新增用户")
     @Operation(summary = "新增用户")
     @PostMapping
     @PreAuthorize("@el.check('user:add')")
-    public void createUser(@Validated @RequestBody User resources){
-        checkLevel(resources);
-        // 默认密码 123456
-        resources.setPassword(passwordEncoder.encode("123456"));
-        userService.create(resources);
+    public void createUser(@Valid @RequestBody UserCreateRequest request) {
+      userService.create(request);
     }
 
     @Log("修改用户")
     @Operation(summary = "修改用户")
     @PutMapping
     @PreAuthorize("@el.check('user:edit')")
-    public void updateUser(@Validated(User.Update.class) @RequestBody User resources) throws Exception {
-        checkLevel(resources);
-        userService.update(resources);
+    public void updateUser(@Valid @RequestBody UserUpdateRequest request) {
+      userService.update(request);
     }
 
     @Log("修改用户：个人中心")
     @Operation(summary = "修改用户：个人中心")
-    @PutMapping(value = "center")
-    public void centerUser(@Validated(User.Update.class) @RequestBody User resources){
-        if(!resources.getId().equals(SecurityUtils.getCurrentUserId())){
-            throw new BadRequestException("不能修改他人资料");
-        }
-        userService.updateCenter(resources);
+    @PutMapping("center")
+    public void centerUser(@Valid @RequestBody UserCenterUpdateRequest request) {
+      userService.updateCenter(request);
     }
 
     @Log("删除用户")
     @Operation(summary = "删除用户")
     @DeleteMapping
     @PreAuthorize("@el.check('user:del')")
-    public void deleteUser(@RequestBody Set<Long> ids){
-        for (Long id : ids) {
-            Integer currentLevel =  Collections.min(roleService.findByUsersId(SecurityUtils.getCurrentUserId()).stream().map(Role::getLevel).collect(Collectors.toList()));
-            Integer optLevel =  Collections.min(roleService.findByUsersId(id).stream().map(Role::getLevel).collect(Collectors.toList()));
-            if (currentLevel > optLevel) {
-                throw new BadRequestException("角色权限不足，不能删除：" + userService.findById(id).getUsername());
-            }
-        }
-        userService.delete(ids);
+    public void deleteUser(@Valid @RequestBody UserDeleteRequest request) {
+      userService.delete(request);
     }
 
     @Operation(summary = "修改密码")
-    @PostMapping(value = "/updatePass")
-    public void updateUserPass(@RequestBody UserPassVo passVo) throws Exception {
-        String oldPass = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,passVo.getOldPass());
-        String newPass = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,passVo.getNewPass());
-        User user = userService.findByName(SecurityUtils.getCurrentUsername());
-        if(!passwordEncoder.matches(oldPass, user.getPassword())){
-            throw new BadRequestException("修改失败，旧密码错误");
-        }
-        if(passwordEncoder.matches(newPass, user.getPassword())){
+    @PostMapping("/updatePass")
+    public void updateUserPass(@Valid @RequestBody UserPasswordUpdateRequest request)
+            throws Exception {
+      String oldPass =
+              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getOldPass());
+      String newPass =
+              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getNewPass());
+      UserLoginDto user = userService.getLoginData(SecurityUtils.getCurrentUsername());
+      if (!passwordEncoder.matches(oldPass, user.getPassword()))
+        throw new BadRequestException("旧密码错误");
+      if (passwordEncoder.matches(newPass, user.getPassword()))
             throw new BadRequestException("新密码不能与旧密码相同");
-        }
-        userService.updatePass(user.getUsername(),passwordEncoder.encode(newPass));
+      userService.updatePass(user.getUsername(), passwordEncoder.encode(newPass));
     }
 
     @Operation(summary = "重置密码")
-    @PutMapping(value = "/resetPwd")
-    public void resetPwd(@RequestBody Set<Long> ids) {
-        String pwd = passwordEncoder.encode("123456");
-        userService.resetPwd(ids, pwd);
+    @PutMapping("/resetPwd")
+    public void resetPwd(@Valid @RequestBody UserResetPasswordRequest request) {
+      userService.resetPwd(request, passwordEncoder.encode("123456"));
     }
 
     @Operation(summary = "修改头像")
-    @PostMapping(value = "/updateAvatar")
-    public Object updateUserAvatar(@RequestParam MultipartFile avatar){
+    @PostMapping("/updateAvatar")
+    public Map<String, String> updateUserAvatar(@RequestParam MultipartFile avatar) {
         return userService.updateAvatar(avatar);
     }
 
     @Log("修改邮箱")
     @Operation(summary = "修改邮箱")
-    @PostMapping(value = "/updateEmail/{code}")
-    public void updateUserEmail(@PathVariable String code, @RequestBody User resources) throws Exception {
-        String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,resources.getPassword());
-        User user = userService.findByName(SecurityUtils.getCurrentUsername());
-        if(!passwordEncoder.matches(password, user.getPassword())){
+    @PostMapping("/updateEmail/{code}")
+    public void updateUserEmail(
+            @PathVariable String code, @Valid @RequestBody UserEmailUpdateRequest request)
+            throws Exception {
+      String password =
+              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getPassword());
+      UserLoginDto user = userService.getLoginData(SecurityUtils.getCurrentUsername());
+      if (!passwordEncoder.matches(password, user.getPassword()))
             throw new BadRequestException("密码错误");
-        }
-        verificationCodeService.validated(CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey() + resources.getEmail(), code);
-        userService.updateEmail(user.getUsername(),resources.getEmail());
-    }
-
-    /**
-     * 如果当前用户的角色级别低于创建用户的角色级别，则抛出权限不足的错误
-     * @param resources /
-     */
-    private void checkLevel(User resources) {
-        Integer currentLevel =  Collections.min(roleService.findByUsersId(SecurityUtils.getCurrentUserId()).stream().map(Role::getLevel).collect(Collectors.toList()));
-        Integer optLevel = roleService.findByRoles(resources.getRoles());
-        if (currentLevel > optLevel) {
-            throw new BadRequestException("角色权限不足");
-        }
+      verificationCodeService.validated(
+              CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey() + request.getEmail(), code);
+      userService.updateEmail(user.getUsername(), request.getEmail());
     }
 }

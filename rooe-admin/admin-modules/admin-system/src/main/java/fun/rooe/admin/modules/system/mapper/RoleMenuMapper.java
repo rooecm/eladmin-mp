@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
-import fun.rooe.admin.modules.system.domain.Menu;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.Set;
 
 /**
@@ -26,7 +26,7 @@ import java.util.Set;
  */
 @Mapper
 public interface RoleMenuMapper {
-    void insertData(@Param("roleId") Long roleId, @Param("menus") Set<Menu> menus);
+    void insertData(@Param("roleId") Long roleId, @Param("menus") Set<Long> menus);
 
     void deleteByRoleId(@Param("roleId") Long roleId);
 

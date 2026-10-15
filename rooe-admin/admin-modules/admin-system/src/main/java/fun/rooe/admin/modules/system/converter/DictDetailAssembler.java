@@ -1,0 +1,36 @@
+package fun.rooe.admin.modules.system.converter;
+
+import fun.rooe.admin.modules.system.domain.DictDetail;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailCreateRequest;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailDto;
+import fun.rooe.admin.modules.system.domain.dto.DictDetailUpdateRequest;
+import org.mapstruct.*;
+
+import java.util.List;
+
+/**
+ * Maps dictionary-detail persistence models to API models and applies validated write requests.
+ */
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface DictDetailAssembler {
+    @Mapping(target = "dict", ignore = true)
+    DictDetailDto toDto(DictDetail entity);
+
+    List<DictDetailDto> toDtos(List<DictDetail> entities);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "dictId", source = "dict.id")
+    @Mapping(target = "label", source = "label")
+    @Mapping(target = "value", source = "value")
+    @Mapping(target = "dictSort", source = "dictSort")
+    DictDetail toEntity(DictDetailCreateRequest request);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "dictId", source = "dict.id")
+    @Mapping(target = "label", source = "label")
+    @Mapping(target = "value", source = "value")
+    @Mapping(target = "dictSort", source = "dictSort")
+    void updateEntity(DictDetailUpdateRequest request, @MappingTarget DictDetail entity);
+}

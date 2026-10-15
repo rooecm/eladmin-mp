@@ -1,121 +1,36 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.security.dto.AuthorityDto;
 import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.response.PageResult;
 
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Zheng Jie
- * @date 2018-12-03
- */
 public interface RoleService extends IService<Role> {
+    List<RoleDto> queryAll();
 
-    /**
-     * 查询全部数据
-     * @return /
-     */
-    List<Role> queryAll();
+    PageResult<RoleDto> queryAll(RoleQueryRequest request);
 
-    /**
-     * 根据ID查询
-     * @param id /
-     * @return /
-     */
-    Role findById(long id);
+    RoleDto findDtoById(Long id);
 
-    /**
-     * 创建
-     * @param resources /
-     */
-    void create(Role resources);
+    void create(RoleCreateRequest request);
 
-    /**
-     * 编辑
-     * @param resources /
-     */
-    void update(Role resources);
+    void update(RoleUpdateRequest request);
 
-    /**
-     * 删除
-     * @param ids /
-     */
-    void delete(Set<Long> ids);
+    void updateMenu(RoleMenuUpdateRequest request);
 
-    /**
-     * 根据用户ID查询
-     * @param userId 用户ID
-     * @return /
-     */
+    void delete(RoleDeleteRequest request);
+
     List<Role> findByUsersId(Long userId);
 
-    /**
-     * 根据角色查询角色级别
-     * @param roles /
-     * @return /
-     */
-    Integer findByRoles(Set<Role> roles);
+    Integer findByRoleIds(Set<Long> roleIds);
 
-    /**
-     * 修改绑定的菜单
-     * @param resources /
-     */
-    void updateMenu(Role resources);
+    int getCurrentUserLevel();
 
-    /**
-     * 待条件分页查询
-     *
-     * @param criteria 条件
-     * @param page     分页参数
-     * @return /
-     */
-    PageResult<Role> queryAll(RoleQueryCriteria criteria, Page<Object> page);
+    List<AuthorityDto> buildPermissions(UserLoginDto user);
 
-    /**
-     * 查询全部
-     * @param criteria 条件
-     * @return /
-     */
-    List<Role> queryAll(RoleQueryCriteria criteria);
-
-    /**
-     * 获取用户权限信息
-     * @param user 用户信息
-     * @return 权限信息
-     */
-    List<AuthorityDto> buildPermissions(User user);
-
-    /**
-     * 验证是否被用户关联
-     * @param ids /
-     */
-    void verification(Set<Long> ids);
-
-    /**
-     * 根据菜单Id查询
-     * @param menuId /
-     * @return /
-     */
     List<Role> findByMenuId(Long menuId);
 }

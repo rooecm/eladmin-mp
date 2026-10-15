@@ -25,7 +25,9 @@ export function del(ids) {
   return request({
     url: 'api/job',
     method: 'delete',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 

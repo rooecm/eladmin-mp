@@ -15,11 +15,11 @@
  */
 package fun.rooe.admin.modules.system.service;
 
-import fun.rooe.admin.modules.system.domain.User;
 import java.util.List;
 
 /**
  * 数据权限服务类
+ *
  * @author Zheng Jie
  * @date 2020-05-07
  */
@@ -27,8 +27,10 @@ public interface DataService {
 
     /**
      * 获取数据权限
-     * @param user /
+     *
+     * @param userId user ID
+     * @param deptId current department ID
      * @return /
      */
-    List<Long> getDeptIds(User user);
+    List<Long> getDeptIds(Long userId, Long deptId);
 }

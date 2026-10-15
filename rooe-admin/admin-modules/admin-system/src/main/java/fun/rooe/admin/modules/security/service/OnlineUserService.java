@@ -15,21 +15,24 @@
  */
 package fun.rooe.admin.modules.security.service;
 
+import fun.rooe.admin.framework.config.security.config.SecurityProperties;
+import fun.rooe.admin.framework.config.security.security.TokenProvider;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.utils.*;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.framework.config.security.security.TokenProvider;
-import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.modules.security.dto.JwtUserDto;
 import fun.rooe.admin.modules.security.dto.OnlineUserDto;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.EncryptUtils;
+import fun.rooe.admin.utils.ExcelUtil;
+import fun.rooe.admin.utils.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -49,49 +52,68 @@ public class OnlineUserService implements OnlineSessionService {
 
     /**
      * 保存在线用户信息
+     *
      * @param jwtUserDto /
      * @param token /
      * @param request /
      */
-    public void save(JwtUserDto jwtUserDto, String token, HttpServletRequest request){
-        String dept = jwtUserDto.getUser().getDept().getName();
+    public void save(JwtUserDto jwtUserDto, String token, HttpServletRequest request) {
+        String dept =
+                jwtUserDto.getUser().getDept() == null
+                        ? null
+                        : jwtUserDto.getUser().getDept().getName();
         String ip = StringUtils.getIp(request);
         String id = tokenProvider.getId(token);
         String browser = StringUtils.getBrowser(request);
         String address = StringUtils.getCityInfo(ip);
         OnlineUserDto onlineUserDto = null;
         try {
-            onlineUserDto = new OnlineUserDto(id, jwtUserDto.getUsername(), jwtUserDto.getUser().getNickName(), dept, browser , ip, address, EncryptUtils.desEncrypt(token), new Date());
+            onlineUserDto =
+                    new OnlineUserDto(
+                            id,
+                            jwtUserDto.getUsername(),
+                            jwtUserDto.getUser().getNickName(),
+                            dept,
+                            browser,
+                            ip,
+                            address,
+                            EncryptUtils.desEncrypt(token),
+                            new Date());
         } catch (Exception e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
         }
         String loginKey = tokenProvider.loginKey(token);
-        redisUtils.set(loginKey, onlineUserDto, properties.getTokenValidityInSeconds(), TimeUnit.MILLISECONDS);
+        redisUtils.set(
+                loginKey,
+                onlineUserDto,
+                properties.getTokenValidityInSeconds(),
+                TimeUnit.MILLISECONDS);
     }
 
     /**
      * 查询全部数据
+     *
      * @param username /
      * @param pageable /
      * @return /
      */
-    public PageResult<OnlineUserDto> getAll(String username, Pageable pageable){
+    public PageResult<OnlineUserDto> getAll(String username, Pageable pageable) {
         List<OnlineUserDto> onlineUserDtos = getAll(username);
         int pageNumber = pageable.getPageNumber() - 1;
         return PageUtil.toPage(
-                PageUtil.paging(pageNumber,pageable.getPageSize(), onlineUserDtos),
-                onlineUserDtos.size()
-        );
+                PageUtil.paging(pageNumber, pageable.getPageSize(), onlineUserDtos),
+                onlineUserDtos.size());
     }
 
     /**
      * 查询全部数据，不分页
+     *
      * @param username /
      * @return /
      */
-    public List<OnlineUserDto> getAll(String username){
-        String loginKey = properties.getOnlineKey() +
-                (StringUtils.isBlank(username) ? "" : "*" + username);
+    public List<OnlineUserDto> getAll(String username) {
+        String loginKey =
+                properties.getOnlineKey() + (StringUtils.isBlank(username) ? "" : "*" + username);
         List<String> keys = redisUtils.scan(loginKey + "*");
         Collections.reverse(keys);
         List<OnlineUserDto> onlineUserDtos = new ArrayList<>();
@@ -104,6 +126,7 @@ public class OnlineUserService implements OnlineSessionService {
 
     /**
      * 退出登录
+     *
      * @param token /
      */
     public void logout(String token) {
@@ -113,6 +136,7 @@ public class OnlineUserService implements OnlineSessionService {
 
     /**
      * 导出
+     *
      * @param all /
      * @param response /
      * @throws IOException /
@@ -120,7 +144,7 @@ public class OnlineUserService implements OnlineSessionService {
     public void download(List<OnlineUserDto> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
         for (OnlineUserDto user : all) {
-            Map<String,Object> map = new LinkedHashMap<>();
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("用户名", user.getUserName());
             map.put("部门", user.getDept());
             map.put("登录IP", user.getIp());
@@ -129,13 +153,15 @@ public class OnlineUserService implements OnlineSessionService {
             map.put("登录日期", user.getLoginTime());
             list.add(map);
         }
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        response.setContentType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
         ExcelUtil.write(list, response.getOutputStream());
     }
 
     /**
      * 查询用户
+     *
      * @param key /
      * @return /
      */
@@ -150,6 +176,7 @@ public class OnlineUserService implements OnlineSessionService {
 
     /**
      * 根据用户名强退用户
+     *
      * @param username /
      */
     public void kickOutForUsername(String username) {

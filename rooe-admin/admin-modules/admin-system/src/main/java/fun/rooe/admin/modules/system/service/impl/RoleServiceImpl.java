@@ -1,87 +1,110 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
-import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.utils.*;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.modules.security.service.UserCacheManager;
+import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.framework.utils.SecurityUtils;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.security.dto.AuthorityDto;
+import fun.rooe.admin.modules.security.service.UserCacheManager;
+import fun.rooe.admin.modules.system.converter.DeptAssembler;
+import fun.rooe.admin.modules.system.converter.MenuAssembler;
+import fun.rooe.admin.modules.system.converter.RoleAssembler;
 import fun.rooe.admin.modules.system.domain.Menu;
 import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.exception.EntityExistException;
 import fun.rooe.admin.modules.system.domain.User;
-import fun.rooe.admin.modules.system.mapper.RoleDeptMapper;
-import fun.rooe.admin.modules.system.mapper.RoleMapper;
-import fun.rooe.admin.modules.system.mapper.RoleMenuMapper;
-import fun.rooe.admin.modules.system.mapper.UserMapper;
+import fun.rooe.admin.modules.system.domain.dto.*;
+import fun.rooe.admin.modules.system.mapper.*;
 import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
+import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.springframework.util.CollectionUtils;
 
 /**
- * @author Zheng Jie
- * @date 2018-12-03
+ * Coordinates role persistence, data scopes, menu assignments, and authorization caches.
  */
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
-
     private final RoleMapper roleMapper;
     private final RoleDeptMapper roleDeptMapper;
     private final RoleMenuMapper roleMenuMapper;
-    private final RedisUtils redisUtils;
+    private final DeptMapper deptMapper;
+    private final MenuMapper menuMapper;
     private final UserMapper userMapper;
+    private final RedisUtils redisUtils;
     private final UserCacheManager userCacheManager;
+    private final RoleAssembler assembler;
+    private final DeptAssembler deptAssembler;
+    private final MenuAssembler menuAssembler;
 
     @Override
-    public List<Role> queryAll() {
-        return roleMapper.queryAll();
+    public List<RoleDto> queryAll() {
+        return assemble(
+                roleMapper.selectList(Wrappers.<Role>lambdaQuery().orderByAsc(Role::getLevel)));
     }
 
     @Override
-    public List<Role> queryAll(RoleQueryCriteria criteria) {
-        return roleMapper.findAll(criteria);
+    public PageResult<RoleDto> queryAll(RoleQueryRequest request) {
+        Page<Role> page = new Page<>(request.getPage(), request.getSize());
+        roleMapper.selectPage(page, wrapper(request));
+        return new PageResult<>(assemble(page.getRecords()), page.getTotal());
+    }
+
+    private LambdaQueryWrapper<Role> wrapper(RoleQueryRequest request) {
+        LambdaQueryWrapper<Role> wrapper = Wrappers.lambdaQuery();
+        wrapper.and(
+                        StringUtils.isNotBlank(request.getBlurry()),
+                        query ->
+                                query.like(Role::getName, request.getBlurry())
+                                        .or()
+                                        .like(Role::getDescription, request.getBlurry()))
+                .orderByAsc(Role::getLevel);
+        if (request.getCreateTime() != null && request.getCreateTime().size() >= 2)
+            wrapper.between(
+                    Role::getCreateTime,
+                    request.getCreateTime().get(0),
+                    request.getCreateTime().get(1));
+        return wrapper;
+    }
+
+    private List<RoleDto> assemble(List<Role> roles) {
+        List<RoleDto> result = assembler.toDtos(roles);
+        for (RoleDto dto : result) {
+            dto.setDepts(
+                    new LinkedHashSet<>(
+                            deptAssembler.toDtos(
+                                    new ArrayList<>(deptMapper.findByRoleId(dto.getId())))));
+            dto.setMenus(
+                    new LinkedHashSet<>(
+                            menuAssembler.toDtos(
+                                    new ArrayList<>(menuMapper.findByRoleId(dto.getId())))));
+        }
+        return result;
     }
 
     @Override
-    public PageResult<Role> queryAll(RoleQueryCriteria criteria, Page<Object> page) {
-        criteria.setOffset(page.offset());
-        List<Role> roles = roleMapper.findAll(criteria);
-        Long total = roleMapper.countAll(criteria);
-        return PageUtil.toPage(roles, total);
+    public RoleDto findDtoById(Long id) {
+        List<RoleDto> result = assemble(List.of(findById(id)));
+        return result.get(0);
     }
 
-    @Override
-    public Role findById(long id) {
+    private Role findById(Long id) {
         String key = CacheKey.ROLE_ID + id;
         Role role = redisUtils.get(key, Role.class);
         if (role == null) {
-            role = roleMapper.findById(id);
+            role = roleMapper.selectById(id);
             redisUtils.set(key, role, 1, TimeUnit.DAYS);
         }
         return role;
@@ -89,73 +112,76 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(Role resources) {
-        if (roleMapper.findByName(resources.getName()) != null) {
-            throw new EntityExistException(Role.class, "username", resources.getName());
-        }
-        save(resources);
-        // 判断是否有部门数据，若有，则需创建关联
-        if (!CollectionUtils.isEmpty(resources.getDepts())) {
-            roleDeptMapper.insertData(resources.getId(), resources.getDepts());
-        }
+    public void create(RoleCreateRequest request) {
+        checkLevel(request.getLevel());
+        checkName(request.getName(), null);
+        Role role = assembler.toEntity(request);
+        save(role);
+        insertDepts(role.getId(), request.getDepts());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(Role resources) {
-        Role role = getById(resources.getId());
-        Role role1 = roleMapper.findByName(resources.getName());
-        if (role1 != null && !role1.getId().equals(role.getId())) {
-            throw new EntityExistException(Role.class, "username", resources.getName());
-        }
-        role.setName(resources.getName());
-        role.setDescription(resources.getDescription());
-        role.setDataScope(resources.getDataScope());
-        role.setDepts(resources.getDepts());
-        role.setLevel(resources.getLevel());
-        // 更新
-        saveOrUpdate(role);
-        // 删除关联部门数据
-        roleDeptMapper.deleteByRoleId(resources.getId());
-        // 判断是否有部门数据，若有，则需更新关联
-        if (!CollectionUtils.isEmpty(resources.getDepts())) {
-            roleDeptMapper.insertData(resources.getId(), resources.getDepts());
-        }
-        // 更新相关缓存
+    public void update(RoleUpdateRequest request) {
+        Role role = findById(request.getId());
+        checkLevel(role.getLevel());
+        checkLevel(request.getLevel());
+        checkName(request.getName(), request.getId());
+        assembler.updateEntity(request, role);
+        updateById(role);
+        // Custom data-scope rows represent the complete request state.
+        roleDeptMapper.deleteByRoleId(role.getId());
+        insertDepts(role.getId(), request.getDepts());
         delCaches(role.getId(), null);
     }
 
     @Override
-    public void updateMenu(Role role) {
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMenu(RoleMenuUpdateRequest request) {
+        Role role = findById(request.getId());
+        checkLevel(role.getLevel());
         List<User> users = userMapper.findByRoleId(role.getId());
-        // 更新菜单
+        // Menu assignments are replaced as one transaction to avoid partial authorization state.
         roleMenuMapper.deleteByRoleId(role.getId());
-        // 判断是否为空
-        if(!CollectionUtils.isEmpty(role.getMenus())){
-            roleMenuMapper.insertData(role.getId(), role.getMenus());
-        }
-        // 更新缓存
+        Set<Long> menuIds = ids(request.getMenus());
+        if (!menuIds.isEmpty()) roleMenuMapper.insertData(role.getId(), menuIds);
         delCaches(role.getId(), users);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Set<Long> ids) {
-        for (Long id : ids) {
-            // 更新相关缓存
-            delCaches(id, null);
-        }
-        removeBatchByIds(ids);
-        // 删除角色部门关联数据、角色菜单关联数据
-        roleDeptMapper.deleteByRoleIds(ids);
-        roleMenuMapper.deleteByRoleIds(ids);
+    public void delete(RoleDeleteRequest request) {
+        for (Long id : request.getIds()) checkLevel(findById(id).getLevel());
+        if (userMapper.countByRoles(request.getIds()) > 0)
+            throw new BadRequestException("所选角色存在用户关联，请解除关联后再试");
+        request.getIds().forEach(id -> delCaches(id, null));
+        removeBatchByIds(request.getIds());
+        roleDeptMapper.deleteByRoleIds(request.getIds());
+        roleMenuMapper.deleteByRoleIds(request.getIds());
+    }
+
+    private void checkName(String name, Long currentId) {
+        Role duplicate = roleMapper.selectOne(Wrappers.<Role>lambdaQuery().eq(Role::getName, name));
+        if (duplicate != null && !duplicate.getId().equals(currentId))
+            throw new EntityExistException(Role.class, "name", name);
+    }
+
+    private void insertDepts(Long roleId, Set<IdReference> refs) {
+        Set<Long> deptIds = ids(refs);
+        if (!deptIds.isEmpty()) roleDeptMapper.insertData(roleId, deptIds);
+    }
+
+    private Set<Long> ids(Set<IdReference> refs) {
+        return refs == null
+                ? Collections.emptySet()
+                : refs.stream().map(IdReference::getId).collect(Collectors.toSet());
     }
 
     @Override
     public List<Role> findByUsersId(Long userId) {
         String key = CacheKey.ROLE_USER + userId;
         List<Role> roles = redisUtils.getList(key, Role.class);
-        if (CollectionUtils.isEmpty(roles) || roles.stream().anyMatch(role -> role == null || role.getId() == null)) {
+        if (CollectionUtils.isEmpty(roles)) {
             roles = roleMapper.findByUserId(userId);
             redisUtils.set(key, roles, 1, TimeUnit.DAYS);
         }
@@ -163,45 +189,45 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public Integer findByRoles(Set<Role> roles) {
-        if (CollectionUtils.isEmpty(roles)) {
-            return Integer.MAX_VALUE;
-        }
-        Set<Role> roleSet = new HashSet<>();
-        for (Role role : roles) {
-            roleSet.add(findById(role.getId()));
-        }
-        return Collections.min(roleSet.stream().map(Role::getLevel).collect(Collectors.toList()));
+    public Integer findByRoleIds(Set<Long> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) return Integer.MAX_VALUE;
+        return roleMapper.selectBatchIds(roleIds).stream()
+                .map(Role::getLevel)
+                .min(Integer::compareTo)
+                .orElse(Integer.MAX_VALUE);
     }
 
     @Override
-    public List<AuthorityDto> buildPermissions(User user) {
+    public int getCurrentUserLevel() {
+        return findByUsersId(SecurityUtils.getCurrentUserId()).stream()
+                .map(Role::getLevel)
+                .min(Integer::compareTo)
+                .orElse(Integer.MAX_VALUE);
+    }
+
+    private void checkLevel(Integer level) {
+        int currentLevel = getCurrentUserLevel();
+        if (level == null || level < currentLevel)
+            throw new BadRequestException("权限不足，当前角色级别：" + currentLevel + "，操作角色级别：" + level);
+    }
+
+    /** Builds deduplicated menu permissions for the authentication principal. */
+    @Override
+    public List<AuthorityDto> buildPermissions(UserLoginDto user) {
         String key = CacheKey.ROLE_AUTH + user.getId();
-        List<AuthorityDto> authorityDtos = redisUtils.getList(key, AuthorityDto.class);
-        if (CollectionUtils.isEmpty(authorityDtos)) {
-            Set<String> permissions = new HashSet<>();
-            // 如果是管理员直接返回
-            if (user.getIsAdmin()) {
-                permissions.add("admin");
-                return permissions.stream().map(AuthorityDto::new)
-                        .collect(Collectors.toList());
-            }
-            List<Role> roles = roleMapper.findByUserId(user.getId());
-            permissions = roles.stream().flatMap(role -> role.getMenus().stream())
+        List<AuthorityDto> cached = redisUtils.getList(key, AuthorityDto.class);
+        if (!CollectionUtils.isEmpty(cached)) return cached;
+        if (Boolean.TRUE.equals(user.getIsAdmin())) return List.of(new AuthorityDto("admin"));
+        Set<String> permissions = new HashSet<>();
+        for (Role role : roleMapper.findByUserId(user.getId())) {
+            menuMapper.findByRoleId(role.getId()).stream()
                     .map(Menu::getPermission)
-                    .filter(StringUtils::isNotBlank).collect(Collectors.toSet());
-            authorityDtos = permissions.stream().map(AuthorityDto::new)
-                    .collect(Collectors.toList());
-            redisUtils.set(key, authorityDtos, 1, TimeUnit.HOURS);
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(permissions::add);
         }
-        return authorityDtos;
-    }
-
-    @Override
-    public void verification(Set<Long> ids) {
-        if (userMapper.countByRoles(ids) > 0) {
-            throw new BadRequestException("所选角色存在用户关联，请解除关联再试！");
-        }
+        cached = permissions.stream().map(AuthorityDto::new).toList();
+        redisUtils.set(key, cached, 1, TimeUnit.HOURS);
+        return cached;
     }
 
     @Override
@@ -209,20 +235,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         return roleMapper.findByMenuId(menuId);
     }
 
-    /**
-     * 清理缓存
-     * @param id /
-     */
-    public void delCaches(Long id, List<User> users) {
+    private void delCaches(Long id, List<User> users) {
         users = CollectionUtils.isEmpty(users) ? userMapper.findByRoleId(id) : users;
-        if (!CollectionUtils.isEmpty(users)) {
-            users.forEach(item -> userCacheManager.cleanUserCache(item.getUsername()));
-            Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
-            redisUtils.delByKeys(CacheKey.DATA_USER, userIds);
-            redisUtils.delByKeys(CacheKey.MENU_USER, userIds);
-            redisUtils.delByKeys(CacheKey.ROLE_AUTH, userIds);
-            redisUtils.delByKeys(CacheKey.ROLE_USER, userIds);
-        }
+        for (User user : users) userCacheManager.cleanUserCache(user.getUsername());
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        redisUtils.delByKeys(CacheKey.DATA_USER, userIds);
+        redisUtils.delByKeys(CacheKey.MENU_USER, userIds);
+        redisUtils.delByKeys(CacheKey.ROLE_AUTH, userIds);
+        redisUtils.delByKeys(CacheKey.ROLE_USER, userIds);
         redisUtils.del(CacheKey.ROLE_ID + id);
     }
 }

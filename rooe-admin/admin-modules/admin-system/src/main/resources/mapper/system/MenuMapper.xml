@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="fun.rooe.admin.modules.system.mapper.MenuMapper">
     <resultMap id="BaseResultMap" type="fun.rooe.admin.modules.system.domain.Menu">
         <id column="id" property="id"/>
@@ -26,31 +26,6 @@
         id, title, name, menu_sort, component, path, type, permission, icon, cache, hidden, pid, sub_count, i_frame, create_by, update_by, create_time, update_time
     </sql>
 
-    <select id="findAll" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List"/>
-        from sys_menu
-        <where>
-            <if test="criteria.blurry != null and criteria.blurry != ''">
-                and (
-                    title like concat('%',#{criteria.blurry},'%')
-                    or name like concat('%',#{criteria.blurry},'%')
-                    or permission like concat('%',#{criteria.blurry},'%')
-                )
-            </if>
-            <if test="criteria.pidIsNull != null">
-                and pid is null
-            </if>
-            <if test="criteria.pid != null">
-                and pid = #{criteria.pid}
-            </if>
-            <if test="criteria.createTime != null and criteria.createTime.size() != 0">
-                and create_time between #{criteria.createTime[0]} and #{criteria.createTime[1]}
-            </if>
-        </where>
-        order by menu_sort
-    </select>
-
     <select id="findByRoleIdsAndTypeNot" resultMap="BaseResultMap">
         SELECT m.* FROM sys_menu m, sys_roles_menus r
         WHERE m.id = r.menu_id AND r.role_id IN
@@ -59,6 +34,14 @@
         </foreach>
         AND type != #{type}
         order by m.menu_sort
+    </select>
+
+    <select id="findByRoleId" resultMap="BaseResultMap">
+        SELECT m.*
+        FROM sys_menu m
+                 JOIN sys_roles_menus rm ON rm.menu_id = m.id
+        WHERE rm.role_id = #{roleId}
+        ORDER BY m.menu_sort
     </select>
 
     <select id="findByPidOrderByMenuSort" resultMap="BaseResultMap">

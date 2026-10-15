@@ -16,11 +16,13 @@
 package fun.rooe.admin.modules.security.dto;
 
 import com.alibaba.fastjson2.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import fun.rooe.admin.modules.system.domain.User;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,7 +36,7 @@ import java.util.stream.Collectors;
 public class JwtUserDto implements UserDetails {
 
     @Schema(description = "用户")
-    private final User user;
+    private final UserLoginDto user;
 
     @Schema(description = "数据权限")
     private final List<Long> dataScopes;
@@ -47,6 +49,7 @@ public class JwtUserDto implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     @JSONField(serialize = false)
     public String getPassword() {
         return user.getPassword();

@@ -19,7 +19,9 @@ export function del(ids) {
   return request({
     url: 'api/dict',
     method: 'delete',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 

@@ -5,6 +5,12 @@
 
 **开发文档：**  [https://rooe-admin.vip](https://rooe-admin.vip)
 
+#### 工程规范
+
+- [持久化模型分层改造指南](docs/persistence-model-refactoring-guide.md)：以 `Dept` 为参考，说明
+  Request、DTO、Service、Assembler、Mapper 与数据库模型的拆分方式。
+- [统一响应与错误码设计规范](docs/spring-boot-api-response-error-code-best-practices.md)
+
 **体验地址：**  [https://rooe-admin.vip/demo](https://rooe-admin.vip/demo)
 
 **账号密码：** `admin / 123456`

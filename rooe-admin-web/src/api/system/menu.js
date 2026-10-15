@@ -16,7 +16,10 @@ export function getMenus(params) {
 }
 
 export function getMenuSuperior(ids) {
-  const data = Array.isArray(ids) ? ids : [ids]
+  const data = {
+    ids: Array.isArray(ids) ? ids : [ids],
+    exclude: true
+  }
   return request({
     url: 'api/menus/superior',
     method: 'post',
@@ -50,7 +53,9 @@ export function del(ids) {
   return request({
     url: 'api/menus',
     method: 'delete',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 

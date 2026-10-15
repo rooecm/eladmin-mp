@@ -1,18 +1,3 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.domain;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
@@ -20,69 +5,114 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-/**
-* @author Zheng Jie
-* @date 2019-04-10
-*/
-@Getter
-@Setter
+/** Persistence model for sys_dict_detail. */
 @TableName("sys_dict_detail")
 public class DictDetail implements Serializable {
-
-    /* 分组校验 */
-    public @interface Create {}
-    /* 分组校验 */
-    public @interface Update {}
-
-    @CreatedBy
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建人", hidden = true)
-    private String createBy;
-
-    @LastModifiedBy
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新人", hidden = true)
-    private String updateBy;
-
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
-
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
-
-    @NotNull(groups = Update.class)
-    @Schema(description = "ID", hidden = true)
+    /** Primary key. */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField(value = "dict_id")
-    @Schema(hidden = true)
+    /** Dictionary ID. */
+    @TableField("dict_id")
     private Long dictId;
 
-    @TableField(exist = false)
-    @Schema(description = "字典")
-    private Dict dict;
-
-    @Schema(description = "字典标签")
+    /** Display label. */
     private String label;
 
-    @Schema(description = "字典值")
+    /** Stored dictionary value. */
     private String value;
 
-    @Schema(description = "排序")
+    /** Display order. */
     private Integer dictSort = 999;
+
+    /** Creator username. */
+    @TableField(fill = FieldFill.INSERT)
+    private String createBy;
+
+    /** Last updater username. */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String updateBy;
+
+    /** Creation time. */
+    @TableField(fill = FieldFill.INSERT)
+    private Timestamp createTime;
+
+    /** Last update time. */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Timestamp updateTime;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getDictId() {
+        return dictId;
+    }
+
+    public void setDictId(Long dictId) {
+        this.dictId = dictId;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public Integer getDictSort() {
+        return dictSort;
+    }
+
+    public void setDictSort(Integer dictSort) {
+        this.dictSort = dictSort;
+    }
+
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    public String getUpdateBy() {
+        return updateBy;
+    }
+
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
+    }
+
+    public Timestamp getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Timestamp createTime) {
+        this.createTime = createTime;
+    }
+
+    public Timestamp getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Timestamp updateTime) {
+        this.updateTime = updateTime;
+    }
 }

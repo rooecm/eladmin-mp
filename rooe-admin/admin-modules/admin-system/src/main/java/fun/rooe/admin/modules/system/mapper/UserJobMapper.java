@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.modules.system.mapper;
 
-import fun.rooe.admin.modules.system.domain.Job;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.Set;
 
 /**
@@ -27,7 +27,7 @@ import java.util.Set;
 @Mapper
 public interface UserJobMapper {
 
-    void insertData(@Param("userId") Long userId, @Param("jobs") Set<Job> jobs);
+    void insertData(@Param("userId") Long userId, @Param("jobs") Set<Long> jobs);
 
     void deleteByUserId(@Param("userId") Long userId);
 

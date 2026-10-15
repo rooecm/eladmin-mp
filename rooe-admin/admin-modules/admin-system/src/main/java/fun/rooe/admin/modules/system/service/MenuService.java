@@ -1,109 +1,26 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.Menu;
-import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
-import fun.rooe.admin.modules.system.domain.dto.MenuVo;
+import fun.rooe.admin.modules.system.domain.dto.*;
 
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Zheng Jie
- * @date 2018-12-17
- */
 public interface MenuService extends IService<Menu> {
+    List<MenuVo> buildCurrentUserMenus();
 
-    /**
-     * 查询全部数据
-     * @param criteria 条件
-     * @param isQuery /
-     * @throws Exception /
-     * @return /
-     */
-    List<Menu> queryAll(MenuQueryCriteria criteria, Boolean isQuery) throws Exception;
+    List<MenuDto> queryAll(MenuQueryRequest request);
 
-    /**
-     * 根据ID查询
-     * @param id /
-     * @return /
-     */
-    Menu findById(long id);
+    List<MenuDto> getMenus(Long pid);
 
-    /**
-     * 创建
-     * @param resources /
-     */
-    void create(Menu resources);
+    Set<Long> getChildIds(Long id);
 
-    /**
-     * 编辑
-     * @param resources /
-     */
-    void update(Menu resources);
+    List<MenuDto> getSuperior(MenuSuperiorRequest request);
 
-    /**
-     * 获取所有子节点，包含自身ID
-     * @param menuList /
-     * @param menuSet /
-     * @return /
-     */
-    Set<Menu> getChildMenus(List<Menu> menuList, Set<Menu> menuSet);
+    void create(MenuCreateRequest request);
 
-    /**
-     * 构建菜单树
-     * @param menus 原始数据
-     * @return /
-     */
-    List<Menu> buildTree(List<Menu> menus);
+    void update(MenuUpdateRequest request);
 
-    /**
-     * 构建菜单树
-     * @param menus /
-     * @return /
-     */
-    List<MenuVo> buildMenus(List<Menu> menus);
-
-    /**
-     * 删除
-     * @param menuSet /
-     */
-    void delete(Set<Menu> menuSet);
-
-    /**
-     * 懒加载菜单数据
-     * @param pid /
-     * @return /
-     */
-    List<Menu> getMenus(Long pid);
-
-    /**
-     * 根据ID获取同级与上级数据
-     * @param menu /
-     * @param objects /
-     * @return /
-     */
-    List<Menu> getSuperior(Menu menu, List<Menu> objects);
-
-    /**
-     * 根据当前用户获取菜单
-     * @param currentUserId /
-     * @return /
-     */
-    List<Menu> findByUser(Long currentUserId);
+    void delete(MenuDeleteRequest request);
 }

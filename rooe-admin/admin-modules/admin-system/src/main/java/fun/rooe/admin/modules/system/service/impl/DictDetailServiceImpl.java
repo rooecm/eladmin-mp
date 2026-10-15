@@ -1,98 +1,103 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import lombok.RequiredArgsConstructor;
+import fun.rooe.admin.modules.system.converter.DictAssembler;
+import fun.rooe.admin.modules.system.converter.DictDetailAssembler;
 import fun.rooe.admin.modules.system.domain.Dict;
 import fun.rooe.admin.modules.system.domain.DictDetail;
-import fun.rooe.admin.modules.system.mapper.DictMapper;
-import fun.rooe.admin.modules.system.domain.dto.DictDetailQueryCriteria;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.mapper.DictDetailMapper;
+import fun.rooe.admin.modules.system.mapper.DictMapper;
 import fun.rooe.admin.modules.system.service.DictDetailService;
+import fun.rooe.admin.response.PageResult;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import org.springframework.util.CollectionUtils;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
-* @author Zheng Jie
-* @date 2019-04-10
-*/
+ * Coordinates dictionary-entry persistence and invalidates affected dictionary caches.
+ */
 @Service
 @RequiredArgsConstructor
-public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDetail> implements DictDetailService {
-
+public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDetail>
+        implements DictDetailService {
     private final DictMapper dictMapper;
     private final DictDetailMapper dictDetailMapper;
     private final RedisUtils redisUtils;
+  private final DictDetailAssembler assembler;
+  private final DictAssembler dictAssembler;
 
     @Override
-    public PageResult<DictDetail> queryAll(DictDetailQueryCriteria criteria, Page<Object> page) {
-        return PageUtil.toPage(dictDetailMapper.findAll(criteria, page));
+    public PageResult<DictDetailDto> queryAll(DictDetailQueryRequest request) {
+      IPage<DictDetail> page =
+              dictDetailMapper.findAll(
+                      request.getDictName(),
+                      request.getLabel(),
+                      new Page<>(request.getPage(), request.getSize()));
+      return new PageResult<>(assemble(page.getRecords()), page.getTotal());
+    }
+
+  @Override
+  public List<DictDetailDto> getDictByName(String name) {
+    String key = CacheKey.DICT_NAME + name;
+    List<DictDetailDto> cached = redisUtils.getList(key, DictDetailDto.class);
+    if (cached == null || cached.isEmpty()) {
+      cached = assemble(dictDetailMapper.findByDictName(name));
+      redisUtils.set(key, cached, 1, TimeUnit.DAYS);
+    }
+    return cached;
+  }
+
+  private List<DictDetailDto> assemble(List<DictDetail> details) {
+    if (details.isEmpty()) return new ArrayList<>();
+    Set<Long> ids = details.stream().map(DictDetail::getDictId).collect(Collectors.toSet());
+    Map<Long, Dict> dicts =
+            dictMapper.selectBatchIds(ids).stream()
+                    .collect(Collectors.toMap(Dict::getId, Function.identity()));
+    List<DictDetailDto> result = assembler.toDtos(details);
+    result.forEach(
+            detail -> detail.setDict(dictAssembler.toDto(dicts.get(detail.getDictId()))));
+    return result;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(DictDetail resources) {
-        resources.setDictId(resources.getDict().getId());
-        save(resources);
-        // 清理缓存
-        delCaches(resources);
+    public void create(DictDetailCreateRequest request) {
+      DictDetail detail = assembler.toEntity(request);
+      save(detail);
+      delCaches(detail);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(DictDetail resources) {
-        DictDetail dictDetail = getById(resources.getId());
-        resources.setId(dictDetail.getId());
-        // 更新数据
-        saveOrUpdate(resources);
-        // 清理缓存
-        delCaches(dictDetail);
-    }
-
-    @Override
-    public List<DictDetail> getDictByName(String name) {
-        String key = CacheKey.DICT_NAME + name;
-        List<DictDetail> dictDetails = redisUtils.getList(key, DictDetail.class);
-        if(CollectionUtils.isEmpty(dictDetails)){
-            dictDetails = dictDetailMapper.findByDictName(name);
-            redisUtils.set(key, dictDetails, 1 , TimeUnit.DAYS);
-        }
-        return dictDetails;
+    public void update(DictDetailUpdateRequest request) {
+      DictDetail detail = getById(request.getId());
+      delCaches(detail);
+      assembler.updateEntity(request, detail);
+      updateById(detail);
+      delCaches(detail);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        DictDetail dictDetail = getById(id);
+      DictDetail detail = getById(id);
         removeById(id);
-        // 清理缓存
-        delCaches(dictDetail);
+      delCaches(detail);
     }
 
-    public void delCaches(DictDetail dictDetail){
-        Dict dict = dictMapper.selectById(dictDetail.getDictId());
-        redisUtils.del(CacheKey.DICT_NAME + dict.getName());
+  private void delCaches(DictDetail detail) {
+    if (detail == null) return;
+    Dict dict = dictMapper.selectById(detail.getDictId());
+    if (dict != null) redisUtils.del(CacheKey.DICT_NAME + dict.getName());
     }
 }

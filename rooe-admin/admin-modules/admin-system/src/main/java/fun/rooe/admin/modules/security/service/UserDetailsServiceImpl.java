@@ -15,17 +15,18 @@
  */
 package fun.rooe.admin.modules.security.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.security.dto.AuthorityDto;
 import fun.rooe.admin.modules.security.dto.JwtUserDto;
-import fun.rooe.admin.modules.system.domain.User;
+import fun.rooe.admin.modules.system.domain.dto.UserLoginDto;
 import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
@@ -44,8 +45,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public JwtUserDto loadUserByUsername(String username) {
         JwtUserDto jwtUserDto = userCacheManager.getUserCache(username);
-        if(jwtUserDto == null){
-            User user = userService.getLoginData(username);
+        if (jwtUserDto == null) {
+            UserLoginDto user = userService.getLoginData(username);
             if (user == null) {
                 throw new BadRequestException("用户不存在");
             } else {
@@ -55,7 +56,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 // 获取用户的权限
                 List<AuthorityDto> authorities = roleService.buildPermissions(user);
                 // 初始化JwtUserDto
-                jwtUserDto = new JwtUserDto(user, dataService.getDeptIds(user), authorities);
+                jwtUserDto =
+                        new JwtUserDto(
+                                user,
+                                dataService.getDeptIds(user.getId(), user.getDeptId()),
+                                authorities);
                 // 添加缓存数据
                 userCacheManager.addUserCache(username, jwtUserDto);
             }

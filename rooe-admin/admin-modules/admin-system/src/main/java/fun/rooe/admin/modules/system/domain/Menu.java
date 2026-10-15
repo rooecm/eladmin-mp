@@ -1,157 +1,247 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.domain;
 
-import com.alibaba.fastjson2.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
 /**
- * @author Zheng Jie
- * @date 2018-12-17
+ * Persistence model for sys_menu.
  */
-@Getter
-@Setter
 @TableName("sys_menu")
 public class Menu implements Serializable {
-
-    /* 分组校验 */
-    public @interface Create {}
-    /* 分组校验 */
-    public @interface Update {}
-
-    @CreatedBy
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建人", hidden = true)
-    private String createBy;
-
-    @LastModifiedBy
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新人", hidden = true)
-    private String updateBy;
-
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
-
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
-
-    @NotNull(groups = {Update.class})
-    @TableId(value="id", type = IdType.AUTO)
-    @Schema(description = "ID", hidden = true)
+  /**
+   * Primary key.
+   */
+  @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField(exist = false)
-    @JSONField(serialize = false)
-    @Schema(description = "菜单角色")
-    private Set<Role> roles;
+  /**
+   * Parent menu ID.
+   */
+  private Long pid;
 
-    @TableField(exist = false)
-    private List<Menu> children;
+  /**
+   * Number of direct child menus.
+   */
+  private Integer subCount = 0;
 
-    @Schema(description = "菜单标题")
-    private String title;
+  /**
+   * Menu type.
+   */
+  private Integer type;
 
-    @TableField(value = "name")
-    @Schema(description = "菜单组件名称")
-    private String componentName;
+  /**
+   * Menu title.
+   */
+  private String title;
 
-    @Schema(description = "排序")
+  /** Frontend component name. */
+  @TableField("name")
+  private String componentName;
+
+  /**
+   * Frontend component path.
+   */
+  private String component;
+
+  /** Display order. */
     private Integer menuSort = 999;
 
-    @Schema(description = "组件路径")
-    private String component;
+  /**
+   * Icon name.
+   */
+  private String icon;
 
-    @Schema(description = "路由地址")
-    private String path;
+  /**
+   * Route or external link path.
+   */
+  private String path;
 
-    @Schema(description = "菜单类型，目录、菜单、按钮")
-    private Integer type;
+  /** Whether the path is rendered in an iframe. */
+  private Boolean iFrame;
 
-    @Schema(description = "权限标识")
-    private String permission;
+  /** Whether the route is cached. */
+  private Boolean cache;
 
-    @Schema(description = "菜单图标")
-    private String icon;
+  /**
+   * Whether the menu is hidden.
+   */
+  private Boolean hidden;
 
-    @Schema(description = "缓存")
-    private Boolean cache;
+  /**
+   * Permission identifier.
+   */
+  private String permission;
 
-    @Schema(description = "是否隐藏")
-    private Boolean hidden;
+  /**
+   * Creator username.
+   */
+  @TableField(fill = FieldFill.INSERT)
+  private String createBy;
 
-    @Schema(description = "上级菜单")
-    private Long pid;
+  /**
+   * Last updater username.
+   */
+  @TableField(fill = FieldFill.INSERT_UPDATE)
+  private String updateBy;
 
-    @Schema(description = "子节点数目", hidden = true)
-    private Integer subCount = 0;
+  /**
+   * Creation time.
+   */
+  @TableField(fill = FieldFill.INSERT)
+  private Timestamp createTime;
 
-    @Schema(description = "外链菜单")
-    @JsonProperty("iFrame")
-    private Boolean iFrame;
+  /**
+   * Last update time.
+   */
+  @TableField(fill = FieldFill.INSERT_UPDATE)
+  private Timestamp updateTime;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Menu menu = (Menu) o;
-        return Objects.equals(id, menu.id);
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getPid() {
+    return pid;
+  }
+
+  public void setPid(Long pid) {
+    this.pid = pid;
+  }
+
+  public Integer getSubCount() {
+    return subCount;
+  }
+
+  public void setSubCount(Integer subCount) {
+    this.subCount = subCount;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public Integer getType() {
+      return type;
     }
 
-    @Schema(description = "是否有子节点")
-    public Boolean getHasChildren() {
-        return subCount > 0;
+  public void setType(Integer type) {
+    this.type = type;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public String getComponentName() {
+    return componentName;
+  }
+
+  public void setComponentName(String componentName) {
+    this.componentName = componentName;
+  }
+
+  public String getComponent() {
+    return component;
+  }
+
+  public void setComponent(String component) {
+    this.component = component;
+  }
+
+  public Integer getMenuSort() {
+    return menuSort;
+  }
+
+  public void setMenuSort(Integer menuSort) {
+    this.menuSort = menuSort;
+  }
+
+  public String getIcon() {
+    return icon;
+  }
+
+  public void setIcon(String icon) {
+    this.icon = icon;
+  }
+
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(String path) {
+    this.path = path;
+  }
+
+  public Boolean getIFrame() {
+    return iFrame;
+  }
+
+  public void setIFrame(Boolean iFrame) {
+    this.iFrame = iFrame;
+  }
+
+  public Boolean getCache() {
+    return cache;
+  }
+
+  public void setCache(Boolean cache) {
+    this.cache = cache;
+  }
+
+  public Boolean getHidden() {
+    return hidden;
+  }
+
+  public void setHidden(Boolean hidden) {
+    this.hidden = hidden;
+  }
+
+  public String getPermission() {
+    return permission;
+  }
+
+  public void setPermission(String permission) {
+    this.permission = permission;
+  }
+
+  public String getCreateBy() {
+    return createBy;
+  }
+
+  public void setCreateBy(String createBy) {
+    this.createBy = createBy;
+  }
+
+  public String getUpdateBy() {
+    return updateBy;
+  }
+
+  public void setUpdateBy(String updateBy) {
+    this.updateBy = updateBy;
+  }
+
+  public Timestamp getCreateTime() {
+    return createTime;
+  }
+
+  public void setCreateTime(Timestamp createTime) {
+    this.createTime = createTime;
+  }
+
+    public Timestamp getUpdateTime() {
+        return updateTime;
     }
 
-    @Schema(description = "是否为叶子")
-    public Boolean getLeaf() {
-        return subCount <= 0;
-    }
-
-    @Schema(description = "标签名称")
-    public String getLabel() {
-        return title;
+    public void setUpdateTime(Timestamp updateTime) {
+        this.updateTime = updateTime;
     }
 }

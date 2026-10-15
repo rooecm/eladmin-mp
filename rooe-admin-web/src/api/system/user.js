@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { encrypt } from '@/utils/rsaEncrypt'
+import {encrypt} from '@/utils/rsaEncrypt'
 
 export function add(data) {
   return request({
@@ -13,7 +13,9 @@ export function del(ids) {
   return request({
     url: 'api/users',
     method: 'delete',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 
@@ -21,7 +23,9 @@ export function resetPwd(ids) {
   return request({
     url: 'api/users/resetPwd',
     method: 'put',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 

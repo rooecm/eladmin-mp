@@ -15,26 +15,26 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import lombok.RequiredArgsConstructor;
+import fun.rooe.admin.constant.CacheKey;
+import fun.rooe.admin.enums.DataScopeEnum;
+import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.modules.system.domain.User;
 import fun.rooe.admin.modules.system.service.DataService;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.enums.DataScopeEnum;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import org.springframework.util.CollectionUtils;
 
 /**
  * @author Zheng Jie
  * @description 数据权限服务实现
  * @date 2020-05-07
- **/
+ */
 @Service
 @RequiredArgsConstructor
 public class DataServiceImpl implements DataService {
@@ -45,26 +45,29 @@ public class DataServiceImpl implements DataService {
 
     /**
      * 用户角色和用户部门改变时需清理缓存
+     *
      * @param user /
      * @return /
      */
     @Override
-    public List<Long> getDeptIds(User user) {
-        if (user == null) {
+    public List<Long> getDeptIds(Long userId, Long deptId) {
+        if (userId == null) {
             return new ArrayList<>();
         }
-        String key = CacheKey.DATA_USER + user.getId();
+        String key = CacheKey.DATA_USER + userId;
         List<Long> ids = redisUtils.getList(key, Long.class);
         if (CollectionUtils.isEmpty(ids)) {
             Set<Long> deptIds = new HashSet<>();
             // 查询用户角色
-            List<Role> roleList = roleService.findByUsersId(user.getId());
+            List<Role> roleList = roleService.findByUsersId(userId);
             // 获取对应的部门ID
             for (Role role : roleList) {
                 DataScopeEnum dataScopeEnum = DataScopeEnum.find(role.getDataScope());
                 switch (Objects.requireNonNull(dataScopeEnum)) {
                     case THIS_LEVEL:
-                        deptIds.add(user.getDept().getId());
+                        if (deptId != null) {
+                            deptIds.add(deptId);
+                        }
                         break;
                     case CUSTOMIZE:
                         deptIds.addAll(getCustomize(deptIds, role));
@@ -81,11 +84,12 @@ public class DataServiceImpl implements DataService {
 
     /**
      * 获取自定义的数据权限
+     *
      * @param deptIds 部门ID
      * @param role 角色
      * @return 数据权限ID
      */
-    public Set<Long> getCustomize(Set<Long> deptIds, Role role){
+    public Set<Long> getCustomize(Set<Long> deptIds, Role role) {
         Set<Dept> depts = deptService.findByRoleId(role.getId());
         for (Dept dept : depts) {
             deptIds.add(dept.getId());

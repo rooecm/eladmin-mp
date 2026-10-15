@@ -1,142 +1,88 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.annotation.Log;
-import fun.rooe.admin.modules.system.domain.Role;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.modules.system.domain.dto.*;
 import fun.rooe.admin.modules.system.service.RoleService;
-import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
 import fun.rooe.admin.response.PageResult;
-import fun.rooe.admin.framework.utils.SecurityUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import java.util.Collections;
+
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.Map;
 
 /**
- * @author Zheng Jie
- * @date 2018-12-03
+ * HTTP endpoints for role administration and role-menu assignments.
  */
+@Validated
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "系统：角色管理")
 @RequestMapping("/api/roles")
 public class RoleController {
-
     private final RoleService roleService;
 
-    private static final String ENTITY_NAME = "role";
-
-    @Operation(summary = "获取单个role")
-    @GetMapping(value = "/{id}")
+    @Operation(summary = "获取单个角色")
+    @GetMapping("/{id}")
     @PreAuthorize("@el.check('roles:list')")
-    public Role findRoleById(@PathVariable Long id){
-        return roleService.findById(id);
+    public RoleDto findRoleById(@PathVariable @Positive Long id) {
+        return roleService.findDtoById(id);
     }
 
-    @Operation(summary = "返回全部的角色")
-    @GetMapping(value = "/all")
+    @Operation(summary = "返回全部角色")
+    @GetMapping("/all")
     @PreAuthorize("@el.check('roles:list','user:add','user:edit')")
-    public List<Role> queryAllRole(){
+    public List<RoleDto> queryAllRole() {
         return roleService.queryAll();
     }
 
     @Operation(summary = "查询角色")
     @GetMapping
     @PreAuthorize("@el.check('roles:list')")
-    public PageResult<Role> queryRole(RoleQueryCriteria criteria){
-        Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return roleService.queryAll(criteria, page);
+    public PageResult<RoleDto> queryRole(@Valid RoleQueryRequest request) {
+        return roleService.queryAll(request);
     }
 
     @Operation(summary = "获取用户级别")
-    @GetMapping(value = "/level")
-    public Map<String, Integer> getRoleLevel(){
-        return Map.of("level", getLevels());
+    @GetMapping("/level")
+    public Map<String, Integer> getRoleLevel() {
+        return Map.of("level", roleService.getCurrentUserLevel());
     }
 
     @Log("新增角色")
     @Operation(summary = "新增角色")
     @PostMapping
     @PreAuthorize("@el.check('roles:add')")
-    public void createRole(@Validated @RequestBody Role resources){
-        if (resources.getId() != null) {
-            throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
-        }
-        checkLevel(resources.getLevel());
-        roleService.create(resources);
+    public void createRole(@Valid @RequestBody RoleCreateRequest request) {
+        roleService.create(request);
     }
 
     @Log("修改角色")
     @Operation(summary = "修改角色")
     @PutMapping
     @PreAuthorize("@el.check('roles:edit')")
-    public void updateRole(@Validated(Role.Update.class) @RequestBody Role resources){
-        Role role = roleService.getById(resources.getId());
-        checkLevel(role.getLevel());
-        checkLevel(resources.getLevel());
-        roleService.update(resources);
+    public void updateRole(@Valid @RequestBody RoleUpdateRequest request) {
+        roleService.update(request);
     }
 
     @Log("修改角色菜单")
     @Operation(summary = "修改角色菜单")
-    @PutMapping(value = "/menu")
+    @PutMapping("/menu")
     @PreAuthorize("@el.check('roles:edit')")
-    public void updateRoleMenu(@RequestBody Role resources){
-        Role role = roleService.getById(resources.getId());
-        checkLevel(role.getLevel());
-        roleService.updateMenu(resources);
+    public void updateRoleMenu(@Valid @RequestBody RoleMenuUpdateRequest request) {
+        roleService.updateMenu(request);
     }
 
     @Log("删除角色")
     @Operation(summary = "删除角色")
     @DeleteMapping
     @PreAuthorize("@el.check('roles:del')")
-    public void deleteRole(@RequestBody Set<Long> ids){
-        for (Long id : ids) {
-            Role role = roleService.getById(id);
-            checkLevel(role.getLevel());
-        }
-        // 验证是否被用户关联
-        roleService.verification(ids);
-        roleService.delete(ids);
-    }
-
-    /**
-     * 获取用户的角色级别
-     * @return /
-     */
-    private int getLevels(){
-        List<Integer> levels = roleService.findByUsersId(SecurityUtils.getCurrentUserId()).stream().map(Role::getLevel).collect(Collectors.toList());
-        return Collections.min(levels);
-    }
-
-    private void checkLevel(Integer level){
-        int min = getLevels();
-        if(level == null || level < min){
-            throw new BadRequestException("权限不足，你的角色级别：" + min + "，低于操作的角色级别：" + level);
-        }
+    public void deleteRole(@Valid @RequestBody RoleDeleteRequest request) {
+        roleService.delete(request);
     }
 }
