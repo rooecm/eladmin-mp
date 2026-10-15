@@ -17,7 +17,6 @@ package fun.rooe.admin.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import fun.rooe.admin.modules.system.domain.Dept;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -30,8 +29,6 @@ import java.util.Set;
 */
 @Mapper
 public interface DeptMapper extends BaseMapper<Dept> {
-
-    List<Dept> findAll(@Param("criteria") DeptQueryCriteria criteria);
 
     List<Dept> findByPid(@Param("pid") Long pid);
 

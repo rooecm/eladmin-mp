@@ -16,12 +16,15 @@
 package fun.rooe.admin.modules.system.converter;
 
 import fun.rooe.admin.modules.system.domain.Dept;
+import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
@@ -45,9 +48,24 @@ public interface DeptAssembler {
     @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
     List<DeptDto> toDtos(List<Dept> depts);
 
-    default PageResult<DeptDto> toTree(List<DeptDto> deptList) {
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "deptSort", source = "deptSort")
+    @Mapping(target = "enabled", source = "enabled")
+    @Mapping(target = "pid", source = "pid")
+    Dept toDept(DeptCreateRequest request);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "deptSort", source = "deptSort")
+    @Mapping(target = "enabled", source = "enabled")
+    @Mapping(target = "pid", source = "pid")
+    void updateDept(DeptUpdateRequest request, @MappingTarget Dept dept);
+
+    default List<DeptDto> toTree(List<DeptDto> deptList) {
         if (deptList == null || deptList.isEmpty()) {
-            return new PageResult<>(new ArrayList<>(), 0);
+            return new ArrayList<>();
         }
 
         Map<Long, DeptDto> deptById = new LinkedHashMap<>();
@@ -74,7 +92,6 @@ public interface DeptAssembler {
             }
         }
 
-        List<DeptDto> content = new ArrayList<>(roots.isEmpty() ? parentsAndOrphans : roots);
-        return new PageResult<>(content, parentsAndOrphans.size());
+        return new ArrayList<>(roots.isEmpty() ? parentsAndOrphans : roots);
     }
 }

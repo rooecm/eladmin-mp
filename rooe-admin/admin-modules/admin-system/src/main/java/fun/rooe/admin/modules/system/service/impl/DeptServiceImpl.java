@@ -15,29 +15,31 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.domain.User;
+import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
+import fun.rooe.admin.modules.system.domain.dto.DeptDeleteRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
+import fun.rooe.admin.modules.system.domain.dto.DeptSuperiorRequest;
+import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
 import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
+import fun.rooe.admin.modules.system.domain.dto.DeptQueryRequest;
 import fun.rooe.admin.modules.system.mapper.DeptMapper;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.enums.DataScopeEnum;
-import fun.rooe.admin.response.PageResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.lang.reflect.Field;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -58,33 +60,40 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     private final DeptAssembler deptAssembler;
 
     @Override
-    public PageResult<DeptDto> queryAll(DeptQueryCriteria criteria) throws Exception {
+    public List<DeptDto> queryAll(DeptQueryRequest request) {
         String dataScopeType = SecurityUtils.getDataScopeType();
-        if(dataScopeType.equals(DataScopeEnum.ALL.getValue())){
-            criteria.setPidIsNull(true);
-        }
-        List<Field> fields = List.of(FieldUtils.getAllFields(criteria.getClass()));
-        List<String> fieldNames = new ArrayList<String>(){{ add("pidIsNull");add("enabled");}};
-        for (Field field : fields) {
-            //设置对象的访问权限，保证对private的属性的访问
-            field.setAccessible(true);
-            Object val = field.get(criteria);
-            if(fieldNames.contains(field.getName())){
-                continue;
-            }
-            if (Objects.nonNull(val)) {
-                criteria.setPidIsNull(null);
-                break;
-            }
-        }
-        // 数据权限
-        criteria.setIds(SecurityUtils.getCurrentUserDataScope());
-        List<Dept> list = deptMapper.findAll(criteria);
+        List<Long> dataScopeIds = SecurityUtils.getCurrentUserDataScope();
+        LambdaQueryWrapper<Dept> queryWrapper = buildQueryWrapper(request, dataScopeIds, dataScopeType);
+        List<Dept> list = deptMapper.selectList(queryWrapper);
         // 如果为空，就代表为自定义权限或者本级权限，就需要去重，不理解可以注释掉，看查询结果
         if(StringUtils.isBlank(dataScopeType)){
             list = deduplication(list);
         }
-        return PageUtil.toPage(deptAssembler.toDtos(list));
+        return deptAssembler.toDtos(list);
+    }
+
+    private LambdaQueryWrapper<Dept> buildQueryWrapper(DeptQueryRequest request,
+                                                        List<Long> dataScopeIds,
+                                                        String dataScopeType) {
+        boolean hasExplicitCondition = request.getName() != null
+                || request.getPid() != null
+                || request.getCreateTime() != null;
+        boolean queryRootDept = !hasExplicitCondition
+                && (DataScopeEnum.ALL.getValue().equals(dataScopeType)
+                || Boolean.TRUE.equals(request.getPidIsNull()));
+
+        LambdaQueryWrapper<Dept> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(!CollectionUtils.isEmpty(dataScopeIds), Dept::getId, dataScopeIds)
+                .like(StringUtils.isNotBlank(request.getName()), Dept::getName, request.getName())
+                .eq(request.getEnabled() != null, Dept::getEnabled, request.getEnabled())
+                .eq(request.getPid() != null, Dept::getPid, request.getPid())
+                .isNull(queryRootDept, Dept::getPid)
+                .orderByAsc(Dept::getDeptSort);
+        if (request.getCreateTime() != null && request.getCreateTime().size() >= 2) {
+            queryWrapper.between(Dept::getCreateTime,
+                    request.getCreateTime().get(0), request.getCreateTime().get(1));
+        }
+        return queryWrapper;
     }
 
     @Override
@@ -110,37 +119,47 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void create(Dept resources) {
-        save(resources);
+    public void create(DeptCreateRequest request) {
+        Dept dept = deptAssembler.toDept(request);
+        save(dept);
         // 清理缓存
-        updateSubCnt(resources.getPid());
+        updateSubCnt(dept.getPid());
         // 清理自定义角色权限的datascope缓存
-        delCaches(resources.getPid());
+        delCaches(dept.getPid());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(Dept resources) {
+    public void update(DeptUpdateRequest request) {
         // 旧的部门
-        Long oldPid = findById(resources.getId()).getPid();
-        Long newPid = resources.getPid();
-        if(resources.getPid() != null && resources.getId().equals(resources.getPid())) {
+        Long oldPid = findById(request.getId()).getPid();
+        Long newPid = request.getPid();
+        if(request.getPid() != null && request.getId().equals(request.getPid())) {
             throw new BadRequestException("上级不能为自己");
         }
-        Dept dept = getById(resources.getId());
-        resources.setId(dept.getId());
-        saveOrUpdate(resources);
+        Dept dept = getById(request.getId());
+        deptAssembler.updateDept(request, dept);
+        saveOrUpdate(dept);
         // 更新父节点中子节点数目
         updateSubCnt(oldPid);
         updateSubCnt(newPid);
         // 清理缓存
-        delCaches(resources.getId());
+        delCaches(request.getId());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Set<Dept> depts) {
-        for (Dept dept : depts) {
+    public void delete(DeptDeleteRequest request) {
+        Map<Long, Dept> deptById = new LinkedHashMap<>();
+        for (Long id : request.getIds()) {
+            Dept dept = findById(id);
+            if (dept != null) {
+                deptById.putIfAbsent(dept.getId(), dept);
+                collectDeleteDepts(findByPid(id), deptById);
+            }
+        }
+        verification(deptById.values());
+        for (Dept dept : deptById.values()) {
             // 清理缓存
             delCaches(dept.getId());
             deptMapper.deleteById(dept.getId());
@@ -148,16 +167,15 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         }
     }
 
-    @Override
-    public Set<Dept> getDeleteDepts(List<Dept> menuList, Set<Dept> deptSet) {
-        for (Dept dept : menuList) {
-            deptSet.add(dept);
-            List<Dept> depts = deptMapper.findByPid(dept.getId());
-            if(!CollectionUtils.isEmpty(depts)){
-                getDeleteDepts(depts, deptSet);
+    private void collectDeleteDepts(List<Dept> deptList, Map<Long, Dept> deptById) {
+        for (Dept dept : deptList) {
+            if (deptById.putIfAbsent(dept.getId(), dept) == null) {
+                List<Dept> children = deptMapper.findByPid(dept.getId());
+                if (!CollectionUtils.isEmpty(children)) {
+                    collectDeleteDepts(children, deptById);
+                }
             }
         }
-        return deptSet;
     }
 
     @Override
@@ -177,22 +195,23 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public PageResult<DeptDto> getSuperior(List<Long> ids, Boolean exclude) {
-        Set<Dept> deptSet = new LinkedHashSet<>();
+    public List<DeptDto> getSuperior(DeptSuperiorRequest request) {
+        List<Long> ids = request.getIds();
+        Map<Long, Dept> deptById = new LinkedHashMap<>();
         Set<Long> adjustedParentIds = new HashSet<>();
         for (Long id : ids) {
             Dept dept = findById(id);
             List<Dept> depts = getSuperiorDepts(dept, new ArrayList<>());
-            if (Boolean.TRUE.equals(exclude)) {
+            if (request.isExclude()) {
                 if (dept.getPid() != null) {
                     adjustedParentIds.add(dept.getPid());
                 }
                 // 编辑部门时不显示自己以及自己下级的数据，避免出现PID数据环形问题
                 depts = depts.stream().filter(item -> !ids.contains(item.getId())).toList();
             }
-            deptSet.addAll(depts);
+            depts.forEach(item -> deptById.putIfAbsent(item.getId(), item));
         }
-        List<DeptDto> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptSet));
+        List<DeptDto> deptDtos = deptAssembler.toDtos(new ArrayList<>(deptById.values()));
         deptDtos.stream()
                 .filter(dept -> adjustedParentIds.contains(dept.getId()))
                 .forEach(dept -> dept.setSubCount(Math.max(0,
@@ -209,8 +228,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         return getSuperiorDepts(findById(dept.getPid()), depts);
     }
 
-    @Override
-    public void verification(Set<Dept> depts) {
+    private void verification(Collection<Dept> depts) {
         Set<Long> deptIds = depts.stream().map(Dept::getId).collect(Collectors.toSet());
         if(userMapper.countByDepts(deptIds) > 0){
             throw new BadRequestException("所选部门存在用户关联，请解除后再试！");

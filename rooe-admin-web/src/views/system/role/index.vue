@@ -285,7 +285,7 @@ export default {
     // 获取部门数据
     getDepts() {
       getDepts({ enabled: true }).then(res => {
-        this.depts = res.content.map(function(obj) {
+        this.depts = res.map(function(obj) {
           if (obj.hasChildren) {
             obj.children = null
           }
@@ -299,7 +299,7 @@ export default {
         ids.push(dept.id)
       })
       getDeptSuperior(ids).then(res => {
-        const date = res.content
+        const date = res
         this.buildDepts(date)
         this.depts = date
       })
@@ -318,7 +318,7 @@ export default {
     loadDepts({ action, parentNode, callback }) {
       if (action === LOAD_CHILDREN_OPTIONS) {
         getDepts({ enabled: true, pid: parentNode.id }).then(res => {
-          parentNode.children = res.content.map(function(obj) {
+          parentNode.children = res.map(function(obj) {
             if (obj.hasChildren) {
               obj.children = null
             }

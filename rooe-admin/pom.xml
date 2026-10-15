@@ -49,9 +49,6 @@
         <jjwt.version>0.11.5</jjwt.version>
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <aws-s3.version>2.30.13</aws-s3.version>
-        <oshi.version>6.6.5</oshi.version>
-        <!-- oshi监控需要指定jna版本, 问题详见 https://github.com/oshi/oshi/issues/1040 -->
-        <jna.version>5.8.0</jna.version>
     </properties>
 
     <dependencyManagement>
@@ -253,11 +250,6 @@
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>http-client-spi</artifactId>
                 <version>${aws-s3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.oshi</groupId>
-                <artifactId>oshi-core</artifactId>
-                <version>${oshi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

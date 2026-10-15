@@ -10,11 +10,13 @@ export function getDepts(params) {
 
 export function getDeptSuperior(ids, exclude) {
   exclude = exclude !== undefined ? exclude : false
-  const data = Array.isArray(ids) ? ids : [ids]
   return request({
-    url: 'api/dept/superior?exclude=' + exclude,
+    url: 'api/dept/superior',
     method: 'post',
-    data
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids],
+      exclude
+    }
   })
 }
 
@@ -30,7 +32,9 @@ export function del(ids) {
   return request({
     url: 'api/dept',
     method: 'delete',
-    data: ids
+    data: {
+      ids: Array.isArray(ids) ? ids : [ids]
+    }
   })
 }
 

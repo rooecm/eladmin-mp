@@ -131,11 +131,6 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
-        <!-- 获取系统信息 -->
-        <dependency>
-            <groupId>com.github.oshi</groupId>
-            <artifactId>oshi-core</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

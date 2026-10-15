@@ -17,9 +17,12 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.Dept;
+import fun.rooe.admin.modules.system.domain.dto.DeptCreateRequest;
+import fun.rooe.admin.modules.system.domain.dto.DeptDeleteRequest;
 import fun.rooe.admin.modules.system.domain.dto.DeptDto;
-import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
-import fun.rooe.admin.response.PageResult;
+import fun.rooe.admin.modules.system.domain.dto.DeptQueryRequest;
+import fun.rooe.admin.modules.system.domain.dto.DeptSuperiorRequest;
+import fun.rooe.admin.modules.system.domain.dto.DeptUpdateRequest;
 import java.util.List;
 import java.util.Set;
 
@@ -31,11 +34,10 @@ public interface DeptService extends IService<Dept> {
 
     /**
      * 查询所有数据
-     * @param criteria 条件
-     * @throws Exception /
+     * @param request 查询条件
      * @return /
      */
-    PageResult<DeptDto> queryAll(DeptQueryCriteria criteria) throws Exception;
+    List<DeptDto> queryAll(DeptQueryRequest request);
 
     /**
      * 根据ID查询
@@ -46,22 +48,22 @@ public interface DeptService extends IService<Dept> {
 
     /**
      * 创建
-     * @param resources /
+     * @param request 新增参数
      */
-    void create(Dept resources);
+    void create(DeptCreateRequest request);
 
     /**
      * 编辑
-     * @param resources /
+     * @param request 修改参数
      */
-    void update(Dept resources);
+    void update(DeptUpdateRequest request);
 
     /**
      * 删除
-     * @param depts /
+     * @param request 删除参数
      *
      */
-    void delete(Set<Dept> depts);
+    void delete(DeptDeleteRequest request);
 
     /**
      * 根据PID查询
@@ -78,20 +80,11 @@ public interface DeptService extends IService<Dept> {
     Set<Dept> findByRoleId(Long id);
 
     /**
-     * 获取待删除的部门
-     * @param deptList /
-     * @param depts /
-     * @return /
-     */
-    Set<Dept> getDeleteDepts(List<Dept> deptList, Set<Dept> depts);
-
-    /**
      * 根据ID获取同级与上级数据
-     * @param ids 部门ID
-     * @param exclude 是否排除指定部门及其下级
+     * @param request 查询参数
      * @return /
      */
-    PageResult<DeptDto> getSuperior(List<Long> ids, Boolean exclude);
+    List<DeptDto> getSuperior(DeptSuperiorRequest request);
 
     /**
      * 获取
@@ -100,9 +93,4 @@ public interface DeptService extends IService<Dept> {
      */
     List<Long> getDeptChildren(List<Dept> deptList);
 
-    /**
-     * 验证是否被角色或用户关联
-     * @param depts /
-     */
-    void verification(Set<Dept> depts);
 }

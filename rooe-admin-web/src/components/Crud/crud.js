@@ -135,8 +135,8 @@ function CRUD(options) {
             table.store.states.treeData = {}
             table.store.states.lazyTreeNodeMap = {}
           }
-          crud.page.total = data.totalElements
-          crud.data = data.content
+          crud.page.total = Array.isArray(data) ? data.length : data.totalElements
+          crud.data = Array.isArray(data) ? data : data.content
           crud.resetDataStatus()
           // time 毫秒后显示表格
           setTimeout(() => {

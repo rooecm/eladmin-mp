@@ -15,102 +15,134 @@
  */
 package fun.rooe.admin.modules.system.domain;
 
-import com.alibaba.fastjson2.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.Objects;
-import java.util.Set;
 
 /**
 * @author Zheng Jie
 * @date 2019-03-25
 */
-@Getter
-@Setter
 @TableName("sys_dept")
 public class Dept implements Serializable {
 
-    /* 分组校验 */
-    public @interface Create {}
-    /* 分组校验 */
-    public @interface Update {}
-
-    @CreatedBy
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建人", hidden = true)
-    private String createBy;
-
-    @LastModifiedBy
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新人", hidden = true)
-    private String updateBy;
-
-    @TableField(fill = FieldFill.INSERT)
-    @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
-
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
-
-    @NotNull(groups = Update.class)
+    /** ID */
     @TableId(value="id", type = IdType.AUTO)
-    @Schema(description = "ID", hidden = true)
     private Long id;
 
-    @TableField(exist = false)
-    @JSONField(serialize = false)
-    @Schema(description = "角色")
-    private Set<Role> roles;
-
-    @Schema(description = "排序")
-    private Integer deptSort;
-
-    @NotBlank
-    @Schema(description = "部门名称")
-    private String name;
-
-    @NotNull
-    @Schema(description = "是否启用")
-    private Boolean enabled;
-
-    @Schema(description = "上级部门")
+    /** 上级部门ID */
     private Long pid;
 
-    @Schema(description = "子节点数目", hidden = true)
+    /** 子部门数目 */
     private Integer subCount = 0;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Dept dept = (Dept) o;
-        return Objects.equals(id, dept.id) &&
-                Objects.equals(name, dept.name);
+    /** 部门名称 */
+    private String name;
+
+    /** 排序 */
+    private Integer deptSort;
+
+    /** 状态：true 启用，false 禁用 */
+    private Boolean enabled;
+
+    /** 创建者 */
+    @TableField(fill = FieldFill.INSERT)
+    private String createBy;
+
+    /** 更新者 */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String updateBy;
+
+    /** 创建时间 */
+    @TableField(fill = FieldFill.INSERT)
+    private Timestamp createTime;
+
+    /** 更新时间 */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Timestamp updateTime;
+
+    public Long getId() {
+        return id;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name);
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getPid() {
+        return pid;
+    }
+
+    public void setPid(Long pid) {
+        this.pid = pid;
+    }
+
+    public Integer getSubCount() {
+        return subCount;
+    }
+
+    public void setSubCount(Integer subCount) {
+        this.subCount = subCount;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getDeptSort() {
+        return deptSort;
+    }
+
+    public void setDeptSort(Integer deptSort) {
+        this.deptSort = deptSort;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    public String getUpdateBy() {
+        return updateBy;
+    }
+
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
+    }
+
+    public Timestamp getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Timestamp createTime) {
+        this.createTime = createTime;
+    }
+
+    public Timestamp getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Timestamp updateTime) {
+        this.updateTime = updateTime;
     }
 
 }

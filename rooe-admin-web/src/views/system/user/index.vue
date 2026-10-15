@@ -399,16 +399,16 @@ export default {
       setTimeout(() => {
         getDepts(params).then(res => {
           if (resolve) {
-            resolve(res.content)
+            resolve(res)
           } else {
-            this.deptDatas = res.content
+            this.deptDatas = res
           }
         })
       }, 100)
     },
     getDepts() {
       getDepts({ enabled: true }).then(res => {
-        this.depts = res.content.map(function(obj) {
+        this.depts = res.map(function(obj) {
           if (obj.hasChildren) {
             obj.children = null
           }
@@ -418,7 +418,7 @@ export default {
     },
     getSupDepts(deptId) {
       getDeptSuperior(deptId).then(res => {
-        const date = res.content
+        const date = res
         this.buildDepts(date)
         this.depts = date
       })
@@ -437,7 +437,7 @@ export default {
     loadDepts({ action, parentNode, callback }) {
       if (action === LOAD_CHILDREN_OPTIONS) {
         getDepts({ enabled: true, pid: parentNode.id }).then(res => {
-          parentNode.children = res.content.map(function(obj) {
+          parentNode.children = res.map(function(obj) {
             if (obj.hasChildren) {
               obj.children = null
             }

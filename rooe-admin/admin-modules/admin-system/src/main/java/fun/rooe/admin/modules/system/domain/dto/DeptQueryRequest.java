@@ -16,32 +16,37 @@
 package fun.rooe.admin.modules.system.domain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+
 import java.sql.Timestamp;
 import java.util.List;
 
 /**
-* @author Zheng Jie
-* @date 2019-03-25
-*/
+ * 部门查询请求。
+ *
+ * @author Zheng Jie
+ * @date 2019-03-25
+ */
 @Data
-public class DeptQueryCriteria{
-
-    @Schema(description = "部门id集合")
-    private List<Long> ids;
+public class DeptQueryRequest {
 
     @Schema(description = "部门名称")
+    @Size(max = 255, message = "部门名称长度不能超过255个字符")
     private String name;
 
     @Schema(description = "是否启用")
     private Boolean enabled;
 
     @Schema(description = "上级部门")
+    @Positive(message = "上级部门ID必须大于0")
     private Long pid;
 
     @Schema(description = "PID为空查询")
     private Boolean pidIsNull;
 
     @Schema(description = "创建时间")
+    @Size(min = 2, max = 2, message = "创建时间必须包含开始时间和结束时间")
     private List<Timestamp> createTime;
 }

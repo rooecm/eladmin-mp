@@ -142,7 +142,7 @@ export default {
       const params = { pid: tree.id }
       setTimeout(() => {
         crudDept.getDepts(params).then(res => {
-          resolve(res.content)
+          resolve(res)
         })
       }, 100)
     },
@@ -162,7 +162,7 @@ export default {
     },
     getSupDepts(id) {
       crudDept.getDeptSuperior(id, true).then(res => {
-        const data = res.content
+        const data = res
         this.buildDepts(data)
         this.depts = data
       })
@@ -179,7 +179,7 @@ export default {
     },
     getDepts() {
       crudDept.getDepts({ enabled: true }).then(res => {
-        this.depts = res.content.map(function(obj) {
+        this.depts = res.map(function(obj) {
           if (obj.hasChildren) {
             obj.children = null
           }
@@ -191,7 +191,7 @@ export default {
     loadDepts({ action, parentNode, callback }) {
       if (action === LOAD_CHILDREN_OPTIONS) {
         crudDept.getDepts({ enabled: true, pid: parentNode.id }).then(res => {
-          parentNode.children = res.content.map(function(obj) {
+          parentNode.children = res.map(function(obj) {
             if (obj.hasChildren) {
               obj.children = null
             }
