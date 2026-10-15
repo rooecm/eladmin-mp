@@ -82,7 +82,7 @@ DeptAssembler                MapStruct 转换与部门树组装
 - [DeptService](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/service/DeptService.java)
 - [DeptServiceImpl](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/service/impl/DeptServiceImpl.java)
 - [DeptAssembler](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/converter/DeptAssembler.java)
-- [Dept 持久化模型](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/domain/Dept.java)
+- [Dept 持久化模型](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/domain/entity/DeptDO.java)
 - [部门 Request 与 DTO](../rooe-admin/admin-modules/admin-system/src/main/java/fun/rooe/admin/modules/system/domain/dto)
 
 Controller 最终只保留协议层逻辑：
