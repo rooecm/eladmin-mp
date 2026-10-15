@@ -109,6 +109,6 @@ public class GlobalExceptionHandler {
      * 统一返回
      */
     private ResponseEntity<ApiResult<Void>> buildResponseEntity(ApiResult<Void> apiResult) {
-        return new ResponseEntity<>(apiResult, HttpStatus.valueOf(apiResult.status()));
+        return new ResponseEntity<>(apiResult, HttpStatus.valueOf(apiResult.getStatus()));
     }
 }

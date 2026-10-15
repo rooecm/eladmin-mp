@@ -23,10 +23,9 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dept;
 import fun.rooe.admin.modules.system.service.DeptService;
 import fun.rooe.admin.modules.system.domain.dto.DeptQueryCriteria;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -58,15 +57,15 @@ public class DeptController {
     @Operation(summary = "查询部门")
     @GetMapping
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public ResponseEntity<PageResult<Dept>> queryDept(DeptQueryCriteria criteria) throws Exception {
+    public ApiResult<PageResult<Dept>> queryDept(DeptQueryCriteria criteria) throws Exception {
         List<Dept> depts = deptService.queryAll(criteria, true);
-        return new ResponseEntity<>(PageUtil.toPage(depts),HttpStatus.OK);
+        return ApiResult.success(PageUtil.toPage(depts));
     }
 
     @Operation(summary = "查询部门:根据ID获取同级与上级数据")
     @PostMapping("/superior")
     @PreAuthorize("@el.check('user:list','dept:list')")
-    public ResponseEntity<Object> getDeptSuperior(@RequestBody List<Long> ids, @RequestParam(defaultValue = "false") Boolean exclude) {
+    public ApiResult<Object> getDeptSuperior(@RequestBody List<Long> ids, @RequestParam(defaultValue = "false") Boolean exclude) {
         Set<Dept> deptSet  = new LinkedHashSet<>();
         for (Long id : ids) {
             Dept dept = deptService.findById(id);
@@ -78,39 +77,39 @@ public class DeptController {
                     }
                 }
                 // 编辑部门时不显示自己以及自己下级的数据，避免出现PID数据环形问题
-                depts = depts.stream().filter(i -> !ids.contains(i.getId())).collect(Collectors.toList());
+                depts = depts.stream().filter(i -> !ids.contains(i.getId())).toList();
             }
             deptSet.addAll(depts);
         }
-        return new ResponseEntity<>(deptService.buildTree(new ArrayList<>(deptSet)),HttpStatus.OK);
+        return ApiResult.success(deptService.buildTree(new ArrayList<>(deptSet)));
     }
 
     @Log("新增部门")
     @Operation(summary = "新增部门")
     @PostMapping
     @PreAuthorize("@el.check('dept:add')")
-    public ResponseEntity<Object> createDept(@Validated @RequestBody Dept resources){
+    public ApiResult<Void> createDept(@Validated @RequestBody Dept resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         deptService.create(resources);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ApiResult.success();
     }
 
     @Log("修改部门")
     @Operation(summary = "修改部门")
     @PutMapping
     @PreAuthorize("@el.check('dept:edit')")
-    public ResponseEntity<Object> updateDept(@Validated(Dept.Update.class) @RequestBody Dept resources){
+    public ApiResult<Void> updateDept(@Validated(Dept.Update.class) @RequestBody Dept resources){
         deptService.update(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("删除部门")
     @Operation(summary = "删除部门")
     @DeleteMapping
     @PreAuthorize("@el.check('dept:del')")
-    public ResponseEntity<Object> deleteDept(@RequestBody Set<Long> ids){
+    public ApiResult<Void> deleteDept(@RequestBody Set<Long> ids){
         Set<Dept> depts = new HashSet<>();
         for (Long id : ids) {
             List<Dept> deptList = deptService.findByPid(id);
@@ -122,6 +121,6 @@ public class DeptController {
         // 验证是否被角色或用户关联
         deptService.verification(depts);
         deptService.delete(depts);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 }

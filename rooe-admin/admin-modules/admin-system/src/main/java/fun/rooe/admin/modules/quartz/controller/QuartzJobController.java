@@ -26,10 +26,9 @@ import fun.rooe.admin.modules.quartz.domain.QuartzJob;
 import fun.rooe.admin.modules.quartz.domain.QuartzLog;
 import fun.rooe.admin.modules.quartz.service.QuartzJobService;
 import fun.rooe.admin.modules.quartz.domain.dto.QuartzJobQueryCriteria;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -54,9 +53,9 @@ public class QuartzJobController {
     @Operation(summary = "查询定时任务")
     @GetMapping
     @PreAuthorize("@el.check('timing:list')")
-    public ResponseEntity<PageResult<QuartzJob>> queryQuartzJob(QuartzJobQueryCriteria criteria){
+    public ApiResult<PageResult<QuartzJob>> queryQuartzJob(QuartzJobQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(quartzJobService.queryAll(criteria,page), HttpStatus.OK);
+        return ApiResult.success(quartzJobService.queryAll(criteria,page));
     }
 
     @Operation(summary = "导出任务数据")
@@ -76,61 +75,61 @@ public class QuartzJobController {
     @Operation(summary = "查询任务执行日志")
     @GetMapping(value = "/logs")
     @PreAuthorize("@el.check('timing:list')")
-    public ResponseEntity<PageResult<QuartzLog>> queryQuartzJobLog(QuartzJobQueryCriteria criteria){
+    public ApiResult<PageResult<QuartzLog>> queryQuartzJobLog(QuartzJobQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(quartzJobService.queryAllLog(criteria,page), HttpStatus.OK);
+        return ApiResult.success(quartzJobService.queryAllLog(criteria,page));
     }
 
     @Log("新增定时任务")
     @Operation(summary = "新增定时任务")
     @PostMapping
     @PreAuthorize("@el.check('timing:add')")
-    public ResponseEntity<Object> createQuartzJob(@Validated @RequestBody QuartzJob resources){
+    public ApiResult<Void> createQuartzJob(@Validated @RequestBody QuartzJob resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         // 验证Bean是不是合法的，合法的定时任务 Bean 需要用 @Service 定义
         checkBean(resources.getBeanName());
         quartzJobService.create(resources);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ApiResult.success();
     }
 
     @Log("修改定时任务")
     @Operation(summary = "修改定时任务")
     @PutMapping
     @PreAuthorize("@el.check('timing:edit')")
-    public ResponseEntity<Object> updateQuartzJob(@Validated(QuartzJob.Update.class) @RequestBody QuartzJob resources){
+    public ApiResult<Void> updateQuartzJob(@Validated(QuartzJob.Update.class) @RequestBody QuartzJob resources){
         // 验证Bean是不是合法的，合法的定时任务 Bean 需要用 @Service 定义
         checkBean(resources.getBeanName());
         quartzJobService.update(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("更改定时任务状态")
     @Operation(summary = "更改定时任务状态")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@el.check('timing:edit')")
-    public ResponseEntity<Object> updateQuartzJobStatus(@PathVariable Long id){
+    public ApiResult<Void> updateQuartzJobStatus(@PathVariable Long id){
         quartzJobService.updateIsPause(quartzJobService.getById(id));
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("执行定时任务")
     @Operation(summary = "执行定时任务")
     @PutMapping(value = "/exec/{id}")
     @PreAuthorize("@el.check('timing:edit')")
-    public ResponseEntity<Object> executionQuartzJob(@PathVariable Long id){
+    public ApiResult<Void> executionQuartzJob(@PathVariable Long id){
         quartzJobService.execution(quartzJobService.getById(id));
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("删除定时任务")
     @Operation(summary = "删除定时任务")
     @DeleteMapping
     @PreAuthorize("@el.check('timing:del')")
-    public ResponseEntity<Object> deleteQuartzJob(@RequestBody Set<Long> ids){
+    public ApiResult<Void> deleteQuartzJob(@RequestBody Set<Long> ids){
         quartzJobService.delete(ids);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     /**

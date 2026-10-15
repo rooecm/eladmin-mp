@@ -29,7 +29,24 @@ service.interceptors.request.use(
 // response 拦截器
 service.interceptors.response.use(
   response => {
-    return response.data
+    const result = response.data
+    // 识别 ApiResult，在请求层解包，供 CRUD 和业务页面统一使用
+    if (result && typeof result.status === 'number' &&
+      typeof result.code === 'string' && typeof result.message === 'string' &&
+      Object.prototype.hasOwnProperty.call(result, 'data')) {
+      if (result.code === '0') {
+        return result.data
+      }
+      const error = new Error(result.message || '接口请求失败')
+      error.code = result.code
+      error.response = response
+      Notification.error({
+        title: error.message,
+        duration: 5000
+      })
+      return Promise.reject(error)
+    }
+    return result
   },
   error => {
     // 兼容blob下载出错json提示

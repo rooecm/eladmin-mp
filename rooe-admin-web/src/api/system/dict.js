@@ -17,7 +17,7 @@ export function add(data) {
 
 export function del(ids) {
   return request({
-    url: 'api/dict/',
+    url: 'api/dict',
     method: 'delete',
     data: ids
   })

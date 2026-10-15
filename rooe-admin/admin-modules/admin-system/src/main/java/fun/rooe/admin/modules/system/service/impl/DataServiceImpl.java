@@ -50,6 +50,9 @@ public class DataServiceImpl implements DataService {
      */
     @Override
     public List<Long> getDeptIds(User user) {
+        if (user == null) {
+            return new ArrayList<>();
+        }
         String key = CacheKey.DATA_USER + user.getId();
         List<Long> ids = redisUtils.getList(key, Long.class);
         if (CollectionUtils.isEmpty(ids)) {

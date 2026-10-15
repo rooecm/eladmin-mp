@@ -16,6 +16,7 @@
 package fun.rooe.admin.modules.system.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.utils.RsaUtils;
@@ -37,8 +38,6 @@ import fun.rooe.admin.modules.system.domain.dto.UserQueryCriteria;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import fun.rooe.admin.modules.system.service.UserService;
 import fun.rooe.admin.enums.CodeEnum;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
@@ -78,7 +77,7 @@ public class UserController {
     @Operation(summary = "查询用户")
     @GetMapping
     @PreAuthorize("@el.check('user:list')")
-    public ResponseEntity<PageResult<User>> queryUser(UserQueryCriteria criteria){
+    public ApiResult<PageResult<User>> queryUser(UserQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         if (!ObjectUtils.isEmpty(criteria.getDeptId())) {
             criteria.getDeptIds().add(criteria.getDeptId());
@@ -88,60 +87,64 @@ public class UserController {
             criteria.getDeptIds().addAll(deptService.getDeptChildren(data));
         }
         // 数据权限
-        List<Long> dataScopes = dataService.getDeptIds(userService.findByName(SecurityUtils.getCurrentUsername()));
+        User currentUser = userService.findByName(SecurityUtils.getCurrentUsername());
+        if (currentUser == null) {
+            return ApiResult.success(PageUtil.noData());
+        }
+        List<Long> dataScopes = dataService.getDeptIds(currentUser);
         // criteria.getDeptIds() 不为空并且数据权限不为空则取交集
         if (!CollectionUtils.isEmpty(criteria.getDeptIds()) && !CollectionUtils.isEmpty(dataScopes)){
             // 取交集
             criteria.getDeptIds().retainAll(dataScopes);
             if(!CollectionUtils.isEmpty(criteria.getDeptIds())){
-                return new ResponseEntity<>(userService.queryAll(criteria,page),HttpStatus.OK);
+                return ApiResult.success(userService.queryAll(criteria,page));
             }
         } else {
             // 否则取并集
             criteria.getDeptIds().addAll(dataScopes);
-            return new ResponseEntity<>(userService.queryAll(criteria,page),HttpStatus.OK);
+            return ApiResult.success(userService.queryAll(criteria,page));
         }
-        return new ResponseEntity<>(PageUtil.noData(),HttpStatus.OK);
+        return ApiResult.success(PageUtil.noData());
     }
 
     @Log("新增用户")
     @Operation(summary = "新增用户")
     @PostMapping
     @PreAuthorize("@el.check('user:add')")
-    public ResponseEntity<Object> createUser(@Validated @RequestBody User resources){
+    public ApiResult<Void> createUser(@Validated @RequestBody User resources){
         checkLevel(resources);
         // 默认密码 123456
         resources.setPassword(passwordEncoder.encode("123456"));
         userService.create(resources);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ApiResult.success();
     }
 
     @Log("修改用户")
     @Operation(summary = "修改用户")
     @PutMapping
     @PreAuthorize("@el.check('user:edit')")
-    public ResponseEntity<Object> updateUser(@Validated(User.Update.class) @RequestBody User resources) throws Exception {
+    public ApiResult<Void> updateUser(@Validated(User.Update.class) @RequestBody User resources) throws Exception {
         checkLevel(resources);
         userService.update(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("修改用户：个人中心")
     @Operation(summary = "修改用户：个人中心")
     @PutMapping(value = "center")
-    public ResponseEntity<Object> centerUser(@Validated(User.Update.class) @RequestBody User resources){
+    public ApiResult<Void> centerUser(@Validated(User.Update.class) @RequestBody User resources){
         if(!resources.getId().equals(SecurityUtils.getCurrentUserId())){
             throw new BadRequestException("不能修改他人资料");
         }
         userService.updateCenter(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("删除用户")
     @Operation(summary = "删除用户")
     @DeleteMapping
     @PreAuthorize("@el.check('user:del')")
-    public ResponseEntity<Object> deleteUser(@RequestBody Set<Long> ids){
+    public ApiResult<Void> deleteUser(@RequestBody Set<Long> ids){
         for (Long id : ids) {
             Integer currentLevel =  Collections.min(roleService.findByUsersId(SecurityUtils.getCurrentUserId()).stream().map(Role::getLevel).collect(Collectors.toList()));
             Integer optLevel =  Collections.min(roleService.findByUsersId(id).stream().map(Role::getLevel).collect(Collectors.toList()));
@@ -150,12 +153,12 @@ public class UserController {
             }
         }
         userService.delete(ids);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     @Operation(summary = "修改密码")
     @PostMapping(value = "/updatePass")
-    public ResponseEntity<Object> updateUserPass(@RequestBody UserPassVo passVo) throws Exception {
+    public ApiResult<Void> updateUserPass(@RequestBody UserPassVo passVo) throws Exception {
         String oldPass = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,passVo.getOldPass());
         String newPass = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,passVo.getNewPass());
         User user = userService.findByName(SecurityUtils.getCurrentUsername());
@@ -166,27 +169,27 @@ public class UserController {
             throw new BadRequestException("新密码不能与旧密码相同");
         }
         userService.updatePass(user.getUsername(),passwordEncoder.encode(newPass));
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     @Operation(summary = "重置密码")
     @PutMapping(value = "/resetPwd")
-    public ResponseEntity<Object> resetPwd(@RequestBody Set<Long> ids) {
+    public ApiResult<Void> resetPwd(@RequestBody Set<Long> ids) {
         String pwd = passwordEncoder.encode("123456");
         userService.resetPwd(ids, pwd);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     @Operation(summary = "修改头像")
     @PostMapping(value = "/updateAvatar")
-    public ResponseEntity<Object> updateUserAvatar(@RequestParam MultipartFile avatar){
-        return new ResponseEntity<>(userService.updateAvatar(avatar), HttpStatus.OK);
+    public ApiResult<Object> updateUserAvatar(@RequestParam MultipartFile avatar){
+        return ApiResult.success(userService.updateAvatar(avatar));
     }
 
     @Log("修改邮箱")
     @Operation(summary = "修改邮箱")
     @PostMapping(value = "/updateEmail/{code}")
-    public ResponseEntity<Object> updateUserEmail(@PathVariable String code, @RequestBody User resources) throws Exception {
+    public ApiResult<Void> updateUserEmail(@PathVariable String code, @RequestBody User resources) throws Exception {
         String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey,resources.getPassword());
         User user = userService.findByName(SecurityUtils.getCurrentUsername());
         if(!passwordEncoder.matches(password, user.getPassword())){
@@ -194,7 +197,7 @@ public class UserController {
         }
         verificationCodeService.validated(CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey() + resources.getEmail(), code);
         userService.updateEmail(user.getUsername(),resources.getEmail());
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     /**

@@ -19,8 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.system.service.MonitorService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +38,7 @@ public class MonitorController {
     @GetMapping
     @Operation(summary = "查询服务监控")
     @PreAuthorize("@el.check('monitor:list')")
-    public ResponseEntity<Object> queryMonitor(){
-        return new ResponseEntity<>(serverService.getServers(),HttpStatus.OK);
+    public ApiResult<Object> queryMonitor(){
+        return ApiResult.success(serverService.getServers());
     }
 }

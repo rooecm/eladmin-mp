@@ -23,10 +23,9 @@ import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.domain.SysLog;
 import fun.rooe.admin.service.SysLogService;
 import fun.rooe.admin.domain.dto.SysLogQueryCriteria;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import fun.rooe.admin.framework.utils.SecurityUtils;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
@@ -65,51 +64,51 @@ public class SysLogController {
     @GetMapping
     @Operation(summary = "日志查询")
     @PreAuthorize("@el.check()")
-    public ResponseEntity<PageResult<SysLog>> queryLog(SysLogQueryCriteria criteria){
+    public ApiResult<PageResult<SysLog>> queryLog(SysLogQueryCriteria criteria){
         criteria.setLogType("INFO");
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(sysLogService.queryAll(criteria,page), HttpStatus.OK);
+        return ApiResult.success(sysLogService.queryAll(criteria,page));
     }
 
     @GetMapping(value = "/user")
     @Operation(summary = "用户日志查询")
-    public ResponseEntity<PageResult<SysLog>> queryUserLog(SysLogQueryCriteria criteria){
+    public ApiResult<PageResult<SysLog>> queryUserLog(SysLogQueryCriteria criteria){
         criteria.setLogType("INFO");
         criteria.setUsername(SecurityUtils.getCurrentUsername());
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(sysLogService.queryAllByUser(criteria,page), HttpStatus.OK);
+        return ApiResult.success(sysLogService.queryAllByUser(criteria,page));
     }
 
     @GetMapping(value = "/error")
     @Operation(summary = "错误日志查询")
     @PreAuthorize("@el.check()")
-    public ResponseEntity<PageResult<SysLog>> queryErrorLog(SysLogQueryCriteria criteria){
+    public ApiResult<PageResult<SysLog>> queryErrorLog(SysLogQueryCriteria criteria){
         criteria.setLogType("ERROR");
         Page<SysLog> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(sysLogService.queryAll(criteria,page), HttpStatus.OK);
+        return ApiResult.success(sysLogService.queryAll(criteria,page));
     }
 
     @GetMapping(value = "/error/{id}")
     @Operation(summary = "日志异常详情查询")
     @PreAuthorize("@el.check()")
-    public ResponseEntity<Object> queryErrorLogDetail(@PathVariable Long id){
-        return new ResponseEntity<>(sysLogService.findByErrDetail(id), HttpStatus.OK);
+    public ApiResult<Object> queryErrorLogDetail(@PathVariable Long id){
+        return ApiResult.success(sysLogService.findByErrDetail(id));
     }
     @DeleteMapping(value = "/del/error")
     @Log("删除所有ERROR日志")
     @Operation(summary = "删除所有ERROR日志")
     @PreAuthorize("@el.check()")
-    public ResponseEntity<Object> delAllErrorLog(){
+    public ApiResult<Void> delAllErrorLog(){
         sysLogService.delAllByError();
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 
     @DeleteMapping(value = "/del/info")
     @Log("删除所有INFO日志")
     @Operation(summary = "删除所有INFO日志")
     @PreAuthorize("@el.check()")
-    public ResponseEntity<Object> delAllInfoLog(){
+    public ApiResult<Void> delAllInfoLog(){
         sysLogService.delAllByInfo();
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 }

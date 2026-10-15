@@ -25,6 +25,7 @@ import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3Storage;
 import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
 import fun.rooe.admin.infrastructure.service.S3StorageService;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,44 +63,43 @@ public class S3StorageController {
     @GetMapping
     @Operation(summary = "查询文件")
     @PreAuthorize("@el.check('storage:list')")
-    public ResponseEntity<PageResult<S3Storage>> queryS3Storage(S3StorageQueryCriteria criteria){
+    public ApiResult<PageResult<S3Storage>> queryS3Storage(S3StorageQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(s3StorageService.queryAll(criteria, page),HttpStatus.OK);
+        return ApiResult.success(s3StorageService.queryAll(criteria, page));
     }
 
     @PostMapping
     @Operation(summary = "上传文件")
-    public ResponseEntity<Object> uploadS3Storage(@RequestParam MultipartFile file){
+    public ApiResult<Map<String,Object>> uploadS3Storage(@RequestParam MultipartFile file){
         S3Storage storage = s3StorageService.upload(file);
         Map<String,Object> map = new HashMap<>(3);
         map.put("id",storage.getId());
         map.put("errno",0);
         map.put("data",new String[]{amzS3Config.getDomain() + "/" + storage.getFilePath()});
-        return new ResponseEntity<>(map,HttpStatus.OK);
+        return ApiResult.success(map);
     }
 
     @Log("下载文件")
     @Operation(summary = "下载文件")
     @GetMapping(value = "/download/{id}")
-    public ResponseEntity<Object> downloadS3Storage(@PathVariable Long id){
+    public ResponseEntity<ApiResult<?>> downloadS3Storage(@PathVariable Long id){
         Map<String,Object> map = new HashMap<>(1);
         S3Storage storage = s3StorageService.getById(id);
         if (storage == null) {
-            map.put("message", "文件不存在或已被删除");
-            return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ApiResult.error(HttpStatus.NOT_FOUND.value(), "文件不存在或已被删除"), HttpStatus.NOT_FOUND);
         }
         // 仅适合公开文件访问，私有文件可以使用服务中的 privateDownload 方法
         String url = amzS3Config.getDomain() + "/" + storage.getFilePath();
         map.put("url", url);
-        return new ResponseEntity<>(map,HttpStatus.OK);
+        return ResponseEntity.ok(ApiResult.success(map));
     }
 
     @Log("删除多个文件")
     @DeleteMapping
     @Operation(summary = "删除多个文件")
     @PreAuthorize("@el.check('storage:del')")
-    public ResponseEntity<Object> deleteAllS3Storage(@RequestBody List<Long> ids) {
+    public ApiResult<Void> deleteAllS3Storage(@RequestBody List<Long> ids) {
         s3StorageService.deleteAll(ids);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 }

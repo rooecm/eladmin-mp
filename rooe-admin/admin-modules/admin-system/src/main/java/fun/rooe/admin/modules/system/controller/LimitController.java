@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import fun.rooe.admin.framework.annotation.Limit;
 import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,7 +42,7 @@ public class LimitController {
     @AnonymousGetMapping
     @Operation(summary = "测试")
     @Limit(key = "test", period = 60, count = 10, name = "testLimit", prefix = "limit")
-    public int testLimit() {
-        return ATOMIC_INTEGER.incrementAndGet();
+    public ApiResult<Integer> testLimit() {
+        return ApiResult.success(ATOMIC_INTEGER.incrementAndGet());
     }
 }

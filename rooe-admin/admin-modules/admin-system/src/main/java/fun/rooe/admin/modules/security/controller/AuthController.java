@@ -39,8 +39,7 @@ import fun.rooe.admin.utils.RsaUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.utils.StringUtils;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -78,7 +77,7 @@ public class AuthController {
     @Log("用户登录")
     @Operation(summary = "登录授权")
     @AnonymousPostMapping(value = "/login")
-    public ResponseEntity<Object> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
+    public ApiResult<Map<String, Object>> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
         // 密码解密
         String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, authUser.getPassword());
         // 查询验证码
@@ -113,19 +112,19 @@ public class AuthController {
         // 保存在线信息
         onlineUserService.save(jwtUser, token, request);
         // 返回登录信息
-        return ResponseEntity.ok(authInfo);
+        return ApiResult.success(authInfo);
     }
 
     @Operation(summary = "获取用户信息")
     @GetMapping(value = "/info")
-    public ResponseEntity<UserDetails> getUserInfo() {
+    public ApiResult<UserDetails> getUserInfo() {
         JwtUserDto jwtUser = (JwtUserDto) SecurityUtils.getCurrentUser();
-        return ResponseEntity.ok(jwtUser);
+        return ApiResult.success(jwtUser);
     }
 
     @Operation(summary = "获取验证码")
     @AnonymousGetMapping(value = "/code")
-    public ResponseEntity<Object> getCode() {
+    public ApiResult<Map<String, Object>> getCode() {
         // 获取运算的结果
         Captcha captcha = captchaConfig.getCaptcha();
         String uuid = properties.getCodeKey() + UUID.randomUUID().toString().replace("-", "");
@@ -141,14 +140,14 @@ public class AuthController {
             put("img", captcha.toBase64());
             put("uuid", uuid);
         }};
-        return ResponseEntity.ok(imgResult);
+        return ApiResult.success(imgResult);
     }
 
     @Operation(summary = "退出登录")
     @AnonymousDeleteMapping(value = "/logout")
-    public ResponseEntity<Object> logout(HttpServletRequest request) {
+    public ApiResult<Void> logout(HttpServletRequest request) {
         String token = tokenProvider.getToken(request);
         onlineUserService.logout(token);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 }

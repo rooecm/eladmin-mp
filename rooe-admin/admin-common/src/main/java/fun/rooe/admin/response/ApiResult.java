@@ -15,30 +15,50 @@
  */
 package fun.rooe.admin.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.io.Serializable;
 
 /**
  * 统一 API 响应对象。
  *
- * @param status    HTTP 状态码
- * @param code    业务响应码，"0" 表示成功
- * @param message 响应消息
- * @param data    响应数据
- * @param timestamp 错误响应时间戳
- * @param <T>     数据类型
+ * @param <T> 数据类型
  */
-public record ApiResult<T>(Integer status, String code, String message, T data, Long timestamp) implements Serializable {
+@Getter
+@AllArgsConstructor
+public class ApiResult<T> implements Serializable {
+
+    /**
+     * HTTP 状态码
+     */
+    private final Integer status;
+
+    /**
+     * 业务响应码，"0" 表示成功
+     */
+    private final String code;
+
+    /**
+     * 响应消息
+     */
+    private final String message;
+
+    /**
+     * 响应数据
+     */
+    private final T data;
 
     public static <T> ApiResult<T> success(T data) {
-        return new ApiResult<>(200, "0", "success", data, null);
+        return new ApiResult<>(200, "0", "success", data);
     }
 
     public static ApiResult<Void> success() {
-        return new ApiResult<>(200, "0", "success", null, null);
+        return new ApiResult<>(200, "0", "success", null);
     }
 
     public static <T> ApiResult<T> failure(String code, String message) {
-        return new ApiResult<>(400, code, message, null, null);
+        return new ApiResult<>(400, code, message, null);
     }
 
     public static ApiResult<Void> error(String message) {
@@ -46,6 +66,6 @@ public record ApiResult<T>(Integer status, String code, String message, T data, 
     }
 
     public static ApiResult<Void> error(Integer status, String message) {
-        return new ApiResult<>(status, String.valueOf(status), message, null, System.currentTimeMillis());
+        return new ApiResult<>(status, String.valueOf(status), message, null);
     }
 }

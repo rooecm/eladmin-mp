@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -85,14 +87,14 @@ public class SpringSecurityConfig {
                 // 添加 CORS 过滤器
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 // 禁用 CSRF
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 // 授权异常处理
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationErrorHandler)
                         .accessDeniedHandler(jwtAccessDeniedHandler))
                 // 防止iframe 造成跨域
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable()))
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 // 不创建会话
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

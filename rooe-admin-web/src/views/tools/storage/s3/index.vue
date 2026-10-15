@@ -104,7 +104,7 @@ export default {
   methods: {
     handleSuccess(response, file, fileList) {
       const uid = file.uid
-      const id = response.id
+      const id = response.data.id
       this.files.push({ uid, id })
     },
     handleBeforeRemove(file, fileList) {

@@ -24,9 +24,8 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.system.domain.Dict;
 import fun.rooe.admin.modules.system.service.DictService;
 import fun.rooe.admin.modules.system.domain.dto.DictQueryCriteria;
+import fun.rooe.admin.response.ApiResult;
 import fun.rooe.admin.response.PageResult;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -58,45 +57,45 @@ public class DictController {
     @Operation(summary = "查询字典")
     @GetMapping(value = "/all")
     @PreAuthorize("@el.check('dict:list')")
-    public ResponseEntity<List<Dict>> queryAllDict(){
-        return new ResponseEntity<>(dictService.queryAll(new DictQueryCriteria()),HttpStatus.OK);
+    public ApiResult<List<Dict>> queryAllDict(){
+        return ApiResult.success(dictService.queryAll(new DictQueryCriteria()));
     }
 
     @Operation(summary = "查询字典")
     @GetMapping
     @PreAuthorize("@el.check('dict:list')")
-    public ResponseEntity<PageResult<Dict>> queryDict(DictQueryCriteria criteria){
+    public ApiResult<PageResult<Dict>> queryDict(DictQueryCriteria criteria){
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-        return new ResponseEntity<>(dictService.queryAll(criteria, page),HttpStatus.OK);
+        return ApiResult.success(dictService.queryAll(criteria, page));
     }
 
     @Log("新增字典")
     @Operation(summary = "新增字典")
     @PostMapping
     @PreAuthorize("@el.check('dict:add')")
-    public ResponseEntity<Object> createDict(@Validated @RequestBody Dict resources){
+    public ApiResult<Void> createDict(@Validated @RequestBody Dict resources){
         if (resources.getId() != null) {
             throw new BadRequestException("A new "+ ENTITY_NAME +" cannot already have an ID");
         }
         dictService.create(resources);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return ApiResult.success();
     }
 
     @Log("修改字典")
     @Operation(summary = "修改字典")
     @PutMapping
     @PreAuthorize("@el.check('dict:edit')")
-    public ResponseEntity<Object> updateDict(@Validated(Dict.Update.class) @RequestBody Dict resources){
+    public ApiResult<Void> updateDict(@Validated(Dict.Update.class) @RequestBody Dict resources){
         dictService.update(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ApiResult.success();
     }
 
     @Log("删除字典")
     @Operation(summary = "删除字典")
     @DeleteMapping
     @PreAuthorize("@el.check('dict:del')")
-    public ResponseEntity<Object> deleteDict(@RequestBody Set<Long> ids){
+    public ApiResult<Void> deleteDict(@RequestBody Set<Long> ids){
         dictService.delete(ids);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ApiResult.success();
     }
 }
