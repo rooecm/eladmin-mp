@@ -17,7 +17,6 @@ package fun.rooe.admin.modules.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.utils.ExcelUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +35,6 @@ import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import java.util.*;
@@ -304,25 +301,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                 }
         );
         return list;
-    }
-
-    @Override
-    public void download(List<Menu> menus, HttpServletResponse response) throws IOException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Menu menu : menus) {
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("菜单标题", menu.getTitle());
-            map.put("菜单类型", menu.getType() == null ? "目录" : menu.getType() == 1 ? "菜单" : "按钮");
-            map.put("权限标识", menu.getPermission());
-            map.put("外链菜单", menu.getIFrame() ? YES_STR : NO_STR);
-            map.put("菜单可见", menu.getHidden() ? NO_STR : YES_STR);
-            map.put("是否缓存", menu.getCache() ? YES_STR : NO_STR);
-            map.put("创建日期", menu.getCreateTime());
-            list.add(map);
-        }
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        ExcelUtil.write(list, response.getOutputStream());
     }
 
     private void updateSubCnt(Long menuId){

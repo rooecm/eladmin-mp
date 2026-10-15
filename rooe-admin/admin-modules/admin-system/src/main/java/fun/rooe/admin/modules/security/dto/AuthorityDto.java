@@ -13,32 +13,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.service.dto;
+package fun.rooe.admin.modules.security.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
+ * 避免序列化问题
  * @author Zheng Jie
  * @date 2018-11-30
  */
-@Getter
-@Setter
-public class AuthUserDto {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthorityDto implements GrantedAuthority {
 
-    @NotBlank
-    @Schema(description = "用户名")
-    private String username;
-
-    @NotBlank
-    @Schema(description = "密码")
-    private String password;
-
-    @Schema(description = "验证码")
-    private String code;
-
-    @Schema(description = "验证码的key")
-    private String uuid = "";
+    @Schema(description = "角色名")
+    private String authority;
 }

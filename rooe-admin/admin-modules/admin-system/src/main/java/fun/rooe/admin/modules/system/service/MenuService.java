@@ -20,8 +20,6 @@ import fun.rooe.admin.modules.system.domain.Menu;
 import fun.rooe.admin.modules.system.domain.dto.MenuQueryCriteria;
 import fun.rooe.admin.modules.system.domain.dto.MenuVo;
 
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -86,14 +84,6 @@ public interface MenuService extends IService<Menu> {
      * @param menuSet /
      */
     void delete(Set<Menu> menuSet);
-
-    /**
-     * 导出
-     * @param menus 待导出的数据
-     * @param response /
-     * @throws IOException /
-     */
-    void download(List<Menu> menus, HttpServletResponse response) throws IOException;
 
     /**
      * 懒加载菜单数据

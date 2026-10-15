@@ -25,7 +25,7 @@ import fun.rooe.admin.utils.*;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
-import fun.rooe.admin.modules.security.service.dto.AuthorityDto;
+import fun.rooe.admin.modules.security.dto.AuthorityDto;
 import fun.rooe.admin.modules.system.domain.Menu;
 import fun.rooe.admin.modules.system.domain.Role;
 import fun.rooe.admin.exception.EntityExistException;
@@ -38,8 +38,6 @@ import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -197,22 +195,6 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             redisUtils.set(key, authorityDtos, 1, TimeUnit.HOURS);
         }
         return authorityDtos;
-    }
-
-    @Override
-    public void download(List<Role> roles, HttpServletResponse response) throws IOException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Role role : roles) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("角色名称", role.getName());
-            map.put("角色级别", role.getLevel());
-            map.put("描述", role.getDescription());
-            map.put("创建日期", role.getCreateTime());
-            list.add(map);
-        }
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
-        response.setHeader("Content-Disposition", "attachment;filename=file.xlsx");
-        ExcelUtil.write(list, response.getOutputStream());
     }
 
     @Override

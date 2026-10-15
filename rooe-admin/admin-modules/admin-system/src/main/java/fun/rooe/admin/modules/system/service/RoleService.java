@@ -17,14 +17,12 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import fun.rooe.admin.modules.security.service.dto.AuthorityDto;
+import fun.rooe.admin.modules.security.dto.AuthorityDto;
 import fun.rooe.admin.modules.system.domain.Role;
 import fun.rooe.admin.modules.system.domain.User;
 import fun.rooe.admin.modules.system.domain.dto.RoleQueryCriteria;
 import fun.rooe.admin.response.PageResult;
 
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -100,14 +98,6 @@ public interface RoleService extends IService<Role> {
      * @return /
      */
     List<Role> queryAll(RoleQueryCriteria criteria);
-
-    /**
-     * 导出数据
-     * @param roles 待导出的数据
-     * @param response /
-     * @throws IOException /
-     */
-    void download(List<Role> roles, HttpServletResponse response) throws IOException;
 
     /**
      * 获取用户权限信息

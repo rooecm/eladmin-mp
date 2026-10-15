@@ -13,24 +13,47 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.modules.security.service.dto;
+package fun.rooe.admin.modules.security.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
+import java.util.Date;
 
 /**
- * 避免序列化问题
+ * 在线用户
  * @author Zheng Jie
- * @date 2018-11-30
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class AuthorityDto implements GrantedAuthority {
+@NoArgsConstructor
+public class OnlineUserDto {
 
-    @Schema(description = "角色名")
-    private String authority;
+    @Schema(description = "Token编号")
+    private String uid;
+
+    @Schema(description = "用户名")
+    private String userName;
+
+    @Schema(description = "昵称")
+    private String nickName;
+
+    @Schema(description = "岗位")
+    private String dept;
+
+    @Schema(description = "浏览器")
+    private String browser;
+
+    @Schema(description = "IP")
+    private String ip;
+
+    @Schema(description = "地址")
+    private String address;
+
+    @Schema(description = "token")
+    private String key;
+
+    @Schema(description = "登录时间")
+    private Date loginTime;
 }

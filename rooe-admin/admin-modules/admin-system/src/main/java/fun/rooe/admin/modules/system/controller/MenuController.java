@@ -30,7 +30,6 @@ import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
@@ -47,13 +46,6 @@ public class MenuController {
 
     private final MenuService menuService;
     private static final String ENTITY_NAME = "menu";
-
-    @Operation(summary = "导出菜单数据")
-    @GetMapping(value = "/download")
-    @PreAuthorize("@el.check('menu:list')")
-    public void exportMenu(HttpServletResponse response, MenuQueryCriteria criteria) throws Exception {
-        menuService.download(menuService.queryAll(criteria, false), response);
-    }
 
     @GetMapping(value = "/build")
     @Operation(summary = "获取前端所需菜单")

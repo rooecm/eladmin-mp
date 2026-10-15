@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
-import fun.rooe.admin.modules.security.service.dto.OnlineUserDto;
+import fun.rooe.admin.modules.security.dto.OnlineUserDto;
 import fun.rooe.admin.utils.EncryptUtils;
 import fun.rooe.admin.response.PageResult;
 import org.springframework.data.domain.Pageable;

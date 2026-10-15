@@ -29,8 +29,6 @@ import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -56,13 +54,6 @@ public class RoleController {
     @PreAuthorize("@el.check('roles:list')")
     public Role findRoleById(@PathVariable Long id){
         return roleService.findById(id);
-    }
-
-    @Operation(summary = "导出角色数据")
-    @GetMapping(value = "/download")
-    @PreAuthorize("@el.check('role:list')")
-    public void exportRole(HttpServletResponse response, RoleQueryCriteria criteria) throws IOException {
-        roleService.download(roleService.queryAll(criteria), response);
     }
 
     @Operation(summary = "返回全部的角色")
