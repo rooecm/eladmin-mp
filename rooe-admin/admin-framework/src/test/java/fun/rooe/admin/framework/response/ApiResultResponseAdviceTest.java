@@ -6,6 +6,8 @@ import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.BusinessException;
+import fun.rooe.admin.framework.advice.ApiResultResponseAdvice;
+import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.utils.BusinessAssert;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;

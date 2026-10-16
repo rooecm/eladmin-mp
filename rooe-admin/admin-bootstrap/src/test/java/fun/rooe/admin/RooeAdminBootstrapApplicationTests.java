@@ -1,11 +1,11 @@
 package fun.rooe.admin;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
-import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
 import fun.rooe.admin.modules.quartz.config.JobRunner;
 import fun.rooe.admin.modules.security.service.OnlineUserService;

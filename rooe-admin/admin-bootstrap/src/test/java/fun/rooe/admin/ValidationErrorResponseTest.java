@@ -1,8 +1,8 @@
 package fun.rooe.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fun.rooe.admin.framework.response.ApiResultResponseAdvice;
-import fun.rooe.admin.framework.response.GlobalExceptionAdvice;
+import fun.rooe.admin.framework.advice.ApiResultResponseAdvice;
+import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

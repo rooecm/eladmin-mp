@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package fun.rooe.admin.framework.response;
+package fun.rooe.admin.framework.advice;
 
 import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.error.CommonErrorCode;
