@@ -6,9 +6,9 @@ spring:
         enabled: false
       # 开发环境默认连接本地 Redis，可通过环境变量覆盖
       database: ${REDIS_DATABASE:0}
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:192.168.2.10}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:123456}
       timeout: ${REDIS_TIMEOUT:3s}
       connect-timeout: ${REDIS_CONNECT_TIMEOUT:3s}
   datasource:
