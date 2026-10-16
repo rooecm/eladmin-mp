@@ -79,7 +79,7 @@ class ApiResultResponseAdviceTest {
         var response = mockMvc.perform(get("/test/error")).andReturn().getResponse();
         JsonNode body = objectMapper.readTree(response.getContentAsString());
 
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertEquals(false, body.has("status"));
         assertEquals("COMMON_1005", body.get("code").asText());
         assertEquals("invalid request", body.get("message").asText());
@@ -99,16 +99,16 @@ class ApiResultResponseAdviceTest {
 
     @Test
     void mapsKnownBusinessFailuresToDistinctCodes() throws Exception {
-        assertError(get("/test/business/captcha"), 400, "AUTH_1007");
+        assertError(get("/test/business/captcha"), 200, "AUTH_1007");
         assertError(get("/test/business/password"), 401, "AUTH_1001");
-        assertError(get("/test/business/limit"), 400, "COMMON_1004");
+        assertError(get("/test/business/limit"), 200, "COMMON_1004");
         assertError(get("/test/business/duplicate"), 409, "COMMON_1003");
         assertError(get("/test/business/large"), 400, "COMMON_1008");
         assertError(get("/test/business/token"), 401, "AUTH_1005");
         assertError(get("/test/business/disabled"), 403, "AUTH_1002");
-        assertError(get("/test/business/missing"), 400, "COMMON_1002");
-        assertError(get("/test/business/exists"), 400, "COMMON_1003");
-        assertError(get("/test/business/unregistered"), 400, "CUSTOM_1001");
+        assertError(get("/test/business/missing"), 200, "COMMON_1002");
+        assertError(get("/test/business/exists"), 200, "COMMON_1003");
+        assertError(get("/test/business/unregistered"), 200, "CUSTOM_1001");
     }
 
     @Test
@@ -127,28 +127,27 @@ class ApiResultResponseAdviceTest {
     }
 
     @Test
-    void frameworkErrorsKeepPublicMessagesAndSupportedStatuses() throws Exception {
-        assertError(get("/test/framework/404"), 404, "COMMON_1002");
-        assertError(get("/test/framework/429"), 400, "COMMON_1001");
+    void unhandledFrameworkErrorsReturnInternalServerError() throws Exception {
+        assertError(get("/test/framework/404"), 500, "SYS_1001");
+        assertError(get("/test/framework/429"), 500, "SYS_1001");
         assertError(get("/test/framework/503"), 500, "SYS_1001");
-        assertError(get("/test/no-such-route"), 404, "COMMON_1002");
+        assertError(get("/test/no-such-route"), 500, "SYS_1001");
         assertError(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/test/upload"),
                 400, "COMMON_1001");
     }
 
     @Test
-    void preservesProtocolErrorsAndNeverWrapsThemAsSuccess() throws Exception {
+    void distinguishesHandledRequestErrorsFromUnhandledProtocolErrors() throws Exception {
         assertError(get("/test/parameter"), 400, "COMMON_1001");
         assertError(get("/test/parameter").param("number", "abc"), 400, "COMMON_1001");
         assertError(post("/test/json").contentType(MediaType.APPLICATION_JSON).content("{"), 400, "COMMON_1001");
         var mediaError = assertError(post("/test/json").contentType(MediaType.TEXT_PLAIN).content("body"),
-                400, "COMMON_1001");
-        assertEquals("请求参数或格式不正确", mediaError.path("message").asText());
+                500, "SYS_1001");
+        assertEquals("系统内部异常，请稍后重试", mediaError.path("message").asText());
         var response = mockMvc.perform(post("/test/data")).andReturn().getResponse();
-        assertEquals(400, response.getStatus());
-        assertEquals("COMMON_1001", objectMapper.readTree(response.getContentAsByteArray()).path("code").asText());
-        assertEquals("请求参数或格式不正确", objectMapper.readTree(response.getContentAsByteArray()).path("message").asText());
-        org.junit.jupiter.api.Assertions.assertTrue(response.getHeader("Allow").contains("GET"));
+        assertEquals(500, response.getStatus());
+        assertEquals("SYS_1001", objectMapper.readTree(response.getContentAsByteArray()).path("code").asText());
+        assertEquals("系统内部异常，请稍后重试", objectMapper.readTree(response.getContentAsByteArray()).path("message").asText());
     }
 
     @Test
@@ -164,7 +163,7 @@ class ApiResultResponseAdviceTest {
         assertEquals("0", body.path("code").asText());
         assertEquals(true, body.has("data"));
         assertEquals(true, body.get("data").isNull());
-        assertError(get("/test/business/captcha"), 400, "AUTH_1007");
+        assertError(get("/test/business/captcha"), 200, "AUTH_1007");
     }
 
     private JsonNode assertError(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request,

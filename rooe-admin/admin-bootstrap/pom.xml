@@ -25,10 +25,6 @@
         </dependency>
         <dependency>
             <groupId>fun.rooe</groupId>
-            <artifactId>admin-logging</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>fun.rooe</groupId>
             <artifactId>admin-quartz</artifactId>
         </dependency>
         <!-- 应用运行环境 -->

@@ -1,24 +1,9 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-package fun.rooe.admin.aspect;
+package fun.rooe.admin.modules.system.aspect;
 
-import fun.rooe.admin.domain.SysLogDO;
 import fun.rooe.admin.framework.utils.RequestHolder;
 import fun.rooe.admin.framework.utils.SecurityUtils;
-import fun.rooe.admin.service.SysLogService;
+import fun.rooe.admin.modules.system.domain.entity.SysLogDO;
+import fun.rooe.admin.modules.system.service.SysLogService;
 import fun.rooe.admin.utils.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

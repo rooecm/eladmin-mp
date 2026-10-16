@@ -20,9 +20,10 @@
             <artifactId>admin-framework</artifactId>
         </dependency>
 
+        <!-- LogAspect 切面依赖 -->
         <dependency>
-            <groupId>fun.rooe</groupId>
-            <artifactId>admin-logging</artifactId>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
         </dependency>
 
         <!-- APIs referenced directly by system sources -->

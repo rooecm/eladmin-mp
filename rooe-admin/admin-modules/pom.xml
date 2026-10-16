@@ -14,7 +14,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>admin-logging</module>
         <module>admin-quartz</module>
         <module>admin-system</module>
     </modules>
