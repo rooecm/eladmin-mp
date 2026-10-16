@@ -36,8 +36,9 @@
 1. 优先复用通用错误码；仅有独立处理需求时，在所属模块的 `error/XxxErrorCode` 枚举中新增错误码和默认消息，实现公共
    `ErrorCode` 接口。
 2. 无需登记 HTTP 映射。`ErrorCodeRegistryTest` 检查所有枚举的错误码格式、唯一性和消息完整性。
-3. 使用 `throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选部门存在用户关联，请解除后再试")`
-   抛出业务异常。可通过第二个字符串参数补充公开消息，或传入原始异常作为 cause，使用默认提示并保留日志原因。
+3. 业务条件校验优先使用 `BusinessAssert.isTrue(condition, errorCode)`、`notNull` 或 `isBlank`。默认使用错误码消息，
+   也可通过最后一个 `message` 参数补充场景提示。将底层异常转换为业务异常时，使用 `BusinessException(errorCode, cause)`
+   保留日志原因。
 4. 不将 SQL、第三方服务异常原文或密钥放进公开消息。未知异常返回 `SYS_1001`，服务端保留完整日志。
 5. 新增错误码后同步更新本表和相关接口说明。已发布的错误码保持语义稳定，不复用作其他错误。
 

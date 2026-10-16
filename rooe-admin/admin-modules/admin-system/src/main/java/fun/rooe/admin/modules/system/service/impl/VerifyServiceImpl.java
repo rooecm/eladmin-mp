@@ -22,6 +22,7 @@ import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.service.VerifyService;
 import fun.rooe.admin.modules.system.utils.TemplateUtils;
+import fun.rooe.admin.utils.BusinessAssert;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -69,10 +70,8 @@ public class VerifyServiceImpl implements VerifyService {
     @Override
     public void validated(String key, String code) {
         String value = redisUtils.get(key, String.class);
-        if(value == null || !value.equals(code)){
-            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
-        } else {
-            redisUtils.del(key);
-        }
+        BusinessAssert.isTrue(value != null && value.equals(code),
+                AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
+        redisUtils.del(key);
     }
 }

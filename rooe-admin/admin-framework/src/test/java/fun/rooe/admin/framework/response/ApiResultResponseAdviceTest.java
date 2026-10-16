@@ -6,6 +6,7 @@ import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.exception.BusinessException;
+import fun.rooe.admin.utils.BusinessAssert;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -181,7 +182,7 @@ class ApiResultResponseAdviceTest {
         @GetMapping("/test/business/{type}")
         void business(@org.springframework.web.bind.annotation.PathVariable String type) {
             switch (type) {
-                case "captcha" -> throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
+                case "captcha" -> BusinessAssert.fail(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
                 case "password" ->
                         throw new org.springframework.security.authentication.BadCredentialsException("secret detail");
                 case "limit" -> throw new BusinessException(CommonErrorCode.TOO_MANY_REQUESTS);

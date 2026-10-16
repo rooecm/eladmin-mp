@@ -17,7 +17,6 @@ package fun.rooe.admin.modules.security.controller;
 
 import com.wf.captcha.base.Captcha;
 import fun.rooe.admin.error.AuthErrorCode;
-import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.annotation.rest.AnonymousDeleteMapping;
 import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
@@ -37,6 +36,7 @@ import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.security.service.UserDetailsServiceImpl;
 import fun.rooe.admin.modules.system.service.UserCredentialService;
+import fun.rooe.admin.utils.BusinessAssert;
 import fun.rooe.admin.utils.RsaUtils;
 import fun.rooe.admin.utils.StringUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,13 +91,9 @@ public class AuthController {
         String code = redisUtils.get(request.getUuid(), String.class);
         // 清除验证码
         redisUtils.del(request.getUuid());
-        if (StringUtils.isBlank(code)) {
-            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码不存在或已过期");
-        }
-        if (StringUtils.isBlank(request.getCode())
-                || !request.getCode().equalsIgnoreCase(code)) {
-            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
-        }
+        BusinessAssert.isBlank(code, AuthErrorCode.CAPTCHA_INVALID, "验证码不存在或已过期");
+        BusinessAssert.isTrue(!StringUtils.isBlank(request.getCode())
+                && request.getCode().equalsIgnoreCase(code), AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
         // 获取用户信息
         JwtUserDTO jwtUser = userDetailsService.loadUserByUsername(request.getUsername());
         // 验证用户密码
