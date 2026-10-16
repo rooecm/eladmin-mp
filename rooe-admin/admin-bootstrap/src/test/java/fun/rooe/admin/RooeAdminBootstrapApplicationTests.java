@@ -7,7 +7,6 @@ import fun.rooe.admin.framework.config.SpringContextConfig;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
-import fun.rooe.admin.modules.quartz.config.JobRunner;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.domain.entity.RoleDO;
@@ -23,7 +22,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 import java.util.Set;
@@ -32,8 +30,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = RooeAdminApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.quartz.auto-startup=false")
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RooeAdminBootstrapApplicationTests {
 
     @Autowired
@@ -53,10 +50,6 @@ public class RooeAdminBootstrapApplicationTests {
 
     @Autowired
     private RoleService roleService;
-
-    // 启动测试验证模块组装，避免加载和调度数据库中的业务任务。
-    @MockitoBean
-    private JobRunner jobRunner;
 
     @Test
     public void contextLoads() {

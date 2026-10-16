@@ -1,0 +1,68 @@
+# rooe-observability 默认配置，优先级低于应用配置、环境变量和命令行参数。
+rooe:
+  observability:
+    trace-header:
+      # 将当前链路的 traceId 写入 HTTP 响应头；关闭后不影响链路生成和日志采集。
+      enabled: true
+      # 响应头名称，可按应用约定改为 X-Trace-Id 等合法 HTTP 头名称。
+      name: traceId
+      # 追加到 CORS 暴露头，供浏览器读取；允许来源等跨域规则仍由应用配置。
+      expose: true
+
+management:
+  tracing:
+    # 启用 Spring Boot 原生链路追踪配置，traceId 由 Micrometer / OpenTelemetry 生成。
+    # 此 Starter 不包含上报器，需要上报链路时由应用自行引入 exporter 并配置地址。
+    enabled: true
+
+logbook:
+  # 关闭 Web 日志时，应同时关闭 filter.enabled 和 secure-filter.enabled。
+  filter:
+    # 采集正常进入 Servlet 请求链的请求、响应日志。
+    enabled: true
+  secure-filter:
+    # 存在 Spring Security 时，补充采集认证、鉴权失败等提前返回的请求。
+    enabled: true
+  format:
+    # 默认输出 JSON，包含当前 traceId；日志级别为 INFO，无需修改 logback.xml。
+    # 切换为其他原生格式后，不再追加 JSON 顶层 traceId 字段。
+    style: json
+  write:
+    # 日志正文最多保留的字符数，仅截断日志，不限制请求大小或缓冲区内存。
+    max-body-size: 4096
+  predicate:
+    # 不采集以下路径；上传下载、流式接口等应用专属路径应由应用自行补充。
+    # 覆盖此列表时需写出所有希望排除的路径，应用列表会替换默认列表。
+    exclude:
+      - path: /actuator/**
+      - path: /swagger-ui/**
+      - path: /v3/api-docs/**
+      - path: /webjars/**
+      - path: /favicon.ico
+  obfuscate:
+    # 敏感信息仅在日志中替换为 XXX，不改变实际请求或响应。
+    # 覆盖以下任一列表时，需保留该列表中仍需脱敏的默认字段。
+    # 请求头和响应头脱敏，避免记录凭证及会话信息。
+    headers:
+      - Authorization
+      - Proxy-Authorization
+      - Cookie
+      - Set-Cookie
+    # URL 查询参数脱敏。
+    parameters:
+      - access_token
+      - refresh_token
+      - token
+      - password
+      - oldPass
+      - newPass
+    # 请求和响应 JSON 正文字段脱敏，支持嵌套对象；保留业务 code 等普通字段。
+    json-body-fields:
+      - password
+      - oldPass
+      - newPass
+      - confirmPassword
+      - token
+      - access_token
+      - refresh_token
+      - secret

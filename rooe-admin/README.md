@@ -1,7 +1,8 @@
 <h1 style="text-align: center">ROOE ADMIN 后台管理系统</h1>
 
 #### 项目简介
-一个基于 Spring Boot 2.7.18 、 Mybatis-Plus、 JWT、Spring Security、Redis、Vue的前后端分离的后台管理系统
+
+一个基于 Spring Boot 3.5.16 、 Mybatis-Plus、 JWT、Spring Security、Redis、Vue的前后端分离的后台管理系统
 
 **开发文档：**  [https://rooe-admin.vip](https://rooe-admin.vip)
 
@@ -103,9 +104,22 @@
 
 用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `admin-modules/admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiResult` 作为共享响应类型保留在公共模块。
 
-在 `rooe-admin` 目录使用 JDK 17 或更高版本构建：`mvn clean verify`。仅构建启动模块及其依赖可执行 `mvn -pl admin-bootstrap -am clean package`。仅验证框架模块可执行 `mvn -pl admin-framework -am test`。bootstrap 集成测试需要可用的数据库与 Redis，测试期间替换业务定时任务加载器并禁用 Quartz 自动执行；业务 SQL 与任务执行需单独验证。
+仓库根目录的 `pom.xml` 聚合 `rooe-starter` 与 `rooe-admin`，两者保留各自的父 POM。使用 JDK 17 或更高版本，在仓库根目录执行
+`mvn clean verify`；只构建应用及其依赖执行 `mvn -pl rooe-admin/admin-bootstrap -am clean package`。Maven 会同时构建所需
+starter，无需提前 install 或发布到远程仓库。IDE 也应导入仓库根 POM。仅验证框架模块可执行
+`mvn -pl rooe-admin/admin-framework -am test`。bootstrap 完整启动测试需要可用的数据库与 Redis；无外部服务时可执行
+`mvn clean verify "-Dtest=*,!RooeAdminBootstrapApplicationTests" "-Dsurefire.failIfNoSpecifiedTests=false"`，仍会运行
+starter 与 admin 的日志、追踪集成测试。业务 SQL 与任务执行需单独验证。
 
-部署入口为 `java -jar admin-bootstrap/target/admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod` 指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行 `mvn -pl admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随所属模块的 JAR 加载，应用配置集中维护在 `admin-bootstrap/src/main/resources`。
+`admin-framework` 引入 `rooe-observability-spring-boot-starter`，`admin-bootstrap` 通过框架模块传递获得该依赖，版本由
+admin 父 POM 导入的 `rooe-starter-dependencies` BOM 管理。starter 负责请求与响应日志、脱敏、追踪及响应 traceId；应用保留
+`WEB_LOG_ENABLED` 开关和专属路径排除配置。BOM 不覆盖应用的 Spring Boot 版本。单独构建 `rooe-admin` 前需先执行
+`mvn -f rooe-starter/pom.xml install`。
+
+部署入口为 `java -jar rooe-admin/admin-bootstrap/target/admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod`
+指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行
+`mvn -pl rooe-admin/admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随所属模块的 JAR 加载，应用配置集中维护在
+`admin-bootstrap/src/main/resources`。
 
 #### 特别鸣谢
 

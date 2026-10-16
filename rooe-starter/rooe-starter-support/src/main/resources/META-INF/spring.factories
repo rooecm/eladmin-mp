@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+fun.rooe.starter.support.env.YamlDefaultsEnvironmentPostProcessor

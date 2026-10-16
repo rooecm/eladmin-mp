@@ -1,0 +1,6 @@
+first:
+  enabled: true
+  limit: 10
+  mode: default
+  paths:
+    - /health

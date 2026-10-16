@@ -3,7 +3,7 @@ spring:
     name: rooe-admin
   freemarker:
     check-template-location: false
-  profiles: # 激活的环境，如果需要 quartz 分布式支持，需要修改 active: dev,quartz
+  profiles: # 激活的环境
     active: dev
   data:
     redis:
@@ -27,6 +27,25 @@ spring:
           max-idle: 20
           # 连接池中的最小空闲连接数
           min-idle: 1
+
+logbook:
+  filter:
+    enabled: ${WEB_LOG_ENABLED:true}
+  secure-filter:
+    enabled: ${WEB_LOG_ENABLED:true}
+  predicate:
+    # 列表覆盖 starter 默认值，因此保留通用排除项并补充本应用路径。
+    exclude:
+      - path: /actuator/**
+      - path: /druid/**
+      - path: /swagger-ui/**
+      - path: /v3/api-docs/**
+      - path: /webjars/**
+      - path: /avatar/**
+      - path: /file/**
+      - path: /webSocket/**
+      - path: /doc.html
+      - path: /favicon.ico
 
 server:
   port: 8000

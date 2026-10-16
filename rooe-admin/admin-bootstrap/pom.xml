@@ -23,10 +23,6 @@
             <groupId>fun.rooe</groupId>
             <artifactId>admin-system</artifactId>
         </dependency>
-        <dependency>
-            <groupId>fun.rooe</groupId>
-            <artifactId>admin-quartz</artifactId>
-        </dependency>
         <!-- 应用运行环境 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -51,10 +47,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-quartz</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

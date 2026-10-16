@@ -20,7 +20,6 @@ import com.alibaba.fastjson2.JSONWriter;
 import com.alibaba.fastjson2.annotation.JSONType;
 import com.alibaba.fastjson2.support.config.FastJsonConfig;
 import com.alibaba.fastjson2.support.spring6.http.converter.FastJsonHttpMessageConverter;
-import fun.rooe.admin.framework.interceptor.TraceIdInterceptor;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.response.ApiResult;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,7 +32,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -67,14 +65,8 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
         config.addAllowedOriginPattern("*");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.addExposedHeader(TraceIdInterceptor.TRACE_ID_HEADER);
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new TraceIdInterceptor());
     }
 
     @Override

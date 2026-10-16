@@ -1,0 +1,8 @@
+multi:
+  mode: first
+  first: kept
+  application: default
+---
+multi:
+  mode: last
+  last: kept

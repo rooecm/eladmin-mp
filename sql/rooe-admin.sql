@@ -193,7 +193,11 @@ CREATE TABLE `sys_menu` (
 -- Records of sys_menu
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (1, NULL, 7, 0, '系统管理', NULL, NULL, 1, 'system', 'system', b'0', b'0', b'0', NULL, NULL, 'admin', '2018-12-18 15:11:29', '2025-01-14 15:48:18');
+INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`,
+                        `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`,
+                        `update_time`)
+VALUES (1, NULL, 6, 0, '系统管理', NULL, NULL, 1, 'system', 'system', b'0', b'0', b'0', NULL, NULL, 'admin',
+        '2018-12-18 15:11:29', '2025-01-14 15:48:18');
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (2, 1, 3, 1, '用户管理', 'User', 'system/user/index', 2, 'peoples', 'user', b'0', b'0', b'0', 'user:list', NULL, NULL, '2018-12-18 15:14:44', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (3, 1, 3, 1, '角色管理', 'Role', 'system/role/index', 3, 'role', 'role', b'0', b'0', b'0', 'roles:list', NULL, NULL, '2018-12-18 15:16:07', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (5, 1, 3, 1, '菜单管理', 'Menu', 'system/menu/index', 5, 'menu', 'menu', b'0', b'0', b'0', 'menu:list', NULL, NULL, '2018-12-18 15:17:28', NULL);
@@ -202,7 +206,6 @@ INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `comp
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (9, 6, 0, 1, 'SQL监控', 'Sql', 'monitor/sql/index', 18, 'sqlMonitor', 'druid', b'0', b'0', b'0', NULL, NULL, NULL, '2018-12-18 15:19:34', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (14, 36, 0, 1, '邮件工具', 'Email', 'tools/email/index', 35, 'email', 'email', b'0', b'0', b'0', NULL, NULL, NULL, '2018-12-27 10:13:09', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (18, 36, 1, 1, '存储管理', 'Storage', 'tools/storage/index', 34, 'qiniu', 'storage', b'0', b'0', b'0', 'storage:list', NULL, NULL, '2018-12-31 11:12:15', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (28, 1, 3, 1, '任务调度', 'Timing', 'system/timing/index', 999, 'timing', 'timing', b'0', b'0', b'0', 'timing:list', NULL, NULL, '2019-01-07 20:34:40', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (32, 6, 0, 1, '异常日志', 'ErrorLog', 'monitor/log/errorLog', 12, 'error', 'errorLog', b'0', b'0', b'0', NULL, NULL, NULL, '2019-01-13 13:49:03', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (35, 1, 3, 1, '部门管理', 'Dept', 'system/dept/index', 6, 'dept', 'dept', b'0', b'0', b'0', 'dept:list', NULL, NULL, '2019-03-25 09:46:00', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (36, NULL, 2, 0, '系统工具', NULL, '', 30, 'sys-tools', 'sys-tools', b'0', b'0', b'0', NULL, NULL, NULL, '2019-03-29 10:57:35', NULL);
@@ -227,69 +230,7 @@ INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `comp
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (64, 39, 0, 2, '字典新增', NULL, '', 2, '', '', b'0', b'0', b'0', 'dict:add', NULL, NULL, '2019-10-29 13:00:17', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (65, 39, 0, 2, '字典编辑', NULL, '', 3, '', '', b'0', b'0', b'0', 'dict:edit', NULL, NULL, '2019-10-29 13:00:42', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (66, 39, 0, 2, '字典删除', NULL, '', 4, '', '', b'0', b'0', b'0', 'dict:del', NULL, NULL, '2019-10-29 13:00:59', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (73, 28, 0, 2, '任务新增', NULL, '', 2, '', '', b'0', b'0', b'0', 'timing:add', NULL, NULL, '2019-10-29 13:07:28', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (74, 28, 0, 2, '任务编辑', NULL, '', 3, '', '', b'0', b'0', b'0', 'timing:edit', NULL, NULL, '2019-10-29 13:07:41', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (75, 28, 0, 2, '任务删除', NULL, '', 4, '', '', b'0', b'0', b'0', 'timing:del', NULL, NULL, '2019-10-29 13:07:54', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (79, 18, 0, 2, '文件删除', NULL, '', 4, '', '', b'0', b'0', b'0', 'storage:del', NULL, NULL, '2019-10-29 13:09:34', NULL);
-COMMIT;
-
--- ----------------------------
--- Table structure for sys_quartz_job
--- ----------------------------
-DROP TABLE IF EXISTS `sys_quartz_job`;
-CREATE TABLE `sys_quartz_job` (
-                                  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-                                  `bean_name` varchar(255) DEFAULT NULL COMMENT 'Spring Bean名称',
-                                  `cron_expression` varchar(255) DEFAULT NULL COMMENT 'cron 表达式',
-                                  `is_pause` bit(1) DEFAULT NULL COMMENT '状态：1暂停、0启用',
-                                  `job_name` varchar(255) DEFAULT NULL COMMENT '任务名称',
-                                  `method_name` varchar(255) DEFAULT NULL COMMENT '方法名称',
-                                  `params` varchar(255) DEFAULT NULL COMMENT '参数',
-                                  `description` varchar(255) DEFAULT NULL COMMENT '备注',
-                                  `person_in_charge` varchar(100) DEFAULT NULL COMMENT '负责人',
-                                  `email` varchar(100) DEFAULT NULL COMMENT '报警邮箱',
-                                  `sub_task` varchar(100) DEFAULT NULL COMMENT '子任务ID',
-                                  `pause_after_failure` bit(1) DEFAULT NULL COMMENT '任务失败后是否暂停',
-                                  `create_by` varchar(255) DEFAULT NULL COMMENT '创建者',
-                                  `update_by` varchar(255) DEFAULT NULL COMMENT '更新者',
-                                  `create_time` datetime DEFAULT NULL COMMENT '创建日期',
-                                  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-                                  PRIMARY KEY (`id`) USING BTREE,
-                                  KEY `idx_is_pause` (`is_pause`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='定时任务';
-
--- ----------------------------
--- Records of sys_quartz_job
--- ----------------------------
-BEGIN;
-INSERT INTO `sys_quartz_job` (`id`, `bean_name`, `cron_expression`, `is_pause`, `job_name`, `method_name`, `params`, `description`, `person_in_charge`, `email`, `sub_task`, `pause_after_failure`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (2, 'testTask', '0/5 * * * * ?', b'1', '测试1', 'run1', 'test', '带参测试，多参使用json', '测试', NULL, NULL, NULL, NULL, 'admin', '2019-08-22 14:08:29', '2020-05-24 13:58:33');
-INSERT INTO `sys_quartz_job` (`id`, `bean_name`, `cron_expression`, `is_pause`, `job_name`, `method_name`, `params`, `description`, `person_in_charge`, `email`, `sub_task`, `pause_after_failure`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (3, 'testTask', '0/5 * * * * ?', b'1', '测试', 'run', '', '不带参测试', 'Zheng Jie', '', '6', b'1', NULL, 'admin', '2019-09-26 16:44:39', '2020-05-24 14:48:12');
-INSERT INTO `sys_quartz_job` (`id`, `bean_name`, `cron_expression`, `is_pause`, `job_name`, `method_name`, `params`, `description`, `person_in_charge`, `email`, `sub_task`, `pause_after_failure`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (5, 'Test', '0/5 * * * * ?', b'1', '任务告警测试', 'run', NULL, '测试', 'test', '', NULL, b'1', 'admin', 'admin', '2020-05-05 20:32:41', '2020-05-05 20:36:13');
-INSERT INTO `sys_quartz_job` (`id`, `bean_name`, `cron_expression`, `is_pause`, `job_name`, `method_name`, `params`, `description`, `person_in_charge`, `email`, `sub_task`, `pause_after_failure`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (6, 'testTask', '0/5 * * * * ?', b'1', '测试3', 'run2', NULL, '测试3', 'Zheng Jie', '', NULL, b'1', 'admin', 'admin', '2020-05-05 20:35:41', '2020-05-05 20:36:07');
-COMMIT;
-
--- ----------------------------
--- Table structure for sys_quartz_log
--- ----------------------------
-DROP TABLE IF EXISTS `sys_quartz_log`;
-CREATE TABLE `sys_quartz_log` (
-                                  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-                                  `bean_name` varchar(255) DEFAULT NULL COMMENT 'Bean名称',
-                                  `cron_expression` varchar(255) DEFAULT NULL COMMENT 'cron 表达式',
-                                  `is_success` bit(1) DEFAULT NULL COMMENT '是否执行成功',
-                                  `job_name` varchar(255) DEFAULT NULL COMMENT '任务名称',
-                                  `method_name` varchar(255) DEFAULT NULL COMMENT '方法名称',
-                                  `params` varchar(255) DEFAULT NULL COMMENT '参数',
-                                  `time` bigint(20) DEFAULT NULL COMMENT '执行耗时',
-                                  `exception_detail` text DEFAULT NULL COMMENT '异常详情',
-                                  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-                                  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=262 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='定时任务日志';
-
--- ----------------------------
--- Records of sys_quartz_log
--- ----------------------------
-BEGIN;
 COMMIT;
 
 -- ----------------------------
@@ -392,8 +333,6 @@ VALUES (14, 2);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (18, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (28, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (32, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (32, 2);
@@ -445,12 +384,6 @@ INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (65, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (66, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (73, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (74, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (75, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (79, 1);
 COMMIT;
