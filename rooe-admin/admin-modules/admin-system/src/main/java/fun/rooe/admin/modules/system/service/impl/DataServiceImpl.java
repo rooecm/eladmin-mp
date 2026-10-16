@@ -18,7 +18,8 @@ package fun.rooe.admin.modules.system.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.enums.DataScopeEnum;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
@@ -68,8 +69,7 @@ public class DataServiceImpl implements DataService {
         for (RoleDO role : roles) {
             DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
             if (configuredScope == null) {
-                throw new BadRequestException(
-                        "Invalid data scope configured for role: " + role.getName());
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "数据权限范围配置无效");
             }
             switch (configuredScope) {
                 case ALL -> {
@@ -111,7 +111,7 @@ public class DataServiceImpl implements DataService {
     @Override
     public void checkDeptAccess(Long deptId) {
         if (!getCurrentDataScope().permits(deptId)) {
-            throw new BadRequestException("No permission to access department: " + deptId);
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "没有权限访问该数据");
         }
     }
 
@@ -122,14 +122,14 @@ public class DataServiceImpl implements DataService {
             return;
         }
         if (deptIds == null || deptIds.stream().anyMatch(id -> !scope.permits(id))) {
-            throw new BadRequestException("Department data permission denied");
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "没有权限访问该数据");
         }
     }
 
     @Override
     public void checkUserAccess(Long userId, Long deptId) {
         if (!getCurrentDataScope().permitsUser(userId, deptId)) {
-            throw new BadRequestException("No permission to access user: " + userId);
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "没有权限访问该数据");
         }
     }
 
@@ -140,7 +140,7 @@ public class DataServiceImpl implements DataService {
             return;
         }
         if (deptIds == null || deptIds.stream().anyMatch(id -> !scope.permitsDeptRead(id))) {
-            throw new BadRequestException("Department data permission denied");
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "没有权限访问该数据");
         }
     }
 

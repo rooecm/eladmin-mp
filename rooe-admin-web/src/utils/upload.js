@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getToken } from '@/utils/auth'
+import { handleApiError, isApiResult } from '@/utils/request'
 
 export function upload(api, file) {
   var data = new FormData()
@@ -9,9 +10,14 @@ export function upload(api, file) {
   }
   return axios.post(api, data, config).then(response => {
     const result = response.data
-    if (result && result.code === '0' && Object.prototype.hasOwnProperty.call(result, 'data')) {
+    if (isApiResult(result)) {
+      if (result.code !== '0') {
+        const error = new Error(result.message)
+        error.response = response
+        return handleApiError(error)
+      }
       response.data = result.data
     }
     return response
-  })
+  }, handleApiError)
 }

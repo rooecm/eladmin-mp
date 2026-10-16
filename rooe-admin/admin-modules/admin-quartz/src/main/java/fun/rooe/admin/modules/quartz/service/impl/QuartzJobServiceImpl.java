@@ -17,7 +17,8 @@ package fun.rooe.admin.modules.quartz.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
@@ -76,7 +77,7 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     @Transactional(rollbackFor = Exception.class)
     public void create(QuartzJobDO resources) {
         if (!CronExpression.isValidExpression(resources.getCronExpression())) {
-            throw new BadRequestException("cron表达式格式错误");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "cron 表达式格式错误");
         }
         save(resources);
         quartzManage.addJob(resources);
@@ -86,12 +87,12 @@ public class QuartzJobServiceImpl extends ServiceImpl<QuartzJobMapper, QuartzJob
     @Transactional(rollbackFor = Exception.class)
     public void update(QuartzJobDO resources) {
         if (!CronExpression.isValidExpression(resources.getCronExpression())) {
-            throw new BadRequestException("cron表达式格式错误");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "cron 表达式格式错误");
         }
         if (StringUtils.isNotBlank(resources.getSubTask())) {
             List<String> tasks = Arrays.asList(resources.getSubTask().split("[,，]"));
             if (tasks.contains(resources.getId().toString())) {
-                throw new BadRequestException("子任务中不能添加当前任务ID");
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "子任务中不能添加当前任务 ID");
             }
         }
         saveOrUpdate(resources);

@@ -1,5 +1,8 @@
 # Spring Boot 企业管理系统统一响应与错误码设计规范
 
+> 项目当前实现和完整错误码清单见 [项目错误码使用说明](error-codes.md)。当前响应固定为 `code/message/data`，HTTP 仅使用
+> 200、400、401、403、404、409、500，由异常类型和处理场景直接设置，无需登记业务错误码的 HTTP 映射。本文件其余字段为通用扩展建议。
+
 > 适用技术栈：Java 17、Spring Boot、Spring MVC、Spring Security\
 > 设计目标：统一 API 响应格式、遵循 HTTP
 > 语义、规范业务错误码，并便于前后端协作和生产排障。
@@ -42,16 +45,15 @@
 -   `code = "0"` 表示业务处理成功。
 -   `message` 为可读提示；可按项目需要支持国际化。
 -   `data` 为业务数据，无数据时为 `null`。
--   HTTP 状态码仍应按实际情况返回，例如 `200 OK`、`201 Created` 或
-    `204 No Content`。
+- 成功统一返回 `200 OK`，无业务数据时 `data` 为 `null`。
 
 ### 2.2 错误响应
 
 ``` json
 {
-  "status": 409,
+  "status": 400,
   "timestamp": "2026-10-14T18:20:00+08:00",
-  "code": "USER_1002",
+  "code": "COMMON_1003",
   "message": "用户名已存在",
   "data": null
 }
@@ -72,10 +74,6 @@
   ----------------------------- ---------------------------- --------------------------------------------------
   `200 OK`                      查询、更新成功               有响应体的常规成功响应
 
-  `201 Created`                 创建资源成功                 可按需要返回新资源或 `Location` 响应头
-
-  `204 No Content`              成功且无响应体               响应体必须为空
-
   `400 Bad Request`             参数校验失败、请求格式错误   请求本身不符合接口要求
 
   `401 Unauthorized`            未认证、认证凭据无效         例如缺少或无效的 Token
@@ -86,13 +84,8 @@
 
   `409 Conflict`                与当前资源状态冲突           例如用户名重复、状态冲突
 
-  `422 Unprocessable Content`   请求格式正确但语义无法处理   可选，不必为使用而使用
-
-  `429 Too Many Requests`       请求频率超限                 可结合 `Retry-After`
-
   `500 Internal Server Error`   未预期的服务端异常           不向客户端泄露内部异常细节
 
-  `503 Service Unavailable`     服务暂时不可用               例如服务过载或依赖暂时不可用
   -------------------------------------------------------------------------------------------------------------
 
 ### 使用原则
@@ -101,7 +94,7 @@
 2.  `401` 表示未成功认证，`403` 表示已认证但没有权限。
 3.  不要将所有错误都包装成 HTTP 200；这会误导 HTTP
     客户端、监控和重试机制。
-4.  `204` 响应不能再携带 JSON 响应体。
+4. 请求方法、媒体类型、文件超限和限流错误统一返回 400；系统及依赖故障返回 500。
 5.  状态码选择应在 API 文档中明确，并在整个项目中保持一致。
 
 ## 4. 业务错误码规范
@@ -112,26 +105,23 @@
 
 -   `COMMON_1001`
 -   `AUTH_1001`
--   `USER_1001`
+- `STORAGE_1003`
 -   `ORDER_1001`
 -   `SYS_1001`
 
 ### 4.2 示例错误码
 
-  错误码          含义                                  建议 HTTP 状态
-  --------------- ------------------------ ---------------------------
-  `COMMON_1001`   请求参数校验失败                                 400
-  `COMMON_1002`   请求资源不存在（通用）                           404
-  `AUTH_1001`     用户名或密码错误                                 401
-  `AUTH_1002`     账号已禁用                 按认证策略选择 401 或 403
-  `AUTH_1003`     登录请求频率超限                                 429
-  `AUTH_1004`     Token 无效                                       401
-  `AUTH_1005`     Token 已过期                                     401
-  `USER_1001`     用户不存在                                       404
-  `USER_1002`     用户名已存在                                     409
-  `USER_1003`     用户状态不允许当前操作                    通常为 409
-  `SYS_1001`      系统内部异常                                     500
-  `SYS_1002`      依赖服务暂时不可用                               503
+| 错误码           | 含义            |
+|---------------|---------------|
+| `COMMON_1001` | 请求参数校验失败      |
+| `COMMON_1002` | 请求资源不存在（通用）   |
+| `AUTH_1001`   | 用户名或密码错误      |
+| `AUTH_1002`   | 账号已禁用         |
+| `AUTH_1005`   | 未登录、凭证无效或会话失效 |
+| `AUTH_1007`   | 验证码无效或已过期     |
+| `COMMON_1003` | 数据已存在         |
+| `COMMON_1010` | 数据存在关联        |
+| `SYS_1001`    | 系统内部异常        |
 
 这些编号是示例，项目应建立统一登记规则。具体场景需结合安全策略和接口语义确定，例如登录失败时，为避免账号枚举风险，可以统一返回"用户名或密码错误"，并使用同一个对外错误码。
 
@@ -152,33 +142,29 @@
 
 ``` java
 public record ApiResult<T>(
-    Integer status,
     String code,
     String message,
-    T data,
-    Long timestamp
+    T data
 ) {
     public static <T> ApiResult<T> success(T data) {
-        return new ApiResult<>(200, "0", "success", data, null);
+        return new ApiResult<>("0", "success", data);
     }
 
     public static ApiResult<Void> success() {
-        return new ApiResult<>(200, "0", "success", null, null);
+        return new ApiResult<>("0", "success", null);
     }
 
     public static <T> ApiResult<T> failure(
             String code, String message) {
-        return new ApiResult<>(400, code, message, null, null);
-    }
-
-    public static ApiResult<Void> error(Integer status, String message) {
-        return new ApiResult<>(status, String.valueOf(status), message, null, System.currentTimeMillis());
+        return new ApiResult<>(code, message, null);
     }
 }
 ```
 
 建议常规成功接口返回
 `ApiResult<T>`。如果需要国际化，可以让消息由统一消息服务解析，而不是将所有文案写死在枚举中。
+
+`ApiResult` 仅封装响应，不进行 HTTP 状态码转换。HTTP 状态由框架层按异常类型和场景，通过 `ResponseEntity` 或安全异常处理器直接设置。
 
 ### 5.2 错误码接口
 
@@ -192,16 +178,14 @@ public interface ErrorCode {
 }
 ```
 
-各业务模块可以定义自己的错误码枚举：
+同类业务失败优先使用通用错误码，具体字段和资源由消息说明。仅为有独立处理需求的业务定义专用错误码，例如：
 
 ``` java
 @Getter
 @RequiredArgsConstructor
 public enum UserErrorCode implements ErrorCode {
 
-    USER_NOT_FOUND("USER_1001", "用户不存在"),
-    USERNAME_ALREADY_EXISTS("USER_1002", "用户名已存在"),
-    USER_STATE_CONFLICT("USER_1003", "用户状态不允许当前操作");
+    PASSWORD_INCORRECT("USER_1004", "密码错误");
 
     private final String code;
     private final String message;
@@ -220,7 +204,11 @@ public class BusinessException extends RuntimeException {
     private final ErrorCode errorCode;
 
     public BusinessException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
+        this(errorCode, errorCode.getMessage());
+    }
+
+    public BusinessException(ErrorCode errorCode, String message) {
+        super(message);
         this.errorCode = errorCode;
     }
 }
@@ -231,7 +219,7 @@ Service 层抛出业务异常：
 ``` java
 if (userRepository.existsByUsername(username)) {
     throw new BusinessException(
-        UserErrorCode.USERNAME_ALREADY_EXISTS
+        CommonErrorCode.DATA_ALREADY_EXISTS, "用户名已存在"
     );
 }
 ```
@@ -241,17 +229,11 @@ if (userRepository.existsByUsername(username)) {
 
 ### 5.4 全局异常处理器
 
-下面示例演示结构；其中 HTTP 状态映射应由 Web 适配层维护。
+下面示例演示结构；普通业务异常返回 400，其他状态按异常类型和场景设置。
 
 ``` java
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    private final ErrorHttpStatusMapper statusMapper;
-
-    public GlobalExceptionHandler(ErrorHttpStatusMapper statusMapper) {
-        this.statusMapper = statusMapper;
-    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Void>> handleBusinessException(
@@ -259,14 +241,12 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         ErrorCode error = ex.getErrorCode();
-        HttpStatus status = statusMapper.toStatus(error);
 
-        ApiResult<Void> body = ApiResult.error(
-            status.value(),
-            error.getMessage()
+        ApiResult<Void> body = ApiResult.failure(
+            error.getCode(), ex.getMessage()
         );
 
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -304,10 +284,7 @@ public class GlobalExceptionHandler {
             String message,
             HttpServletRequest request) {
 
-        ApiResult<Void> body = ApiResult.error(
-            status.value(),
-            message
-        );
+        ApiResult<Void> body = ApiResult.failure(code, message);
 
         return ResponseEntity.status(status).body(body);
     }
@@ -320,8 +297,7 @@ public class GlobalExceptionHandler {
 
 说明：
 
--   示例中的 `ErrorHttpStatusMapper` 负责把业务错误码映射为 HTTP
-    状态码，属于 Web 适配层。
+- 不维护业务错误码到 HTTP 状态的映射；异常处理器根据异常类型设置状态。
 -   需要补齐项目实际使用的 import、日志对象和异常类型。
 -   应根据 Spring Boot 版本处理
     `MethodArgumentNotValidException`、`ConstraintViolationException`、`HttpMessageNotReadableException`
@@ -343,7 +319,7 @@ public class GlobalExceptionHandler {
   普通更新、删除                      `ApiResult<Void>` 或
                                       `ApiResult<T>`，按团队 API 规范统一
 
-  创建资源，需要 HTTP 201             `ResponseEntity<ApiResult<T>>`
+创建资源，返回 HTTP 200             `ApiResult<T>`
 
   需要设置 `Location` 或其他响应头    `ResponseEntity<ApiResult<T>>`
 
@@ -365,7 +341,7 @@ public ResponseEntity<ApiResult<UserVO>> create(
     UserVO user = userService.create(request);
 
     return ResponseEntity
-        .status(HttpStatus.CREATED)
+        .status(HttpStatus.OK)
         .body(ApiResult.success(user));
 }
 ```
@@ -419,7 +395,6 @@ user / auth / order 等业务模块
 framework / infrastructure（Web 适配）
 ├── web
 │   ├── ApiError.java
-│   ├── ErrorHttpStatusMapper.java
 │   └── GlobalExceptionHandler.java
 └── security
     ├── RestAuthenticationEntryPoint.java
@@ -430,7 +405,7 @@ framework / infrastructure（Web 适配）
 
 -   业务错误语义属于对应业务模块。
 -   通用异常抽象可放在 `common` 或 `core`。
--   HTTP 状态码映射、`ResponseEntity`、Spring MVC 异常处理和 Spring
+- HTTP 状态码设置、`ResponseEntity`、Spring MVC 异常处理和 Spring
     Security 适配属于 Web/框架适配层。
 -   如果希望 `common` 保持纯 Java，应避免在其公共接口中直接依赖
     `HttpStatus` 等 Spring Web 类型。
@@ -438,7 +413,7 @@ framework / infrastructure（Web 适配）
 ## 9. 前端处理规范
 
 1.  根据 HTTP 状态码处理通用协议行为，例如 `401` 触发重新认证流程。
-2.  根据业务 `code` 处理精确业务行为，例如 `USER_1002` 提示用户名重复。
+2. 根据业务 `code` 处理对应类别，例如 `COMMON_1003` 表示数据重复，`message` 说明具体字段。
 3.  使用 `message`
     展示用户可理解的提示，不要通过解析消息文本判断业务逻辑。
 4.  参数校验错误可以增加结构化 `details`
@@ -451,7 +426,7 @@ framework / infrastructure（Web 适配）
 -   [ ] 统一错误响应 `ApiResult<Void>`。
 -   [ ] 定义 HTTP 状态码使用规范。
 -   [ ] 建立业务错误码登记与唯一性检查规则。
--   [ ] 将业务异常与 HTTP 映射解耦。
+-   [ ] 按异常类型设置 HTTP 状态，无需业务错误码映射。
 -   [ ] 使用 `@RestControllerAdvice` 统一处理 MVC 异常。
 -   [ ] 使用 `AuthenticationEntryPoint` 和 `AccessDeniedHandler`
     统一处理安全异常。
@@ -469,7 +444,7 @@ framework / infrastructure（Web 适配）
 2.  **成功和错误响应统一使用 `ApiResult<T>`。**
 3.  **需要特殊状态码或响应头时使用 `ResponseEntity<T>`。**
 4.  **不将所有错误统一返回 HTTP 200。**
-5.  **业务层不负责构造 HTTP 响应，Web 适配层负责状态码映射。**
+5. **业务层不负责构造 HTTP 响应，Web 适配层按异常类型设置状态码。**
 6.  **MVC 异常与 Spring Security 异常都要接入统一错误响应体系。**
 7.  **错误码保持稳定、唯一、可读；消息不作为前端逻辑判断依据。**
 8.  **通过 `traceId` 实现线上问题的日志追踪。**

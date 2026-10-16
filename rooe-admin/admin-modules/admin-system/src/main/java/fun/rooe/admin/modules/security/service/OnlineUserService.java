@@ -15,7 +15,8 @@
  */
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.framework.config.security.security.TokenProvider;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
@@ -139,7 +140,7 @@ public class OnlineUserService implements OnlineSessionService {
             try {
                 logout(EncryptUtils.desDecrypt(key));
             } catch (Exception e) {
-                throw new BadRequestException("无效的会话标识");
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "无效的会话标识");
             }
         }
     }

@@ -15,6 +15,7 @@
  */
 package fun.rooe.admin.response;
 
+import fun.rooe.admin.error.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -56,11 +57,8 @@ public class ApiResult<T> implements Serializable {
         return new ApiResult<>(code, message, null);
     }
 
-    public static ApiResult<Void> error(String message) {
-        return error(400, message);
+    public static <T> ApiResult<T> failure(ErrorCode errorCode) {
+        return failure(errorCode.getCode(), errorCode.getMessage());
     }
 
-    public static ApiResult<Void> error(Integer code, String message) {
-        return new ApiResult<>(String.valueOf(code), message, null);
-    }
 }

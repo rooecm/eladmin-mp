@@ -15,11 +15,13 @@
  */
 package fun.rooe.admin.framework.aspect;
 
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Limit;
 import fun.rooe.admin.framework.cache.RateLimitStore;
-import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.utils.RequestHolder;
 import fun.rooe.admin.utils.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -28,7 +30,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import jakarta.servlet.http.HttpServletRequest;
+
 import java.lang.reflect.Method;
 
 /**
@@ -71,7 +73,7 @@ public class LimitAspect {
             logger.info("第{}次访问key为 {}，描述为 [{}] 的接口", count, limitKey, limit.name());
             return joinPoint.proceed();
         } else {
-            throw new BadRequestException("访问次数受限制");
+            throw new BusinessException(CommonErrorCode.TOO_MANY_REQUESTS);
         }
     }
 }

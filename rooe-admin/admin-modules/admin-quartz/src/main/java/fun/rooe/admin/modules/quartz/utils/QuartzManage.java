@@ -15,8 +15,9 @@
  */
 package fun.rooe.admin.modules.quartz.utils;
 
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
+import fun.rooe.admin.modules.quartz.error.QuartzErrorCode;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
@@ -71,7 +72,7 @@ public class QuartzManage {
             }
         } catch (Exception e) {
             log.error("创建定时任务失败", e);
-            throw new BadRequestException("创建定时任务失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "创建定时任务失败", e);
         }
     }
 
@@ -102,7 +103,7 @@ public class QuartzManage {
             }
         } catch (Exception e) {
             log.error("更新定时任务失败", e);
-            throw new BadRequestException("更新定时任务失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "更新定时任务失败", e);
         }
 
     }
@@ -119,7 +120,7 @@ public class QuartzManage {
             scheduler.deleteJob(jobKey);
         } catch (Exception e) {
             log.error("删除定时任务失败", e);
-            throw new BadRequestException("删除定时任务失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "删除定时任务失败", e);
         }
     }
 
@@ -140,7 +141,7 @@ public class QuartzManage {
             scheduler.resumeJob(jobKey);
         } catch (Exception e) {
             log.error("恢复定时任务失败", e);
-            throw new BadRequestException("恢复定时任务失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "恢复定时任务失败", e);
         }
     }
 
@@ -163,7 +164,7 @@ public class QuartzManage {
             scheduler.triggerJob(jobKey, dataMap);
         } catch (Exception e) {
             log.error("定时任务执行失败", e);
-            throw new BadRequestException("定时任务执行失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "定时任务执行失败", e);
         }
     }
 
@@ -178,7 +179,7 @@ public class QuartzManage {
             scheduler.pauseJob(jobKey);
         } catch (Exception e) {
             log.error("定时任务暂停失败", e);
-            throw new BadRequestException("定时任务暂停失败");
+            throw new BusinessException(QuartzErrorCode.OPERATION_FAILED, "定时任务暂停失败", e);
         }
     }
 }

@@ -1,11 +1,16 @@
 package fun.rooe.admin.utils;
 
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import org.apache.commons.codec.binary.Base64;
+
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import java.io.ByteArrayOutputStream;
-import java.security.*;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -30,8 +35,12 @@ public class RsaUtils {
         PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec5);
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        byte[] result = doLongerCipherFinal(Cipher.DECRYPT_MODE, cipher, Base64.decodeBase64(text));
-        return new String(result);
+        try {
+            byte[] result = doLongerCipherFinal(Cipher.DECRYPT_MODE, cipher, Base64.decodeBase64(text));
+            return new String(result);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "密码格式无效，请重新输入", e);
+        }
     }
 
     /**

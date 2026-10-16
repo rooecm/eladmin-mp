@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.framework.config.security.security;
 
-import lombok.RequiredArgsConstructor;
 import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
@@ -32,10 +32,11 @@ public class TokenConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFi
     private final TokenProvider tokenProvider;
     private final SecurityProperties properties;
     private final OnlineSessionService onlineSessionService;
+    private final SecurityErrorResponseWriter errorWriter;
 
     @Override
     public void configure(HttpSecurity http) {
-        TokenFilter customFilter = new TokenFilter(tokenProvider, properties, onlineSessionService);
+        TokenFilter customFilter = new TokenFilter(tokenProvider, properties, onlineSessionService, errorWriter);
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }

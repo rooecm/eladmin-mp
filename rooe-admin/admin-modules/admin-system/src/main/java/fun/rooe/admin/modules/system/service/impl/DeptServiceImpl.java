@@ -19,7 +19,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
@@ -147,7 +148,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptDO> implements 
             dataService.checkDeptAccess(newPid);
         }
         if(request.getPid() != null && request.getId().equals(request.getPid())) {
-            throw new BadRequestException("上级不能为自己");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "上级部门不能为自己");
         }
         DeptDO dept = getById(request.getId());
         deptAssembler.updateDept(request, dept);
@@ -263,11 +264,11 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptDO> implements 
         Set<Long> deptIds = depts.stream().map(DeptDO::getId).collect(Collectors.toSet());
         if (userMapper.selectCount(
                 Wrappers.<UserDO>lambdaQuery().in(UserDO::getDeptId, deptIds)) > 0) {
-            throw new BadRequestException("所选部门存在用户关联，请解除后再试！");
+            throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选部门存在用户关联，请解除后再试");
         }
         if (roleDeptMapper.selectCount(
                 Wrappers.<RoleDeptDO>lambdaQuery().in(RoleDeptDO::getDeptId, deptIds)) > 0) {
-            throw new BadRequestException("所选部门存在角色关联，请解除后再试！");
+            throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选部门存在角色关联，请解除后再试");
         }
     }
 

@@ -16,9 +16,10 @@
 package fun.rooe.admin.infrastructure.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.domain.EmailConfigDO;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
+import fun.rooe.admin.infrastructure.error.EmailErrorCode;
 import fun.rooe.admin.infrastructure.mapper.EmailConfigMapper;
 import fun.rooe.admin.infrastructure.service.EmailService;
 import fun.rooe.admin.utils.EncryptUtils;
@@ -68,7 +69,7 @@ public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfig
     @Transactional(rollbackFor = Exception.class)
     public void send(EmailDTO emailDto, EmailConfigDO emailConfig) {
         if(emailConfig.getId() == null){
-            throw new BadRequestException("请先配置，再操作");
+            throw new BusinessException(EmailErrorCode.NOT_CONFIGURED);
         }
         // 封装
         String user = emailConfig.getFromUser().split("@")[0];
@@ -95,7 +96,7 @@ public class EmailServiceImpl extends ServiceImpl<EmailConfigMapper, EmailConfig
             message.setContent(emailDto.getContent(), "text/html;charset=UTF-8");
             Transport.send(message);
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BusinessException(EmailErrorCode.SEND_FAILED, e);
         }
     }
 }

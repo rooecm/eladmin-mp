@@ -15,15 +15,11 @@
  */
 package fun.rooe.admin.framework.config.security.config;
 
-import fun.rooe.admin.framework.config.security.security.JwtAccessDeniedHandler;
-import fun.rooe.admin.framework.config.security.security.JwtAuthenticationEntryPoint;
-import fun.rooe.admin.framework.config.security.security.TokenFilter;
-import fun.rooe.admin.framework.config.security.security.TokenProvider;
-import lombok.RequiredArgsConstructor;
+import fun.rooe.admin.enums.RequestMethodEnum;
 import fun.rooe.admin.framework.config.security.security.*;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.framework.utils.AnonTagUtils;
-import fun.rooe.admin.enums.RequestMethodEnum;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.ApplicationContext;
@@ -41,7 +37,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
-import java.util.*;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Zheng Jie
@@ -58,6 +56,7 @@ public class SpringSecurityConfig {
     private final ApplicationContext applicationContext;
     private final SecurityProperties properties;
     private final OnlineSessionService onlineSessionService;
+    private final SecurityErrorResponseWriter errorWriter;
 
     @Value("${swagger.enabled:true}")
     private boolean swaggerEnabled;
@@ -79,7 +78,7 @@ public class SpringSecurityConfig {
         // 获取匿名标记
         Map<String, Set<String>> anonymousUrls = AnonTagUtils.getAnonymousUrl(applicationContext);
         // 创建 TokenFilter
-        TokenFilter tokenFilter = new TokenFilter(tokenProvider, properties, onlineSessionService);
+        TokenFilter tokenFilter = new TokenFilter(tokenProvider, properties, onlineSessionService, errorWriter);
 
         return httpSecurity
                 // 添加 TokenFilter
@@ -100,6 +99,7 @@ public class SpringSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 授权配置
                 .authorizeHttpRequests(authorize -> {
+                    authorize.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll();
                         // 静态资源
                         authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(HttpMethod.GET, "/", "/index.html", "/webSocket/**").permitAll()

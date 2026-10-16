@@ -15,7 +15,9 @@
  */
 package fun.rooe.admin.modules.system.service.impl;
 
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.AuthErrorCode;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.domain.dto.EmailDTO;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.service.VerifyService;
@@ -53,7 +55,7 @@ public class VerifyServiceImpl implements VerifyService {
             String code = String.format("%06d", new SecureRandom().nextInt(1_000_000));
             // 存入缓存
             if(!redisUtils.set(redisKey, code, expiration)){
-                throw new BadRequestException("服务异常，请联系网站负责人");
+                throw new BusinessException(CommonErrorCode.INTERNAL_ERROR, "服务暂时不可用，请稍后重试");
             }
             content = TemplateUtils.render("email.ftl", Map.of("code", code));
             // 存在就再次发送原来的验证码
@@ -68,7 +70,7 @@ public class VerifyServiceImpl implements VerifyService {
     public void validated(String key, String code) {
         String value = redisUtils.get(key, String.class);
         if(value == null || !value.equals(code)){
-            throw new BadRequestException("无效验证码");
+            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
         } else {
             redisUtils.del(key);
         }

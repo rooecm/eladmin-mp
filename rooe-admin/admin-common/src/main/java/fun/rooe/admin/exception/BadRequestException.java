@@ -15,6 +15,7 @@
  */
 package fun.rooe.admin.exception;
 
+import fun.rooe.admin.error.CommonErrorCode;
 import lombok.Getter;
 
 /**
@@ -23,16 +24,16 @@ import lombok.Getter;
  * 统一异常处理
  */
 @Getter
-public class BadRequestException extends RuntimeException{
+public class BadRequestException extends BusinessException {
 
     private Integer status = 400;
 
     public BadRequestException(String msg){
-        super(msg);
+        super(CommonErrorCode.BUSINESS_REJECTED, msg);
     }
 
     public BadRequestException(Integer status,String msg){
-        super(msg);
+        super(CommonErrorCode.BUSINESS_REJECTED, msg);
         this.status = status;
     }
 }

@@ -1,12 +1,14 @@
 package fun.rooe.admin.modules.system.controller;
 
 import fun.rooe.admin.enums.CodeEnum;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.config.properties.RsaProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.request.*;
+import fun.rooe.admin.modules.system.error.UserErrorCode;
 import fun.rooe.admin.modules.system.service.UserCredentialService;
 import fun.rooe.admin.modules.system.service.UserService;
 import fun.rooe.admin.modules.system.service.VerifyService;
@@ -92,9 +94,9 @@ public class UserController {
               RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getNewPass());
       String username = SecurityUtils.getCurrentUsername();
       if (!userCredentialService.matches(username, oldPass))
-        throw new BadRequestException("旧密码错误");
+          throw new BusinessException(UserErrorCode.PASSWORD_INCORRECT, "旧密码错误");
       if (userCredentialService.matches(username, newPass))
-            throw new BadRequestException("新密码不能与旧密码相同");
+          throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "新密码不能与旧密码相同");
       userService.updatePass(username, newPass);
     }
 
@@ -121,7 +123,7 @@ public class UserController {
               RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getPassword());
       String username = SecurityUtils.getCurrentUsername();
       if (!userCredentialService.matches(username, password))
-            throw new BadRequestException("密码错误");
+          throw new BusinessException(UserErrorCode.PASSWORD_INCORRECT);
       verificationCodeService.validated(
               CodeEnum.EMAIL_RESET_EMAIL_CODE.getKey() + request.getEmail(), code);
       userService.updateEmail(username, request.getEmail());

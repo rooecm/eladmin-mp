@@ -17,10 +17,11 @@ package fun.rooe.admin.infrastructure.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
+import fun.rooe.admin.infrastructure.error.StorageErrorCode;
 import fun.rooe.admin.infrastructure.mapper.LocalStorageMapper;
 import fun.rooe.admin.infrastructure.service.LocalStorageService;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
@@ -69,10 +70,10 @@ public class LocalStorageServiceImpl extends ServiceImpl<LocalStorageMapper, Loc
         try {
             file = FileUtil.upload(multipartFile.getInputStream(), multipartFile.getOriginalFilename(), properties.getPath().getPath() + type +  File.separator);
         } catch (IOException e) {
-            throw new BadRequestException("上传失败");
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试");
         }
         if(Objects.isNull(file)){
-            throw new BadRequestException("上传失败");
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试");
         }
         try {
             name = StringUtils.isBlank(name) ? FileUtil.getFileNameNoEx(multipartFile.getOriginalFilename()) : name;

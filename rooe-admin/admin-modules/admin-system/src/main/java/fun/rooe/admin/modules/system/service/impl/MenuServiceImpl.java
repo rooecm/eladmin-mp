@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
@@ -123,7 +123,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(MenuUpdateRequest request) {
-        if (request.getId().equals(request.getPid())) throw new BadRequestException("上级不能为自己");
+        if (request.getId().equals(request.getPid()))
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "上级菜单不能为自己");
         validateUnique(request.getTitle(), request.getComponentName(), request.getId());
         validateFrame(request.getIFrame(), request.getPath());
         MenuDO menu = getById(request.getId());
@@ -140,13 +141,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
         MenuDO duplicate =
                 menuMapper.selectOne(Wrappers.<MenuDO>lambdaQuery().eq(MenuDO::getTitle, title));
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(MenuDO.class, "title", title);
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "菜单标题已存在");
         if (StringUtils.isNotBlank(componentName)) {
             duplicate =
                     menuMapper.selectOne(
                             Wrappers.<MenuDO>lambdaQuery().eq(MenuDO::getComponentName, componentName));
             if (duplicate != null && !duplicate.getId().equals(currentId))
-                throw new EntityExistException(MenuDO.class, "componentName", componentName);
+                throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "菜单组件名称已存在");
         }
     }
 
@@ -155,7 +156,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
                 && (path == null
                 || !(path.toLowerCase().startsWith(HTTP_PRE)
                 || path.toLowerCase().startsWith(HTTPS_PRE)))) {
-            throw new BadRequestException("外链必须以 http:// 或 https:// 开头");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "外链必须以 http:// 或 https:// 开头");
         }
     }
 

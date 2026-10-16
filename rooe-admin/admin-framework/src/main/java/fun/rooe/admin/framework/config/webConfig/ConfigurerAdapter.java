@@ -15,10 +15,13 @@
  */
 package fun.rooe.admin.framework.config.webConfig;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONWriter;
+import com.alibaba.fastjson2.annotation.JSONType;
 import com.alibaba.fastjson2.support.config.FastJsonConfig;
 import com.alibaba.fastjson2.support.spring6.http.converter.FastJsonHttpMessageConverter;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
+import fun.rooe.admin.response.ApiResult;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +34,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +81,8 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
 
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // ApiResult always includes data, including null, without changing DTO null handling.
+        JSON.mixIn(ApiResult.class, ApiResultJsonMixin.class);
         // 添加默认的 StringHttpMessageConverter
         converters.add(new StringHttpMessageConverter(StandardCharsets.UTF_8));
         // 配置 FastJsonHttpMessageConverter
@@ -95,5 +101,9 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
         fastJsonConverter.setDefaultCharset(StandardCharsets.UTF_8);
         // 将 FastJsonHttpMessageConverter 添加到列表末尾
         converters.add(fastJsonConverter);
+    }
+
+    @JSONType(serializeFeatures = JSONWriter.Feature.WriteNulls)
+    private abstract static class ApiResultJsonMixin {
     }
 }

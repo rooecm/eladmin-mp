@@ -6,99 +6,98 @@ import { getToken } from '@/utils/auth'
 import Config from '@/settings'
 import Cookies from 'js-cookie'
 
-// 创建axios实例
 const service = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.VUE_APP_BASE_API : '/', // api 的 base_url
-  timeout: Config.timeout // 请求超时时间
+  baseURL: process.env.NODE_ENV === 'production' ? process.env.VUE_APP_BASE_API : '/',
+  timeout: Config.timeout
 })
 
-// request拦截器
 service.interceptors.request.use(
   config => {
     if (getToken()) {
-      config.headers['Authorization'] = getToken() // 让每个请求携带自定义token 请根据实际情况自行修改
+      config.headers['Authorization'] = getToken()
     }
     config.headers['Content-Type'] = 'application/json'
     return config
   },
-  error => {
-    Promise.reject(error)
-  }
+  error => Promise.reject(error)
 )
 
-// response 拦截器
+export function isApiResult(result) {
+  return result && typeof result.code === 'string' && typeof result.message === 'string' &&
+    Object.prototype.hasOwnProperty.call(result, 'data')
+}
+
+function readBlob(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(blob, 'utf-8')
+  })
+}
+
+let redirectingToLogin = false
+
+// Shared by normal requests, direct Axios uploads, and failed Blob downloads.
+export async function handleApiError(error) {
+  const response = error.response
+  const status = response ? response.status : 0
+  let result = response && response.data
+  if (typeof Blob !== 'undefined' && result instanceof Blob) {
+    try {
+      result = JSON.parse(await readBlob(result))
+      response.data = result
+    } catch (e) {
+      result = null
+    }
+  }
+  const code = result && typeof result.code === 'string' ? result.code : undefined
+  const message = result && typeof result.message === 'string' && result.message
+    ? result.message
+    : (/timeout/i.test(error.message || '') ? '网络请求超时' : '接口请求失败')
+  if (code) {
+    error.code = code
+    error.businessCode = code
+  }
+  error.message = message
+  error.httpStatus = status
+
+  Notification.error({ title: message, duration: 5000 })
+
+  const sessionExpired = code === 'AUTH_1005'
+  const loginRequest = /(?:^|\/)auth\/login(?:\?|$)/.test((error.config || (response && response.config) || {}).url || '')
+  const legacyUnauthorized = status === 401 && (!code || code === '401') && !loginRequest
+  if ((sessionExpired || legacyUnauthorized) && getToken() && !redirectingToLogin) {
+    redirectingToLogin = true
+    try {
+      await store.dispatch('LogOut')
+      Cookies.set('point', 401)
+      location.reload()
+    } catch (e) {
+      router.push({ path: '/login' })
+    } finally {
+      redirectingToLogin = false
+    }
+  } else if (status === 403 && (!code || code === '403' || code === 'PERMISSION_1001')) {
+    router.push({ path: '/401' })
+  }
+  throw error
+}
+
 service.interceptors.response.use(
   response => {
     const result = response.data
-    // 识别 ApiResult，在请求层解包，供 CRUD 和业务页面统一使用
-    if (result && typeof result.code === 'string' && typeof result.message === 'string' &&
-      Object.prototype.hasOwnProperty.call(result, 'data')) {
+    if (isApiResult(result)) {
       if (result.code === '0') {
         return result.data
       }
-      const error = new Error(result.message || '接口请求失败')
-      error.code = result.code
+      const error = new Error(result.message)
       error.response = response
-      Notification.error({
-        title: error.message,
-        duration: 5000
-      })
-      return Promise.reject(error)
+      return handleApiError(error)
     }
     return result
   },
-  error => {
-    // 兼容blob下载出错json提示
-    if (error.response.data instanceof Blob && error.response.data.type.toLowerCase().indexOf('json') !== -1) {
-      const reader = new FileReader()
-      reader.readAsText(error.response.data, 'utf-8')
-      reader.onload = function(e) {
-        const errorMsg = JSON.parse(reader.result).message
-        Notification.error({
-          title: errorMsg,
-          duration: 5000
-        })
-      }
-    } else {
-      let status = 0
-      try {
-        status = error.response.status
-      } catch (e) {
-        if (error.toString().indexOf('Error: timeout') !== -1) {
-          Notification.error({
-            title: '网络请求超时',
-            duration: 5000
-          })
-          return Promise.reject(error)
-        }
-      }
-      console.log(status)
-      if (status) {
-        if (status === 401) {
-          store.dispatch('LogOut').then(() => {
-            // 用户登录界面提示
-            Cookies.set('point', 401)
-            location.reload()
-          })
-        } else if (status === 403) {
-          router.push({ path: '/401' })
-        } else {
-          const errorMsg = error.response.data.message
-          if (errorMsg !== undefined) {
-            Notification.error({
-              title: errorMsg,
-              duration: 5000
-            })
-          }
-        }
-      } else {
-        Notification.error({
-          title: '接口请求失败',
-          duration: 5000
-        })
-      }
-    }
-    return Promise.reject(error)
-  }
+  handleApiError
 )
+
 export default service

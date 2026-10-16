@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
+import fun.rooe.admin.infrastructure.error.StorageErrorCode;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.OnlineUserService;
@@ -217,13 +218,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Transactional(rollbackFor = Exception.class)
     public void updateCenter(UserCenterUpdateRequest request) {
         if (!request.getId().equals(SecurityUtils.getCurrentUserId()))
-            throw new BadRequestException("不能修改他人资料");
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "不能修改他人资料");
         UserDO user = getById(request.getId());
         UserDO duplicate =
                 userMapper.selectOne(
                         Wrappers.<UserDO>lambdaQuery().eq(UserDO::getPhone, request.getPhone()));
         if (duplicate != null && !user.getId().equals(duplicate.getId()))
-            throw new EntityExistException(UserDO.class, "phone", request.getPhone());
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "手机号已存在");
         assembler.updateCenter(request, user);
         updateById(user);
         delCaches(user.getId(), user.getUsername());
@@ -241,7 +242,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                             .min(Integer::compareTo)
                             .orElse(Integer.MAX_VALUE);
             if (currentLevel > targetLevel)
-                throw new BadRequestException("角色权限不足，不能删除：" + findById(id).getUsername());
+                throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "角色权限不足，无法操作该用户");
         }
         for (Long id : request.getIds()) {
             UserDO user = getById(id);
@@ -256,7 +257,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     private void checkLevel(Set<Long> roleIds) {
         if (roleService.getCurrentUserLevel() > roleService.findByRoleIds(roleIds))
-            throw new BadRequestException("角色权限不足");
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "角色权限不足，无法操作该用户");
     }
 
     private void checkUnique(String username, String email, String phone, Long currentId) {
@@ -275,7 +276,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     private void checkDuplicate(UserDO duplicate, Long currentId, String field, String value) {
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(UserDO.class, field, value);
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, switch (field) {
+                case "username" -> "用户名已存在";
+                case "email" -> "邮箱已存在";
+                case "phone" -> "手机号已存在";
+                default -> CommonErrorCode.DATA_ALREADY_EXISTS.getMessage();
+            });
     }
 
     private void insertRelations(Long userId, Set<IdReference> jobs, Set<IdReference> roles) {
@@ -352,7 +358,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     public void resetPwd(UserResetPasswordRequest request, String rawPassword) {
         List<UserDO> users = userMapper.selectBatchIds(request.getIds());
         if (users.size() != request.getIds().size()) {
-            throw new BadRequestException("User does not exist");
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "用户不存在");
         }
         for (UserDO user : users) {
             checkUserAccess(user);
@@ -377,7 +383,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         String image = "gif jpg png jpeg";
         String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
         if (fileType != null && !image.contains(fileType))
-            throw new BadRequestException("文件格式错误，仅支持 " + image);
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "文件格式错误，仅支持 " + image);
         UserDO user = findByUsername(SecurityUtils.getCurrentUsername());
         String oldPath = user.getAvatarPath();
         File file;
@@ -388,9 +394,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                             multipartFile.getOriginalFilename(),
                             properties.getPath().getAvatar());
         } catch (IOException e) {
-            throw new BadRequestException("头像上传失败");
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试", e);
         }
-        user.setAvatarPath(Objects.requireNonNull(file).getPath());
+        if (file == null) {
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试");
+        }
+        user.setAvatarPath(file.getPath());
         user.setAvatarName(file.getName());
         updateById(user);
         if (StringUtils.isNotBlank(oldPath)) FileUtil.del(oldPath);
@@ -447,7 +456,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     private void checkUserAccess(UserDO user) {
         if (user == null) {
-            throw new BadRequestException("User does not exist");
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "用户不存在");
         }
         dataService.checkUserAccess(user.getId(), user.getDeptId());
     }

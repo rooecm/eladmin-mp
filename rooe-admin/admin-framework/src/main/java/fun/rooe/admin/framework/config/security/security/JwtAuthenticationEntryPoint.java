@@ -15,15 +15,16 @@
  */
 package fun.rooe.admin.framework.config.security.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import fun.rooe.admin.error.AuthErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.response.ApiResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 /**
@@ -31,16 +32,13 @@ import java.io.IOException;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    private final SecurityErrorResponseWriter errorWriter;
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
-        // 当用户尝试访问安全的REST资源而不提供任何凭据时，将调用此方法发送401 响应
-        int code = HttpStatus.UNAUTHORIZED.value();
-        response.setStatus(code);
-        response.setContentType("application/json;charset=UTF-8");
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonResponse = objectMapper.writeValueAsString(ApiResult.error(HttpStatus.UNAUTHORIZED.value(), "登录状态已过期，请重新登录"));
-        response.getWriter().write(jsonResponse);
+        errorWriter.write(response, HttpStatus.UNAUTHORIZED, AuthErrorCode.SESSION_INVALID);
     }
 }

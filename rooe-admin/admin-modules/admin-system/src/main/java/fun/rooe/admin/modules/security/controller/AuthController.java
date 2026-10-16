@@ -16,7 +16,8 @@
 package fun.rooe.admin.modules.security.controller;
 
 import com.wf.captcha.base.Captcha;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.AuthErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.annotation.rest.AnonymousDeleteMapping;
 import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
@@ -44,6 +45,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -90,17 +92,17 @@ public class AuthController {
         // 清除验证码
         redisUtils.del(request.getUuid());
         if (StringUtils.isBlank(code)) {
-            throw new BadRequestException("验证码不存在或已过期");
+            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码不存在或已过期");
         }
         if (StringUtils.isBlank(request.getCode())
                 || !request.getCode().equalsIgnoreCase(code)) {
-            throw new BadRequestException("验证码错误");
+            throw new BusinessException(AuthErrorCode.CAPTCHA_INVALID, "验证码错误");
         }
         // 获取用户信息
         JwtUserDTO jwtUser = userDetailsService.loadUserByUsername(request.getUsername());
         // 验证用户密码
         if (!userCredentialService.matches(request.getUsername(), password)) {
-            throw new BadRequestException("登录密码错误");
+            throw new BadCredentialsException(AuthErrorCode.BAD_CREDENTIALS.getMessage());
         }
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());

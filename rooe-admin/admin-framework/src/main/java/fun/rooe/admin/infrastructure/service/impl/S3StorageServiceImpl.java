@@ -17,10 +17,12 @@ package fun.rooe.admin.infrastructure.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3StorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.S3StorageQueryCriteria;
+import fun.rooe.admin.infrastructure.error.StorageErrorCode;
 import fun.rooe.admin.infrastructure.mapper.S3StorageMapper;
 import fun.rooe.admin.infrastructure.service.S3StorageService;
 import fun.rooe.admin.infrastructure.utils.PageUtil;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -76,7 +79,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
         // 检查桶是否存在
         String bucketName = amzS3Config.getDefaultBucket();
         if (!bucketExists(bucketName)) {
-            throw new BadRequestException("存储桶不存在，请检查配置或权限。");
+            throw new BusinessException(StorageErrorCode.BUCKET_UNAVAILABLE);
         }
         // 遍历 ID 列表，删除对应的文件和数据库记录
         for (Long id : ids) {
@@ -98,6 +101,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             } catch (S3Exception e) {
                 // 处理 AWS 特定的异常
                 log.error("从 S3 删除文件时出错: {}", e.awsErrorDetails().errorMessage(), e);
+                throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件删除失败，请稍后重试", e);
             }
         }
     }
@@ -111,13 +115,13 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             if (createBucket(bucketName)){
                 log.info("存储桶 {} 创建成功。", bucketName);
             } else {
-                throw new BadRequestException("存储桶创建失败，请检查配置或权限。");
+                throw new BusinessException(StorageErrorCode.BUCKET_UNAVAILABLE, "存储桶创建失败，请检查配置或权限");
             }
         }
         // 获取文件名
         String originalName = file.getOriginalFilename();
         if (StringUtils.isBlank(originalName)) {
-            throw new IllegalArgumentException("文件名不能为空");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "文件名不能为空");
         }
         // 生成存储路径和文件名
         String folder = new SimpleDateFormat(amzS3Config.getTimeformat()).format(new Date());
@@ -142,8 +146,8 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             s3Storage.setFilePath(filePath);
             // 保存入库
             s3StorageMapper.insert(s3Storage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | SdkException e) {
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试", e);
         }
         // 设置地址
         return s3Storage;
@@ -174,7 +178,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
     public Map<String, String> privateDownload(Long id) {
         S3StorageDO storage = s3StorageMapper.selectById(id);
         if (storage == null) {
-            throw new BadRequestException("文件不存在或已被删除");
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "文件不存在或已被删除");
         }
         // 创建 GetObjectRequest，指定存储桶和文件键
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -191,10 +195,10 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
             base64Data = Base64.getEncoder().encodeToString(fileBytes);
         } catch (S3Exception e) {
             // 处理 AWS 特定的异常
-            throw new BadRequestException("从 S3 下载文件时出错: " + e.awsErrorDetails().errorMessage());
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件下载失败，请稍后重试", e);
         } catch (IOException e) {
             // 处理通用的 IO 异常 (IOUtils.toByteArray 可能会抛出)
-            throw new BadRequestException("读取 S3 输入流时出错: " + e.getMessage());
+            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件下载失败，请稍后重试", e);
         }
         // 构造返回数据
         Map<String, String> responseData = new HashMap<>();
@@ -226,7 +230,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
                 return false;
             }
             // 其他异常 (如 403 Forbidden) 说明存在问题，但不能断定它不存在
-            throw new BadRequestException("检查存储桶时出错: " + e.awsErrorDetails().errorMessage());
+            throw new BusinessException(StorageErrorCode.BUCKET_UNAVAILABLE, e);
         }
     }
 
@@ -255,7 +259,7 @@ public class S3StorageServiceImpl extends ServiceImpl<S3StorageMapper, S3Storage
         } catch (BucketAlreadyOwnedByYouException e) {
             log.warn("存储桶 '{}' 已经被您拥有，无需重复创建。", bucketName);
         } catch (S3Exception e) {
-            throw new BadRequestException("创建存储桶时出错: " + e.awsErrorDetails().errorMessage());
+            throw new BusinessException(StorageErrorCode.BUCKET_UNAVAILABLE, "存储桶创建失败，请检查配置或权限", e);
         }
         return true;
     }

@@ -15,11 +15,13 @@
  */
 package fun.rooe.admin.utils;
 
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -30,8 +32,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class FileUtil {
@@ -120,7 +120,7 @@ public class FileUtil {
 
     public static void checkSize(long maxSize, long size) {
         if (size > (maxSize * 1024 * 1024)) {
-            throw new BadRequestException("文件超出规定大小:" + maxSize + "MB");
+            throw new BusinessException(CommonErrorCode.FILE_TOO_LARGE, "文件超出规定大小:" + maxSize + "MB");
         }
     }
 

@@ -15,92 +15,126 @@
  */
 package fun.rooe.admin.framework.response;
 
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.exception.EntityExistException;
-import fun.rooe.admin.exception.EntityNotFoundException;
+import fun.rooe.admin.error.AuthErrorCode;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.error.ErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.response.ApiResult;
+import io.jsonwebtoken.JwtException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.context.MessageSourceResolvable;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
-/**
- * @author Zheng Jie
- * @date 2018-11-23
- */
+import java.util.stream.Stream;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionAdvice {
 
-    /**
-     * 处理所有不可知的异常
-     */
-    @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ApiResult<Void>> handleException(Throwable e) {
-        log.error("系统异常", e);
-        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResult<Void>> businessException(BusinessException e) {
+        log.warn("Business failure", e);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResult.failure(e.getErrorCode().getCode(), e.getMessage()));
     }
 
-    /**
-     * BadCredentialsException
-     */
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResult<Void>> badCredentialsException(BadCredentialsException e) {
-        String message = "坏的凭证".equals(e.getMessage()) ? "用户名或密码不正确" : e.getMessage();
-        log.error(message);
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, message);
-    }
-
-    /**
-     * 处理自定义异常
-     */
-    @ExceptionHandler(value = BadRequestException.class)
-    public ResponseEntity<ApiResult<Void>> badRequestException(BadRequestException e) {
-        log.error(e.getMessage());
-        return buildResponseEntity(HttpStatus.valueOf(e.getStatus()), e.getMessage());
-    }
-
-    /**
-     * 处理 EntityExist
-     */
-    @ExceptionHandler(value = EntityExistException.class)
-    public ResponseEntity<ApiResult<Void>> entityExistException(EntityExistException e) {
-        log.error(e.getMessage());
-        return buildResponseEntity(HttpStatus.CONFLICT, e.getMessage());
-    }
-
-    /**
-     * 处理 EntityNotFound
-     */
-    @ExceptionHandler(value = EntityNotFoundException.class)
-    public ResponseEntity<ApiResult<Void>> entityNotFoundException(EntityNotFoundException e) {
-        log.error(e.getMessage());
-        return buildResponseEntity(HttpStatus.NOT_FOUND, e.getMessage());
-    }
-
-    /**
-     * 处理所有接口数据验证异常
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        ObjectError objectError = e.getBindingResult().getAllErrors().get(0);
-        String message = objectError.getDefaultMessage();
-        if (objectError instanceof FieldError) {
-            message = ((FieldError) objectError).getField() + ": " + message;
+    @ExceptionHandler({AuthenticationException.class, JwtException.class})
+    public ResponseEntity<ApiResult<Void>> authenticationException(RuntimeException e) {
+        if (e instanceof AuthenticationServiceException) {
+            // The DAO provider can wrap known rejections thrown while loading user details.
+            if (e.getCause() instanceof AuthenticationException cause
+                    && !(cause instanceof AuthenticationServiceException)) {
+                e = cause;
+            } else {
+                return handleException(e);
+            }
         }
-        log.error(message);
-        return buildResponseEntity(HttpStatus.BAD_REQUEST, message);
+        if (e instanceof DisabledException) {
+            return failure(HttpStatus.FORBIDDEN, AuthErrorCode.ACCOUNT_DISABLED);
+        }
+        ErrorCode code = e instanceof BadCredentialsException || e instanceof UsernameNotFoundException
+                ? AuthErrorCode.BAD_CREDENTIALS : AuthErrorCode.SESSION_INVALID;
+        return failure(HttpStatus.UNAUTHORIZED, code);
     }
 
-    /**
-     * 统一返回
-     */
-    private ResponseEntity<ApiResult<Void>> buildResponseEntity(HttpStatus status, String message) {
-        return ResponseEntity.status(status).body(ApiResult.error(status.value(), message));
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResult<Void>> accessDeniedException(AccessDeniedException e) {
+        return failure(HttpStatus.FORBIDDEN, CommonErrorCode.ACCESS_DENIED);
+    }
+
+    @ExceptionHandler({BindException.class, ConstraintViolationException.class, HandlerMethodValidationException.class})
+    public ResponseEntity<ApiResult<Void>> validationException(Exception e) {
+        Stream<String> messages;
+        if (e instanceof BindException binding) {
+            messages = binding.getAllErrors().stream()
+                    .filter(error -> error instanceof FieldError field && field.isBindingFailure()
+                            || StringUtils.hasText(error.getDefaultMessage()))
+                    .map(error -> error instanceof FieldError field
+                            ? field.getField() + ": " + (field.isBindingFailure() ? "参数类型不正确" : field.getDefaultMessage())
+                            : error.getDefaultMessage());
+        } else if (e instanceof ConstraintViolationException constraint) {
+            messages = constraint.getConstraintViolations().stream()
+                    .map(error -> error.getPropertyPath() + ": " + error.getMessage());
+        } else {
+            HandlerMethodValidationException validation = (HandlerMethodValidationException) e;
+            if (validation.isForReturnValue()) {
+                return handleException(e);
+            }
+            messages = validation.getAllErrors().stream().map(MessageSourceResolvable::getDefaultMessage);
+        }
+        String message = messages.filter(StringUtils::hasText).sorted().findFirst()
+                .orElse(CommonErrorCode.INVALID_ARGUMENT.getMessage());
+        return failure(HttpStatus.BAD_REQUEST, CommonErrorCode.INVALID_ARGUMENT, message);
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, TypeMismatchException.class,
+            ServletRequestBindingException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<ApiResult<Void>> requestException(Exception e) {
+        return failure(HttpStatus.BAD_REQUEST, CommonErrorCode.INVALID_ARGUMENT);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResult<Void>> uploadSizeException(MaxUploadSizeExceededException e) {
+        return failure(HttpStatus.BAD_REQUEST, CommonErrorCode.FILE_TOO_LARGE);
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<ApiResult<Void>> duplicateKeyException(DuplicateKeyException e) {
+        log.warn("Duplicate data", e);
+        return failure(HttpStatus.CONFLICT, CommonErrorCode.DATA_ALREADY_EXISTS);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResult<Void>> handleException(Exception e) {
+        log.error("Unhandled system exception", e);
+        return failure(HttpStatus.INTERNAL_SERVER_ERROR, CommonErrorCode.INTERNAL_ERROR);
+    }
+
+    private ResponseEntity<ApiResult<Void>> failure(HttpStatus status, ErrorCode errorCode) {
+        return failure(status, errorCode, errorCode.getMessage());
+    }
+
+    private ResponseEntity<ApiResult<Void>> failure(HttpStatus status, ErrorCode errorCode, String message) {
+        return ResponseEntity.status(status).body(ApiResult.failure(errorCode.getCode(), message));
     }
 }

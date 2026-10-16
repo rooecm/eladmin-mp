@@ -16,7 +16,8 @@
 package fun.rooe.admin.modules.quartz.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.utils.SpringBeanHolder;
 import fun.rooe.admin.modules.quartz.domain.QuartzJobDO;
@@ -86,7 +87,7 @@ public class QuartzJobController {
     @PreAuthorize("@el.check('timing:add')")
     public void createQuartzJob(@Validated @RequestBody QuartzJobDO resources) {
         if (resources.getId() != null) {
-            throw new BadRequestException("A new " + ENTITY_NAME + " cannot already have an ID");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "新建任务不能指定 ID");
         }
         // 验证Bean是不是合法的，合法的定时任务 Bean 需要用 @Service 定义
         checkBean(resources.getBeanName());
@@ -136,7 +137,7 @@ public class QuartzJobController {
         // 避免调用攻击者可以从SpringContextHolder获得控制jdbcTemplate类
         // 并使用getDeclaredMethod调用jdbcTemplate的queryForMap函数，执行任意sql命令。
         if (!SpringBeanHolder.getAllServiceBeanName().contains(beanName)) {
-            throw new BadRequestException("非法的 Bean，请重新输入！");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "非法的 Bean，请重新输入");
         }
     }
 }

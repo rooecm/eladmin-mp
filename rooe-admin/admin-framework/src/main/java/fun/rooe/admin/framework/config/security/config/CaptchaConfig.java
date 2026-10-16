@@ -17,13 +17,15 @@ package fun.rooe.admin.framework.config.security.config;
 
 import com.wf.captcha.*;
 import com.wf.captcha.base.Captcha;
-import lombok.Data;
-import lombok.Getter;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.config.security.config.enums.LoginCodeEnum;
 import fun.rooe.admin.utils.StringUtils;
+import lombok.Data;
+import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
 import java.awt.*;
 
 /**
@@ -102,7 +104,7 @@ public class CaptchaConfig {
                 captcha.setLen(length);
                 break;
             default:
-                throw new BadRequestException("验证码配置信息错误！正确配置查看 LoginCodeEnum ");
+                throw new BusinessException(CommonErrorCode.INTERNAL_ERROR);
         }
         if(StringUtils.isNotBlank(fontName)){
             captcha.setFont(new Font(fontName, Font.PLAIN, fontSize));

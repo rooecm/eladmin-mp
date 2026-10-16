@@ -16,7 +16,8 @@
 package fun.rooe.admin.infrastructure.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.infrastructure.config.AmzS3Config;
 import fun.rooe.admin.infrastructure.domain.S3StorageDO;
@@ -85,7 +86,7 @@ public class S3StorageController {
         Map<String,Object> map = new HashMap<>(1);
         S3StorageDO storage = s3StorageService.getById(id);
         if (storage == null) {
-            throw new BadRequestException(404, "文件不存在或已被删除");
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "文件不存在或已被删除");
         }
         // 仅适合公开文件访问，私有文件可以使用服务中的 privateDownload 方法
         String url = amzS3Config.getDomain() + "/" + storage.getFilePath();

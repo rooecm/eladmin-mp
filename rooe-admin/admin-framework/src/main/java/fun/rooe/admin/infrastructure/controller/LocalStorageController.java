@@ -16,7 +16,8 @@
 package fun.rooe.admin.infrastructure.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.infrastructure.domain.LocalStorageDO;
 import fun.rooe.admin.infrastructure.domain.dto.LocalStorageQueryCriteria;
@@ -73,7 +74,7 @@ public class LocalStorageController {
         // 判断文件是否为图片
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
         if(!FileUtil.IMAGE.equals(FileUtil.getFileType(suffix))){
-            throw new BadRequestException("只能上传图片");
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "文件格式不支持");
         }
         LocalStorageDO localStorage = localStorageService.create(null, file);
         return localStorage;

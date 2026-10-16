@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.enums.DataScopeEnum;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
@@ -116,6 +116,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
             role = roleMapper.selectById(id);
             redisUtils.set(key, role, 1, TimeUnit.DAYS);
         }
+        if (role == null) {
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "角色不存在");
+        }
         return role;
     }
 
@@ -178,7 +181,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
         for (Long id : request.getIds()) checkLevel(findById(id).getLevel());
         if (userRoleMapper.selectCount(
                 Wrappers.<UserRoleDO>lambdaQuery().in(UserRoleDO::getRoleId, request.getIds())) > 0)
-            throw new BadRequestException("所选角色存在用户关联，请解除关联后再试");
+            throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选角色存在用户关联，请解除关联后再试");
         request.getIds().forEach(id -> delCaches(id, null));
         removeBatchByIds(request.getIds());
         roleDeptMapper.delete(
@@ -190,7 +193,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     private void checkName(String name, Long currentId) {
         RoleDO duplicate = roleMapper.selectOne(Wrappers.<RoleDO>lambdaQuery().eq(RoleDO::getName, name));
         if (duplicate != null && !duplicate.getId().equals(currentId))
-            throw new EntityExistException(RoleDO.class, "name", name);
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "角色名称已存在");
     }
 
     private void insertDepts(Long roleId, Set<IdReference> refs) {
@@ -225,19 +228,19 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
             String value, Set<IdReference> refs, Long existingRoleId) {
         DataScopeEnum configuredScope = DataScopeEnum.find(value);
         if (configuredScope == null) {
-            throw new BadRequestException("Invalid data scope: " + value);
+            throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "数据权限范围配置无效");
         }
         UserDataScope currentScope = dataService.getCurrentDataScope();
         if (configuredScope == DataScopeEnum.ALL && !currentScope.isAll()) {
-            throw new BadRequestException("Cannot grant a data scope broader than your own");
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "不能授予超出自身的数据权限");
         }
         if (configuredScope == DataScopeEnum.CUSTOM) {
             Set<Long> deptIds = ids(refs);
             if (deptIds.isEmpty()) {
-                throw new BadRequestException("Custom data scope departments cannot be empty");
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "自定义数据权限必须选择部门");
             }
             if (deptMapper.selectBatchIds(deptIds).size() != deptIds.size()) {
-                throw new BadRequestException("Data scope contains a department that does not exist");
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "数据权限包含不存在的部门");
             }
             dataService.checkDeptAccess(deptIds);
         }
@@ -258,13 +261,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
         }
         List<RoleDO> roles = roleMapper.selectBatchIds(roleIds);
         if (roles.size() != roleIds.size()) {
-            throw new BadRequestException("Role does not exist");
+            throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "角色不存在");
         }
         for (RoleDO role : roles) {
             DataScopeEnum configuredScope = DataScopeEnum.find(role.getDataScope());
             if (configuredScope == null) {
-                throw new BadRequestException(
-                        "Invalid data scope configured for role: " + role.getName());
+                throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "数据权限范围配置无效");
             }
             checkConfiguredScope(configuredScope, role.getId(), targetDeptId);
         }
@@ -275,8 +277,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
         switch (configuredScope) {
             case ALL -> {
                 if (!dataService.getCurrentDataScope().isAll()) {
-                    throw new BadRequestException(
-                            "Cannot grant a data scope broader than your own");
+                    throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "不能授予超出自身的数据权限");
                 }
             }
             case DEPT -> dataService.checkDeptAccess(targetDeptId);
@@ -327,7 +328,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     private void checkLevel(Integer level) {
         int currentLevel = getCurrentUserLevel();
         if (level == null || level < currentLevel)
-            throw new BadRequestException("权限不足，当前角色级别：" + currentLevel + "，操作角色级别：" + level);
+            throw new BusinessException(CommonErrorCode.ACCESS_DENIED, "权限不足，无法操作该级别的角色");
     }
 
     /** Builds deduplicated menu permissions for the authentication principal. */

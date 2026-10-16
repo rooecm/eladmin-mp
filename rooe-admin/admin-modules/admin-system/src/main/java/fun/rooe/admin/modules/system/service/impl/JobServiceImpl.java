@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.constant.CacheKey;
-import fun.rooe.admin.exception.BadRequestException;
-import fun.rooe.admin.exception.EntityExistException;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.domain.dto.JobDTO;
@@ -88,7 +88,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, JobDO> implements Job
     public void create(JobCreateRequest request) {
         if (jobMapper.selectOne(Wrappers.<JobDO>lambdaQuery().eq(JobDO::getName, request.getName()))
                 != null) {
-            throw new EntityExistException(JobDO.class, "name", request.getName());
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "岗位名称已存在");
         }
         save(assembler.toEntity(request));
     }
@@ -101,7 +101,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, JobDO> implements Job
                 jobMapper.selectOne(
                         Wrappers.<JobDO>lambdaQuery().eq(JobDO::getName, request.getName()));
         if (duplicate != null && !duplicate.getId().equals(request.getId())) {
-            throw new EntityExistException(JobDO.class, "name", request.getName());
+            throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "岗位名称已存在");
         }
         assembler.updateEntity(request, job);
         updateById(job);
@@ -113,7 +113,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, JobDO> implements Job
     public void delete(JobDeleteRequest request) {
         if (userJobMapper.selectCount(
                 Wrappers.<UserJobDO>lambdaQuery().in(UserJobDO::getJobId, request.getIds())) > 0) {
-            throw new BadRequestException("所选岗位存在用户关联，请解除关联后再试");
+            throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选岗位存在用户关联，请解除关联后再试");
         }
         removeBatchByIds(request.getIds());
         request.getIds().forEach(this::delCaches);

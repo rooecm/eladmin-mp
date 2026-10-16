@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.exception.BadRequestException;
+import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
 import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
@@ -25,6 +25,8 @@ import fun.rooe.admin.modules.system.service.RoleService;
 import fun.rooe.admin.modules.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -49,10 +51,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (jwtUserDto == null || jwtUserDto.getDataScopeMode() == null) {
             UserLoginDTO user = userService.getLoginData(username);
             if (user == null) {
-                throw new BadRequestException("用户不存在");
+                throw new BadCredentialsException(AuthErrorCode.BAD_CREDENTIALS.getMessage());
             } else {
                 if (!user.getEnabled()) {
-                    throw new BadRequestException("账号未激活！");
+                    throw new DisabledException(AuthErrorCode.ACCOUNT_DISABLED.getMessage());
                 }
                 // 获取用户的权限
                 List<AuthorityDTO> authorities = roleService.buildPermissions(user);

@@ -1,10 +1,8 @@
 package fun.rooe.admin.framework.config.security.security;
 
-import fun.rooe.admin.framework.config.security.security.TokenFilter;
-import fun.rooe.admin.framework.config.security.security.TokenProvider;
-import jakarta.servlet.FilterChain;
 import fun.rooe.admin.framework.config.security.config.SecurityProperties;
 import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
+import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.*;
 
 class TokenFilterTest {
@@ -34,7 +33,7 @@ class TokenFilterTest {
         SecurityProperties properties = new SecurityProperties();
         properties.setHeader("Authorization");
         properties.setTokenStartWith("Bearer");
-        filter = new TokenFilter(tokenProvider, properties, sessions);
+        filter = new TokenFilter(tokenProvider, properties, sessions, mock(SecurityErrorResponseWriter.class));
     }
 
     @AfterEach
