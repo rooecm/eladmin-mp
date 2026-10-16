@@ -23,8 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.*;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -37,12 +38,10 @@ import java.util.stream.Collectors;
 public class RedisUtils {
     private static final Logger log = LoggerFactory.getLogger(RedisUtils.class);
 
-    private RedisTemplate<Object, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public RedisUtils(RedisTemplate<Object, Object> redisTemplate) {
+    public RedisUtils(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
-        this.redisTemplate.setKeySerializer(new StringRedisSerializer());
-        this.redisTemplate.setHashKeySerializer(new StringRedisSerializer());
     }
 
     /**
@@ -88,7 +87,7 @@ public class RedisUtils {
      * @param key 键 不能为null
      * @return 时间(秒) 返回0代表为永久有效
      */
-    public long getExpire(Object key) {
+    public long getExpire(String key) {
         return redisTemplate.getExpire(key, TimeUnit.SECONDS);
     }
 
@@ -105,7 +104,7 @@ public class RedisUtils {
         Cursor<byte[]> cursor = rc.scan(options);
         List<String> result = new ArrayList<>();
         while (cursor.hasNext()) {
-            result.add(new String(cursor.next()));
+            result.add(new String(cursor.next(), StandardCharsets.UTF_8));
         }
         try {
             RedisConnectionUtils.releaseConnection(rc, factory);
@@ -181,7 +180,7 @@ public class RedisUtils {
                 log.debug(new StringBuilder("删除缓存：").append(keys[0]).append("，结果：").append(result).toString());
                 log.debug("--------------------------------------------");
             } else {
-                Set<Object> keySet = new HashSet<>();
+                Set<String> keySet = new HashSet<>();
                 for (String key : keys) {
                     if (redisTemplate.hasKey(key))
                         keySet.add(key);
@@ -201,9 +200,9 @@ public class RedisUtils {
      */
     public void scanDel(String pattern){
         ScanOptions options = ScanOptions.scanOptions().match(pattern).build();
-        try (Cursor<byte[]> cursor = redisTemplate.executeWithStickyConnection(
-                (RedisCallback<Cursor<byte[]>>) connection -> (Cursor<byte[]>) new ConvertingCursor<>(
-                        connection.scan(options), redisTemplate.getKeySerializer()::deserialize))) {
+        try (Cursor<String> cursor = redisTemplate.executeWithStickyConnection(
+                (RedisCallback<Cursor<String>>) connection -> new ConvertingCursor<>(
+                        connection.scan(options), bytes -> new String(bytes, StandardCharsets.UTF_8)))) {
             while (cursor.hasNext()) {
                 redisTemplate.delete(cursor.next());
             }
@@ -778,7 +777,7 @@ public class RedisUtils {
      * @param ids    id
      */
     public void delByKeys(String prefix, Set<Long> ids) {
-        Set<Object> keys = new HashSet<>();
+        Set<String> keys = new HashSet<>();
         for (Long id : ids) {
             keys.addAll(redisTemplate.keys(new StringBuffer(prefix).append(id).toString()));
         }

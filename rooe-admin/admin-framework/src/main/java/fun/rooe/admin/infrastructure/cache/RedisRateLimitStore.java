@@ -1,7 +1,7 @@
 package fun.rooe.admin.infrastructure.cache;
 
 import fun.rooe.admin.framework.cache.RateLimitStore;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
@@ -27,9 +27,9 @@ public class RedisRateLimitStore implements RateLimitStore {
                     "\nreturn c;",
             Long.class);
 
-    private final RedisTemplate<Object, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
-    public RedisRateLimitStore(RedisTemplate<Object, Object> redisTemplate) {
+    public RedisRateLimitStore(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

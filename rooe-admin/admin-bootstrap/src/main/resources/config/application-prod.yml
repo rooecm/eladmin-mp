@@ -1,5 +1,16 @@
 #配置数据源
 spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+      # 生产连接信息由部署环境注入，不在仓库中保存凭据
+      database: ${REDIS_DATABASE:0}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:3s}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3s}
   datasource:
     druid:
       db-type: com.alibaba.druid.pool.DruidDataSource
