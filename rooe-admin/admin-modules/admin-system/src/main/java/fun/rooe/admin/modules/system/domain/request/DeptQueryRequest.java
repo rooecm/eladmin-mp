@@ -19,8 +19,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -48,5 +49,6 @@ public class DeptQueryRequest {
 
     @Schema(description = "创建时间")
     @Size(min = 2, max = 2, message = "创建时间必须包含开始时间和结束时间")
-    private List<Timestamp> createTime;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private List<LocalDateTime> createTime;
 }

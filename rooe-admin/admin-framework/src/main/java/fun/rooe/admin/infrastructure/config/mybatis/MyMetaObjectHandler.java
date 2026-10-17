@@ -19,7 +19,9 @@ import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * @author Zheng Jie
@@ -32,8 +34,11 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         /* 创建时间 */
-        this.strictInsertFill(metaObject, "createTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
-        this.strictInsertFill(metaObject, "updateTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        this.strictInsertFill(metaObject, "createTime", Timestamp.class, now);
+        this.strictInsertFill(metaObject, "updateTime", Timestamp.class, now);
+        this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, now.toLocalDateTime());
+        this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now.toLocalDateTime());
         /* 操作人 */
         String username = "System";
         try {username = SecurityUtils.getCurrentUsername();}catch (Exception ignored){}
@@ -44,7 +49,9 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         /* 更新时间 */
-        this.strictUpdateFill(metaObject, "updateTime", Timestamp.class, new Timestamp(System.currentTimeMillis()));
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        this.strictUpdateFill(metaObject, "updateTime", Timestamp.class, now);
+        this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, now.toLocalDateTime());
         /* 操作人 */
         String username = "System";
         try {username = SecurityUtils.getCurrentUsername();}catch (Exception ignored){}
