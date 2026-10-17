@@ -1,6 +1,13 @@
 spring:
   application:
     name: rooe-admin
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    # 已有数据的库首次启动只打基线标记并跳过 V1，只有空库会真正执行 V1__baseline.sql
+    baseline-on-migrate: true
+    baseline-version: 1
+    # clean 会清空整个 schema，显式关掉以免版本升级或误操作让它重新可用
+    clean-disabled: true
   freemarker:
     check-template-location: false
   profiles: # 激活的环境
