@@ -1,6 +1,7 @@
 package fun.rooe.admin.modules.system.service.impl;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
@@ -26,6 +27,9 @@ class DataServiceImplTest {
     private RoleMapper roleMapper;
     private DeptMapper deptMapper;
     private DataServiceImpl service;
+    // 与 Spring Boot 默认配置一致：忽略未知属性
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     @BeforeEach
     void setUp() {
@@ -125,10 +129,11 @@ class DataServiceImplTest {
     }
 
     @Test
-    void dataScopeSurvivesCacheSerialization() {
+    void dataScopeSurvivesCacheSerialization() throws Exception {
         UserDataScope original = UserDataScope.limited(List.of(10L, 20L), 1L, 30L);
 
-        UserDataScope restored = JSON.parseObject(JSON.toJSONString(original), UserDataScope.class);
+        UserDataScope restored =
+                objectMapper.readValue(objectMapper.writeValueAsString(original), UserDataScope.class);
 
         assertEquals(original, restored);
     }

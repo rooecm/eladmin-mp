@@ -222,7 +222,7 @@ class LogbookWebLoggingTest {
                         .map(FilterRegistrationBean::getFilter).toArray(jakarta.servlet.Filter[]::new);
                 var mvc = MockMvcBuilders.standaloneSetup(new TestController())
                         .addFilters(filters)
-                        .addFilters(new ConfigurerAdapter(new FileProperties()).corsFilter())
+                        .addFilters(new ConfigurerAdapter(new FileProperties(), new ObjectMapper()).corsFilter())
                         .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
                 assertion.verify(mvc, events);
             } finally {

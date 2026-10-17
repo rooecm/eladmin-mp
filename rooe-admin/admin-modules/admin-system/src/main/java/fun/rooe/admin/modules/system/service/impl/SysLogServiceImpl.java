@@ -1,12 +1,11 @@
 package fun.rooe.admin.modules.system.service.impl;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.framework.annotation.Log;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.system.converter.SysLogAssembler;
@@ -23,6 +22,7 @@ import fun.rooe.admin.utils.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.scheduling.annotation.Async;
@@ -34,7 +34,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Zheng Jie
@@ -42,10 +45,12 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> implements SysLogService {
 
     private final SysLogMapper sysLogMapper;
     private final SysLogAssembler assembler;
+    private final ObjectMapper objectMapper;
     // 定义敏感字段常量数组
     private static final String[] SENSITIVE_KEYS = {"password"};
 
@@ -125,20 +130,27 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> imple
         String methodName = joinPoint.getTarget().getClass().getName() + "." + signature.getName() + "()";
 
         // 获取参数
-        JSONObject params = getParameter(method, joinPoint.getArgs());
+        Map<String, Object> params = getParameter(method, joinPoint.getArgs());
 
         // 填充基本信息
         sysLog.setRequestIp(ip);
         sysLog.setAddress(StringUtils.getCityInfo(sysLog.getRequestIp()));
         sysLog.setMethod(methodName);
         sysLog.setUsername(username);
-        sysLog.setParams(JSON.toJSONString(params));
+        try {
+            sysLog.setParams(objectMapper.writeValueAsString(params));
+        } catch (JsonProcessingException exception) {
+            // 参数序列化失败不应影响日志保存
+            log.warn("Could not serialize log parameters: {}", exception.getMessage());
+            sysLog.setParams(String.valueOf(params));
+        }
         sysLog.setBrowser(browser);
         sysLog.setDescription(aopLog.value());
 
         // 如果没有获取到用户名，尝试从参数中获取
         if(StringUtils.isBlank(sysLog.getUsername())){
-            sysLog.setUsername(params.getString("username"));
+            Object usernameParam = params.get("username");
+            sysLog.setUsername(usernameParam == null ? null : usernameParam.toString());
         }
 
         // 保存
@@ -148,8 +160,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> imple
     /**
      * 根据方法和传入的参数获取请求参数
      */
-    private JSONObject getParameter(Method method, Object[] args) {
-        JSONObject params = new JSONObject();
+    private Map<String, Object> getParameter(Method method, Object[] args) {
+        Map<String, Object> params = new LinkedHashMap<>();
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             // 过滤掉 MultiPartFile
@@ -167,11 +179,11 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> imple
             // 将RequestBody注解修饰的参数作为请求参数
             RequestBody requestBody = parameters[i].getAnnotation(RequestBody.class);
             if (requestBody != null) {
-                Object json = JSON.toJSON(args[i]);
-                if (json instanceof JSONArray) {
-                    params.put("reqBodyList", json);
+                Object json = objectMapper.convertValue(args[i], Object.class);
+                if (json instanceof Map<?, ?> map) {
+                    map.forEach((key, value) -> params.put(String.valueOf(key), value));
                 } else {
-                    params.putAll((JSONObject) json);
+                    params.put("reqBodyList", json);
                 }
             } else {
                 String key = parameters[i].getName();
@@ -179,9 +191,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> imple
             }
         }
         // 遍历敏感字段数组并替换值
-        Set<String> keys = params.keySet();
         for (String key : SENSITIVE_KEYS) {
-            if (keys.contains(key)) {
+            if (params.containsKey(key)) {
                 params.put(key, "******");
             }
         }

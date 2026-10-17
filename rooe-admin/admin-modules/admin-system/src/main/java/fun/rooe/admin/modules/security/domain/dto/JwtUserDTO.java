@@ -15,12 +15,12 @@
  */
 package fun.rooe.admin.modules.security.domain.dto;
 
-import com.alibaba.fastjson2.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
  * @date 2018-11-23
  */
 @Getter
-@AllArgsConstructor
 public class JwtUserDTO implements UserDetails {
 
     @Schema(description = "用户")
@@ -50,6 +49,20 @@ public class JwtUserDTO implements UserDetails {
 
     @Schema(description = "角色")
     private final List<AuthorityDTO> authorities;
+
+    @JsonCreator
+    public JwtUserDTO(
+            @JsonProperty("user") UserLoginDTO user,
+            @JsonProperty("dataScopes") List<Long> dataScopes,
+            @JsonProperty("dataScopeMode") UserDataScope.Mode dataScopeMode,
+            @JsonProperty("dataScopeIncludesSelf") boolean dataScopeIncludesSelf,
+            @JsonProperty("authorities") List<AuthorityDTO> authorities) {
+        this.user = user;
+        this.dataScopes = dataScopes;
+        this.dataScopeMode = dataScopeMode;
+        this.dataScopeIncludesSelf = dataScopeIncludesSelf;
+        this.authorities = authorities;
+    }
 
     public JwtUserDTO(
             UserLoginDTO user, List<Long> dataScopes, List<AuthorityDTO> authorities) {
@@ -69,7 +82,6 @@ public class JwtUserDTO implements UserDetails {
 
     @Override
     @JsonIgnore
-    @JSONField(serialize = false)
     public String getPassword() {
         // Passwords are verified through UserCredentialService and never enter the cached
         // principal.
@@ -77,31 +89,31 @@ public class JwtUserDTO implements UserDetails {
     }
 
     @Override
-    @JSONField(serialize = false)
+    @JsonIgnore
     public String getUsername() {
         return user.getUsername();
     }
 
-    @JSONField(serialize = false)
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
-    @JSONField(serialize = false)
+    @JsonIgnore
     public boolean isEnabled() {
         return user.getEnabled();
     }

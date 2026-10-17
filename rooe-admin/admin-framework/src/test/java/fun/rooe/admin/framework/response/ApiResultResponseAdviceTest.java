@@ -151,10 +151,14 @@ class ApiResultResponseAdviceTest {
     }
 
     @Test
-    void productionFastJsonConverterKeepsDataNullOnSuccessAndFailure() throws Exception {
+    void productionJacksonConverterKeepsDataNullOnSuccessAndFailure() throws Exception {
         var converters = new java.util.ArrayList<org.springframework.http.converter.HttpMessageConverter<?>>();
+        // 模拟 WebMvcConfigurationSupport 注册的默认转换器
+        converters.add(new org.springframework.http.converter.StringHttpMessageConverter());
+        converters.add(new org.springframework.http.converter.json.MappingJackson2HttpMessageConverter());
         new fun.rooe.admin.framework.config.webConfig.ConfigurerAdapter(
-                new fun.rooe.admin.infrastructure.config.properties.FileProperties()).configureMessageConverters(converters);
+                new fun.rooe.admin.infrastructure.config.properties.FileProperties(), objectMapper)
+                .extendMessageConverters(converters);
         mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
                 .setMessageConverters(converters.toArray(org.springframework.http.converter.HttpMessageConverter[]::new))
                 .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();

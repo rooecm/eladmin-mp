@@ -1,5 +1,6 @@
 package fun.rooe.admin.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
@@ -20,6 +21,7 @@ class RedissonSpringDataIntegrationTest {
     void usesRedissonAsTheOnlySpringDataRedisConnectionFactory() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.registerBean(RedissonClient.class, () -> mock(RedissonClient.class));
+            context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
             context.register(RedissonAutoConfigurationV2.class, RedisConfiguration.class);
             context.refresh();
 

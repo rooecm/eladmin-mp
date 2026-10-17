@@ -15,9 +15,9 @@
  */
 package fun.rooe.admin.framework.utils;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.model.UserDataScope;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
@@ -70,11 +72,11 @@ public class SecurityUtils {
      * @return /
      */
     public static List<Long> getCurrentUserDataScope(){
-        UserDetails userDetails = getCurrentUser();
-        // 将 Java 对象转换为 JSONObject 对象
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(userDetails);
-        JSONArray jsonArray = jsonObject.getJSONArray("dataScopes");
-        return JSON.parseArray(jsonArray.toJSONString(), Long.class);
+        // 将 Java 对象转换为 JsonNode 对象
+        JsonNode jsonNode = objectMapper().valueToTree(getCurrentUser());
+        List<Long> dataScopes = new ArrayList<>();
+        jsonNode.path("dataScopes").forEach(node -> dataScopes.add(node.asLong()));
+        return dataScopes;
     }
 
     /**
@@ -88,15 +90,14 @@ public class SecurityUtils {
     }
 
     public static UserDataScope.Mode getCurrentUserDataScopeMode() {
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(getCurrentUser());
-        String mode = jsonObject.getString("dataScopeMode");
-        if (mode == null) {
+        JsonNode modeNode = objectMapper().valueToTree(getCurrentUser()).get("dataScopeMode");
+        if (modeNode == null || modeNode.isNull()) {
             return getCurrentUserDataScope().isEmpty()
                     ? UserDataScope.Mode.NONE
                     : UserDataScope.Mode.LIMITED;
         }
         try {
-            return UserDataScope.Mode.valueOf(mode);
+            return UserDataScope.Mode.valueOf(modeNode.asText());
         } catch (IllegalArgumentException exception) {
             return UserDataScope.Mode.NONE;
         }
@@ -115,7 +116,8 @@ public class SecurityUtils {
      * @return 系统用户ID
      */
     public static Long getCurrentUserId(String token) {
-        return getClaims(token).getLong("userId");
+        JsonNode userId = getClaims(token).get("userId");
+        return userId == null || userId.isNull() ? null : userId.asLong();
     }
 
     /**
@@ -133,7 +135,8 @@ public class SecurityUtils {
      * @return 系统用户名称
      */
     public static String getCurrentUsername(String token) {
-        return getClaims(token).getString("sub");
+        JsonNode subject = getClaims(token).get("sub");
+        return subject == null || subject.isNull() ? null : subject.asText();
     }
 
     /**
@@ -153,9 +156,17 @@ public class SecurityUtils {
         return null;
     }
 
-    private static JSONObject getClaims(String token) {
+    private static JsonNode getClaims(String token) {
         String[] tokenParts = token.split("\\.");
-        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]));
-        return JSON.parseObject(payload);
+        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]), StandardCharsets.UTF_8);
+        try {
+            return objectMapper().readTree(payload);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalArgumentException("Invalid token payload", exception);
+        }
+    }
+
+    private static ObjectMapper objectMapper() {
+        return SpringBeanHolder.getBean(ObjectMapper.class);
     }
 }

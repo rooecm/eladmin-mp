@@ -15,19 +15,14 @@
  */
 package fun.rooe.admin.framework.config.webConfig;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONWriter;
-import com.alibaba.fastjson2.annotation.JSONType;
-import com.alibaba.fastjson2.support.config.FastJsonConfig;
-import com.alibaba.fastjson2.support.spring6.http.converter.FastJsonHttpMessageConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
-import fun.rooe.admin.response.ApiResult;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -36,7 +31,6 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,8 +47,14 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
     /** 文件配置 */
     private final FileProperties properties;
 
-    public ConfigurerAdapter(FileProperties properties) {
+    /**
+     * Spring Boot 统一配置的 JSON 序列化器
+     */
+    private final ObjectMapper objectMapper;
+
+    public ConfigurerAdapter(FileProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -80,30 +80,17 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        // ApiResult always includes data, including null, without changing DTO null handling.
-        JSON.mixIn(ApiResult.class, ApiResultJsonMixin.class);
-        // 添加默认的 StringHttpMessageConverter
-        converters.add(new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        // 配置 FastJsonHttpMessageConverter
-        FastJsonHttpMessageConverter fastJsonConverter = new FastJsonHttpMessageConverter();
-        List<MediaType> supportMediaTypeList = new ArrayList<>();
-        supportMediaTypeList.add(MediaType.APPLICATION_JSON);
-        FastJsonConfig config = new FastJsonConfig();
-        config.setDateFormat("yyyy-MM-dd HH:mm:ss");
-        // 开启引用检测，枚举支持
-        config.setWriterFeatures(
-                JSONWriter.Feature.WriteEnumUsingToString,
-                JSONWriter.Feature.ReferenceDetection
-        );
-        fastJsonConverter.setFastJsonConfig(config);
-        fastJsonConverter.setSupportedMediaTypes(supportMediaTypeList);
-        fastJsonConverter.setDefaultCharset(StandardCharsets.UTF_8);
-        // 将 FastJsonHttpMessageConverter 添加到列表末尾
-        converters.add(fastJsonConverter);
-    }
-
-    @JSONType(serializeFeatures = JSONWriter.Feature.WriteNulls)
-    private abstract static class ApiResultJsonMixin {
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        for (int i = 0; i < converters.size(); i++) {
+            HttpMessageConverter<?> converter = converters.get(i);
+            // 默认的 StringHttpMessageConverter 使用 ISO-8859-1，这里统一为 UTF-8
+            if (converter instanceof StringHttpMessageConverter) {
+                converters.set(i, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+            }
+            // 使用 Spring Boot 配置的 ObjectMapper，保持日期格式与 null 策略一致
+            if (converter instanceof MappingJackson2HttpMessageConverter) {
+                converters.set(i, new MappingJackson2HttpMessageConverter(objectMapper));
+            }
+        }
     }
 }

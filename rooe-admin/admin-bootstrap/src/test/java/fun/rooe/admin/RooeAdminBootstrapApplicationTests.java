@@ -16,6 +16,7 @@ import fun.rooe.admin.modules.system.mapper.RoleMapper;
 import fun.rooe.admin.modules.system.mapper.UserMapper;
 import fun.rooe.admin.modules.system.service.RoleService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -23,6 +24,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +35,28 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = RooeAdminApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@EnabledIf("integrationEnvironmentAvailable")
 public class RooeAdminBootstrapApplicationTests {
+
+    // 集成测试依赖 application-dev.yml 中配置的 Redis 与 MySQL，Redis 地址可通过环境变量覆盖；
+    // 环境不可达时整类跳过，避免本地开发因缺少基础设施而构建失败
+    private static final String REDIS_HOST = System.getenv().getOrDefault("REDIS_HOST", "192.168.2.10");
+    private static final int REDIS_PORT = Integer.parseInt(System.getenv().getOrDefault("REDIS_PORT", "6379"));
+    private static final String DB_HOST = "192.168.2.10";
+    private static final int DB_PORT = 3306;
+
+    static boolean integrationEnvironmentAvailable() {
+        return isReachable(REDIS_HOST, REDIS_PORT) && isReachable(DB_HOST, DB_PORT);
+    }
+
+    private static boolean isReachable(String host, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), 2000);
+            return true;
+        } catch (IOException exception) {
+            return false;
+        }
+    }
 
     @Autowired
     private ApplicationContext applicationContext;

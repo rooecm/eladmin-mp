@@ -1,11 +1,11 @@
 package fun.rooe.admin.modules.system.service.impl;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.system.converter.SysLogAssembler;
 import fun.rooe.admin.modules.system.domain.dto.SysLogDTO;
@@ -25,9 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,13 +36,15 @@ class SysLogServiceImplTest {
     private SysLogMapper mapper;
     private SysLogServiceImpl service;
     private LambdaQueryWrapper<SysLogDO> capturedQuery;
+    // 使用 JVM 默认时区，保证时间戳的构造与格式化一致
+    private final ObjectMapper objectMapper = new ObjectMapper().setTimeZone(TimeZone.getDefault());
 
     @BeforeEach
     void setUp() {
         TableInfoHelper.initTableInfo(
                 new MapperBuilderAssistant(new MybatisConfiguration(), ""), SysLogDO.class);
         mapper = mock(SysLogMapper.class);
-        service = new SysLogServiceImpl(mapper, Mappers.getMapper(SysLogAssembler.class));
+        service = new SysLogServiceImpl(mapper, Mappers.getMapper(SysLogAssembler.class), objectMapper);
         when(mapper.selectPage(any(Page.class), any())).thenAnswer(invocation -> {
             Page<SysLogDO> page = invocation.getArgument(0);
             capturedQuery = invocation.getArgument(1);
@@ -88,10 +88,10 @@ class SysLogServiceImplTest {
         assertEquals(15, page.getValue().getSize());
         assertEquals(31, result.getTotalElements());
         assertEquals("admin", result.getContent().get(0).getUsername());
-        JSONObject json = JSON.parseObject(JSON.toJSONString(result.getContent().get(0)));
-        assertEquals("2026-10-16 12:00:00", json.getString("createTime"));
-        assertFalse(json.containsKey("exceptionDetail"));
-        assertFalse(json.containsKey("logType"));
+        JsonNode json = objectMapper.valueToTree(result.getContent().get(0));
+        assertEquals("2026-10-16 12:00:00", json.path("createTime").asText());
+        assertFalse(json.has("exceptionDetail"));
+        assertFalse(json.has("logType"));
     }
 
     @Test
@@ -123,9 +123,11 @@ class SysLogServiceImplTest {
             Set<String> columns = Set.of(capturedQuery.getSqlSelect().split(","));
             assertEquals(Set.of("id", "description", "request_ip", "time", "address",
                     "browser", "create_time"), columns);
-            JSONObject json = JSON.parseObject(JSON.toJSONString(result.getContent().get(0)));
+            JsonNode json = objectMapper.valueToTree(result.getContent().get(0));
+            Set<String> fields = new HashSet<>();
+            json.fieldNames().forEachRemaining(fields::add);
             assertEquals(Set.of("id", "description", "requestIp", "time", "address",
-                    "browser", "createTime"), json.keySet());
+                    "browser", "createTime"), fields);
             assertEquals("someone-else", request.getUsername());
         }
     }

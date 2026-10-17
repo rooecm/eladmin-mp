@@ -1,5 +1,6 @@
 package fun.rooe.admin.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -7,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,13 +17,14 @@ import static org.mockito.Mockito.mock;
 class RedisConfigurationTest {
 
     private final RedisConfiguration configuration = new RedisConfiguration();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     @SuppressWarnings("unchecked")
     void configuresStringKeysAndCompatibleJsonValues() {
         RedisConnectionFactory connectionFactory = mock(RedisConnectionFactory.class);
 
-        RedisTemplate<String, Object> template = configuration.redisTemplate(connectionFactory);
+        RedisTemplate<String, Object> template = configuration.redisTemplate(connectionFactory, objectMapper);
 
         assertInstanceOf(StringRedisSerializer.class, template.getKeySerializer());
         assertInstanceOf(StringRedisSerializer.class, template.getHashKeySerializer());
@@ -30,13 +33,27 @@ class RedisConfigurationTest {
         RedisSerializer<Object> valueSerializer = (RedisSerializer<Object>) template.getValueSerializer();
         byte[] serialized = valueSerializer.serialize(expected);
         assertNotNull(serialized);
+        assertTrue(new String(serialized, StandardCharsets.UTF_8).contains("@class"));
         Object deserialized = valueSerializer.deserialize(serialized);
         assertEquals(expected, deserialized);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void treatsUnreadableLegacyValuesAsCacheMiss() {
+        RedisConnectionFactory connectionFactory = mock(RedisConnectionFactory.class);
+        RedisTemplate<String, Object> template = configuration.redisTemplate(connectionFactory, objectMapper);
+        RedisSerializer<Object> valueSerializer = (RedisSerializer<Object>) template.getValueSerializer();
+
+        byte[] legacy = ("{\"@type\":\"fun.rooe.admin.infrastructure.config.RedisConfigurationTest$CacheValue\","
+                + "\"value\":\"value\"}").getBytes(StandardCharsets.UTF_8);
+
+        assertNull(valueSerializer.deserialize(legacy));
+    }
+
+    @Test
     void usesTwoHourDefaultCacheTtl() {
-        RedisCacheConfiguration cacheConfiguration = configuration.redisCacheConfiguration();
+        RedisCacheConfiguration cacheConfiguration = configuration.redisCacheConfiguration(objectMapper);
 
         assertEquals(Duration.ofHours(2), cacheConfiguration.getTtlFunction().getTimeToLive("cache", null));
     }

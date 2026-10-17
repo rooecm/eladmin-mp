@@ -15,9 +15,10 @@
  */
 package fun.rooe.admin.infrastructure.config;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONFactory;
-import com.alibaba.fastjson2.JSONWriter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.MurmurHash3;
 import org.springframework.cache.Cache;
@@ -51,30 +52,36 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfiguration implements CachingConfigurer {
 
-    // 兼容现有缓存格式，同时将自动类型限制在项目自身的包空间内。
-    private static final String[] AUTO_TYPE_ALLOWLIST = {"fun.rooe."};
+    // 反序列化白名单：仅放行项目自身与 JDK 基础类型，避免任意类型实例化。
+    private static final String[] AUTO_TYPE_ALLOWLIST = {
+            "fun.rooe.", "java.lang.", "java.util.", "java.sql.", "java.math.", "java.time."
+    };
+
+    // 类型信息属性名，与 Jackson 默认约定保持一致
+    private static final String TYPE_PROPERTY = "@class";
 
     /**
      *  设置 redis 数据默认过期时间，默认2小时
      *  设置@cacheable 序列化方式
      */
     @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(){
-        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
+    public RedisCacheConfiguration redisCacheConfiguration(ObjectMapper objectMapper) {
+        RedisSerializer<Object> valueSerializer = new JacksonRedisSerializer(objectMapper);
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig();
         configuration = configuration.serializeValuesWith(RedisSerializationContext.
-                SerializationPair.fromSerializer(fastJsonRedisSerializer)).entryTtl(Duration.ofHours(2));
+                SerializationPair.fromSerializer(valueSerializer)).entryTtl(Duration.ofHours(2));
         return configuration;
     }
 
     @Bean(name = "redisTemplate")
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory,
+                                                       ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         // 指定 key 和 value 的序列化方案
-        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
-        // value值的序列化采用fastJsonRedisSerializer
-        template.setValueSerializer(fastJsonRedisSerializer);
-        template.setHashValueSerializer(fastJsonRedisSerializer);
+        RedisSerializer<Object> valueSerializer = new JacksonRedisSerializer(objectMapper);
+        // value值的序列化采用JacksonRedisSerializer
+        template.setValueSerializer(valueSerializer);
+        template.setHashValueSerializer(valueSerializer);
         // key的序列化采用StringRedisSerializer
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
         template.setKeySerializer(stringRedisSerializer);
@@ -100,7 +107,7 @@ public class RedisConfiguration implements CachingConfigurer {
      * 自定义缓存key生成策略
      */
     @Bean
-    public KeyGenerator keyGenerator() {
+    public KeyGenerator keyGenerator(ObjectMapper objectMapper) {
         return (target, method, params) -> {
             Map<String,Object> container = new HashMap<>(8);
             Class<?> targetClassClass = target.getClass();
@@ -115,9 +122,16 @@ public class RedisConfiguration implements CachingConfigurer {
                 container.put(String.valueOf(i),params[i]);
             }
             // 转为JSON字符串
-            String jsonString = JSON.toJSONString(container);
+            String jsonString;
+            try {
+                jsonString = objectMapper.writeValueAsString(container);
+            } catch (JsonProcessingException exception) {
+                log.warn("Cache key parameters could not be serialized as JSON, fallback to toString: {}",
+                        exception.getMessage());
+                jsonString = container.toString();
+            }
             // 使用 MurmurHash 生成 hash
-            return Integer.toHexString(MurmurHash3.hash32x86(jsonString.getBytes()));
+            return Integer.toHexString(MurmurHash3.hash32x86(jsonString.getBytes(StandardCharsets.UTF_8)));
         };
     }
 
@@ -149,40 +163,55 @@ public class RedisConfiguration implements CachingConfigurer {
     }
 
     /**
-     * Value 序列化
+     * Value 序列化（Jackson 实现）
      *
-     * @param <T>
+     * 写入类型信息以支持多态反序列化，反序列化时仅接受白名单内的类型；
+     * 无法识别的历史数据按缓存未命中处理，由调用方回源查询。
+     *
      * @author /
      */
-    static class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
+    static class JacksonRedisSerializer implements RedisSerializer<Object> {
 
-        private final Class<T> clazz;
+        private final ObjectMapper objectMapper;
 
-        FastJsonRedisSerializer(Class<T> clazz) {
-            super();
-            this.clazz = clazz;
+        JacksonRedisSerializer(ObjectMapper objectMapper) {
+            this.objectMapper = objectMapper.copy();
+            BasicPolymorphicTypeValidator.Builder validatorBuilder = BasicPolymorphicTypeValidator.builder();
             for (String packagePrefix : AUTO_TYPE_ALLOWLIST) {
-                JSONFactory.getDefaultObjectReaderProvider().addAutoTypeAccept(packagePrefix);
+                validatorBuilder.allowIfSubType(packagePrefix);
             }
+            PolymorphicTypeValidator typeValidator = validatorBuilder.build();
+            this.objectMapper.activateDefaultTypingAsProperty(
+                    typeValidator, ObjectMapper.DefaultTyping.EVERYTHING, TYPE_PROPERTY);
         }
 
         @Override
-        public byte[] serialize(T t) throws SerializationException
+        public byte[] serialize(Object value) throws SerializationException
         {
-            if (t == null) {
+            if (value == null) {
                 return new byte[0];
             }
-            return JSON.toJSONString(t, JSONWriter.Feature.WriteClassName).getBytes(StandardCharsets.UTF_8);
+            try {
+                return objectMapper.writeValueAsBytes(value);
+            } catch (JsonProcessingException exception) {
+                throw new SerializationException("Could not serialize Redis value", exception);
+            }
         }
 
         @Override
-        public T deserialize(byte[] bytes) throws SerializationException
+        public Object deserialize(byte[] bytes) throws SerializationException
         {
             if (bytes == null || bytes.length == 0) {
                 return null;
             }
-            String str = new String(bytes, StandardCharsets.UTF_8);
-            return JSON.parseObject(str, clazz);
+            try {
+                return objectMapper.readValue(bytes, Object.class);
+            } catch (Exception exception) {
+                // 历史数据可能由旧序列化器写入，按缓存未命中处理，避免升级期间接口报错
+                log.warn("Could not deserialize Redis value, treating it as a cache miss: {}",
+                        exception.getMessage());
+                return null;
+            }
         }
 
     }

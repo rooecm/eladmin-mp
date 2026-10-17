@@ -1,7 +1,6 @@
 package fun.rooe.admin.modules.security.dto;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONWriter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
@@ -13,8 +12,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUserDTOSerializationTest {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    void cachedPrincipalRoundTripDoesNotContainPassword() {
+    void cachedPrincipalRoundTripDoesNotContainPassword() throws Exception {
         UserLoginDTO user = new UserLoginDTO();
         user.setId(1L);
         user.setUsername("admin");
@@ -27,8 +28,8 @@ class JwtUserDTOSerializationTest {
                         false,
                         Collections.emptyList());
 
-        String json = JSON.toJSONString(principal, JSONWriter.Feature.WriteClassName);
-        JwtUserDTO restored = JSON.parseObject(json, JwtUserDTO.class);
+        String json = objectMapper.writeValueAsString(principal);
+        JwtUserDTO restored = objectMapper.readValue(json, JwtUserDTO.class);
 
         assertFalse(json.contains("password"));
         assertEquals("admin", restored.getUsername());

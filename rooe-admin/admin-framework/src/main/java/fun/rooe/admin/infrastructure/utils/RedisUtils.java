@@ -15,7 +15,7 @@
  */
 package fun.rooe.admin.infrastructure.utils;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -40,8 +40,11 @@ public class RedisUtils {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public RedisUtils(RedisTemplate<String, Object> redisTemplate) {
+    private final ObjectMapper objectMapper;
+
+    public RedisUtils(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -234,7 +237,7 @@ public class RedisUtils {
         }
         // 如果 value 不是目标类型，则尝试将其反序列化为 clazz 类型
         if (!clazz.isInstance(value)) {
-            return JSON.parseObject(value.toString(), clazz);
+            return objectMapper.convertValue(value, clazz);
         } else if (clazz.isInstance(value)) {
             return clazz.cast(value);
         } else {

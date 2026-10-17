@@ -10,6 +10,11 @@ spring:
     clean-disabled: true
   freemarker:
     check-template-location: false
+  jackson:
+    # 与前端约定的日期格式，保持与旧序列化器一致
+    date-format: yyyy-MM-dd HH:mm:ss
+    # 与数据库连接的 serverTimezone 保持一致
+    time-zone: Asia/Shanghai
   profiles: # 激活的环境
     active: dev
 logbook:
