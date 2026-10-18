@@ -1,7 +1,9 @@
 package fun.rooe.admin.utils;
 
 import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,8 @@ public class ExcelUtilTest {
     @Test
     public void testWrite() throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        write(List.of(Map.of("name", "=test", "age", 18)), outputStream);
+        write(List.of(Map.of("name", "=test", "age", 18,
+                "createTime", LocalDateTime.of(2026, 10, 18, 10, 30, 0))), outputStream);
         assertTrue(outputStream.size() > 0);
     }
 }

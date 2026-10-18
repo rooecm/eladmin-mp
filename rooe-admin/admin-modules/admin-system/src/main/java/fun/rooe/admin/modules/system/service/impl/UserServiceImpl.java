@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -349,7 +350,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         userMapper.update(Wrappers.<UserDO>lambdaUpdate()
                 .eq(UserDO::getUsername, username)
                 .set(UserDO::getPassword, userCredentialService.encode(rawPassword))
-                .set(UserDO::getPwdResetTime, new Date()));
+                .set(UserDO::getPwdResetTime, LocalDateTime.now()));
         flushCache(username);
     }
 

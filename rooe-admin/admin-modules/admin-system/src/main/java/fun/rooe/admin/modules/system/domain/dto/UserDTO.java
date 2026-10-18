@@ -3,8 +3,7 @@ package fun.rooe.admin.modules.system.domain.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
@@ -29,11 +28,11 @@ public class UserDTO {
     private String updateBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date pwdResetTime;
+    private LocalDateTime pwdResetTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
+    private LocalDateTime updateTime;
 }

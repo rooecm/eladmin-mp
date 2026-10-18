@@ -26,7 +26,7 @@ class MyMetaObjectHandlerTest {
     }
 
     @Test
-    void fillsTimestampAuditFields() {
+    void fillsUserAuditFields() {
         TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), UserDO.class);
 
         UserDO user = new UserDO();

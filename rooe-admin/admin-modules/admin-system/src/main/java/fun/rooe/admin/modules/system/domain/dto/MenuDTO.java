@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,10 +33,10 @@ public class MenuDTO {
     private String updateBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
+    private LocalDateTime updateTime;
 
     private List<MenuDTO> children;
 

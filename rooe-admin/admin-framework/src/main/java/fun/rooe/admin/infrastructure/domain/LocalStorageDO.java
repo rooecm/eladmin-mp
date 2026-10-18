@@ -26,7 +26,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
 * @author Zheng Jie
@@ -51,12 +51,12 @@ public class LocalStorageDO implements Serializable {
     @TableField(fill = FieldFill.INSERT)
     @Schema(description = "创建时间: yyyy-MM-dd HH:mm:ss", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     @Schema(description = "更新时间: yyyy-MM-dd HH:mm:ss", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
+    private LocalDateTime updateTime;
 
     @TableId(value = "storage_id", type = IdType.AUTO)
     @Schema(description = "ID", hidden = true)

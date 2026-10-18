@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.system.domain.entity;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Persistence model for sys_dict_detail.
@@ -53,13 +53,13 @@ public class DictDetailDO implements Serializable {
      * Creation time.
      */
     @TableField(fill = FieldFill.INSERT)
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     /**
      * Last update time.
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Timestamp updateTime;
+    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -117,19 +117,19 @@ public class DictDetailDO implements Serializable {
         this.updateBy = updateBy;
     }
 
-    public Timestamp getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Timestamp createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 
-    public Timestamp getUpdateTime() {
+    public LocalDateTime getUpdateTime() {
         return updateTime;
     }
 
-    public void setUpdateTime(Timestamp updateTime) {
+    public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
     }
 }

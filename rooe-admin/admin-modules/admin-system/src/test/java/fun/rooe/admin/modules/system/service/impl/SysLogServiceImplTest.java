@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.system.converter.SysLogAssembler;
 import fun.rooe.admin.modules.system.domain.dto.SysLogDTO;
@@ -24,7 +25,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,8 +37,10 @@ class SysLogServiceImplTest {
     private SysLogMapper mapper;
     private SysLogServiceImpl service;
     private LambdaQueryWrapper<SysLogDO> capturedQuery;
-    // 使用 JVM 默认时区，保证时间戳的构造与格式化一致
-    private final ObjectMapper objectMapper = new ObjectMapper().setTimeZone(TimeZone.getDefault());
+    // 使用 JVM 默认时区，保证时间日期的构造与格式化一致
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .setTimeZone(TimeZone.getDefault());
 
     @BeforeEach
     void setUp() {
@@ -61,8 +64,8 @@ class SysLogServiceImplTest {
         request.setUsername("admin");
         request.setPage(2);
         request.setSize(15);
-        Timestamp start = Timestamp.valueOf("2026-10-01 00:00:00");
-        Timestamp end = Timestamp.valueOf("2026-10-16 23:59:59");
+        LocalDateTime start = LocalDateTime.of(2026, 10, 1, 0, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2026, 10, 16, 23, 59, 59);
         request.setCreateTime(List.of(start, end));
 
         PageResult<SysLogDTO> result = service.queryAll(request);
@@ -194,7 +197,7 @@ class SysLogServiceImplTest {
         log.setAddress("local");
         log.setBrowser("browser");
         log.setExceptionDetail("stack trace");
-        log.setCreateTime(Timestamp.valueOf("2026-10-16 12:00:00"));
+        log.setCreateTime(LocalDateTime.of(2026, 10, 16, 12, 0, 0));
         return log;
     }
 }

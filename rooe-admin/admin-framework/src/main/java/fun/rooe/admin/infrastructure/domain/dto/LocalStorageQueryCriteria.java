@@ -17,7 +17,9 @@ package fun.rooe.admin.infrastructure.domain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import java.sql.Timestamp;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -31,7 +33,8 @@ public class LocalStorageQueryCriteria{
     private String blurry;
 
     @Schema(description = "创建时间")
-    private List<Timestamp> createTime;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private List<LocalDateTime> createTime;
 
     @Schema(description = "页码", example = "1")
     private Integer page = 1;

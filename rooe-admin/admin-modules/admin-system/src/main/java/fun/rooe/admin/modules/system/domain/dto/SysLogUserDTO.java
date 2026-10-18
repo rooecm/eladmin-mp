@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Personal activity response, limited to fields shown in the user center.
@@ -32,5 +32,5 @@ public class SysLogUserDTO {
 
     @Schema(description = "创建日期")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 }

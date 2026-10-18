@@ -15,10 +15,11 @@
 */
 package fun.rooe.admin.infrastructure.domain.dto;
 
-import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -38,6 +39,7 @@ public class S3StorageQueryCriteria{
     private String fileName;
 
     @Schema(description = "创建时间")
-    private List<Timestamp> createTime;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private List<LocalDateTime> createTime;
 
 }

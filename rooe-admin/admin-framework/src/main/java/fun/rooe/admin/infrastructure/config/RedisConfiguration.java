@@ -54,7 +54,7 @@ public class RedisConfiguration implements CachingConfigurer {
 
     // 反序列化白名单：仅放行项目自身与 JDK 基础类型，避免任意类型实例化。
     private static final String[] AUTO_TYPE_ALLOWLIST = {
-            "fun.rooe.", "java.lang.", "java.util.", "java.sql.", "java.math.", "java.time."
+            "fun.rooe.", "java.lang.", "java.util.", "java.math.", "java.time."
     };
 
     // 类型信息属性名，与 Jackson 默认约定保持一致

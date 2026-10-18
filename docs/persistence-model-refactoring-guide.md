@@ -178,6 +178,51 @@ List<Xxx> deduplicated = new ArrayList<>(itemById.values());
 
 如果业务确实需要值相等语义，应放在值对象或专用业务模型中，而不是数据库模型中。
 
+### 4.4 日期时间字段统一使用 `LocalDateTime`
+
+数据库列保持 `datetime`，不要改用 MySQL `TIMESTAMP`：`datetime` 不做时区换算、范围到 9999 年；`TIMESTAMP` 有 2038
+年上限且按会话时区转换。JDBC URL 的 `serverTimezone=Asia/Shanghai` 与 `spring.jackson.time-zone: Asia/Shanghai` 必须保持一致。
+
+Java 侧所有日期时间字段（持久化模型、DTO、Request）统一使用 `java.time.LocalDateTime`：
+
+- 不使用 `java.sql.Timestamp`：JDBC 遗留类型，可变，`equals/hashCode` 与 `java.util.Date` 不对称，并把 JDBC 细节泄漏进模型。
+- 不使用 `java.util.Date`：可变且 API 过时。
+- 当前为单时区部署，`datetime` 列不携带时区，`LocalDateTime` 语义匹配；未来若需要多时区，再评估 `Instant`/`OffsetDateTime`。
+
+自动填充只填 `LocalDateTime`：
+
+```java
+LocalDateTime now = LocalDateTime.now();
+this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, now);
+this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
+```
+
+DTO 保留显式格式注解，保证 JSON 契约不变：
+
+```java
+@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+private LocalDateTime createTime;
+```
+
+查询 Request 的时间范围必须加 `@DateTimeFormat`，否则 GET 参数绑定失败（含前端 axios 的 `createTime[]` 数组格式）：
+
+```java
+@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+private List<LocalDateTime> createTime;
+```
+
+配套改动：
+
+- Excel 导出：`ExcelUtil` 用 `DateTimeFormatter` 格式化 `LocalDateTime`，不要用 `SimpleDateFormat`（线程不安全，导出使用
+  `parallelStream`）。
+- Redis 缓存：旧的 `Timestamp` 序列化值升级后反序列化失败并按缓存未命中处理，读取方必须容忍 `null`；反序列化白名单移除
+  `java.sql.`。
+-
+验证参考：[DeptDateTimeContractTest](../rooe-admin/admin-bootstrap/src/test/java/fun/rooe/admin/DeptDateTimeContractTest.java)
+覆盖 JSON
+输出与查询参数绑定，[MyMetaObjectHandlerTest](../rooe-admin/admin-modules/admin-system/src/test/java/fun/rooe/admin/infrastructure/config/mybatis/MyMetaObjectHandlerTest.java)
+覆盖自动填充。
+
 ## 5. Request 与 DTO 设计
 
 ### 5.1 按用例拆分 Request
@@ -488,6 +533,7 @@ crud.data = Array.isArray(data) ? data : data.content
 3. 移除校验分组。
 4. 移除 `equals/hashCode`。
 5. 按数据库列顺序排列字段并补充注释。
+6. 日期时间字段统一为 `LocalDateTime`，不使用 `Timestamp`/`Date`（见 4.4）。
 
 ### 第七步：同步调用方并验证
 
@@ -515,6 +561,7 @@ npm run build:prod
 
 ```bash
 rg "XxxQueryCriteria|findAll\(@Param\(\"criteria\"\)|equals\(Object|hashCode\(" rooe-admin
+rg "java\.sql\.Timestamp" rooe-admin
 git diff --check
 git status --short
 ```
@@ -531,6 +578,7 @@ git status --short
 - [ ] 没有 Validation、Swagger、Jackson、Spring Data 注解。
 - [ ] 没有展示字段、树字段和关联集合。
 - [ ] 没有重写 `equals/hashCode`。
+- [ ] 日期时间字段统一使用 `LocalDateTime`，不使用 `java.sql.Timestamp`、`java.util.Date`。
 
 ### 接口层
 
@@ -560,6 +608,7 @@ git status --short
 
 - [ ] 所有前端和外部调用方已同步新请求 JSON。
 - [ ] 所有调用方已同步列表或分页响应变化。
+- [ ] 时间字段 JSON 输出保持 `yyyy-MM-dd HH:mm:ss`，查询参数绑定通过。
 - [ ] 后端测试通过。
 - [ ] 前端 ESLint 通过。
 - [ ] 前端生产构建通过。

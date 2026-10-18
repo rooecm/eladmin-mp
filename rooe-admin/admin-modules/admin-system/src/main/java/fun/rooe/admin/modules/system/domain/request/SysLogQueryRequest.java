@@ -6,8 +6,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -23,7 +24,8 @@ public class SysLogQueryRequest {
 
     @Schema(description = "创建时间范围，包含开始和结束时间")
     @Size(min = 2, max = 2)
-    private List<@NotNull Timestamp> createTime;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private List<@NotNull LocalDateTime> createTime;
 
     @Schema(description = "页码，兼容前端从 0 开始的请求")
     @NotNull

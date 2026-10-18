@@ -20,20 +20,15 @@ import cn.idev.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ExcelUtil {
 
-    private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static void write(List<Map<String, Object>> list, OutputStream outputStream) throws IOException {
         List<Map<String, Object>> sanitizedList = list.parallelStream().map(map -> {
@@ -44,11 +39,9 @@ public class ExcelUtil {
                         || strValue.startsWith("-") || strValue.startsWith("@"))) {
                     strValue = "'" + strValue;
                 }
-                // 将 Timestamp / Date 转换为格式化字符串，避免 FastExcel 找不到 Converter
-                if (value instanceof Timestamp ts) {
-                    value = new SimpleDateFormat(DATE_PATTERN).format(ts);
-                } else if (value instanceof Date date) {
-                    value = new SimpleDateFormat(DATE_PATTERN).format(date);
+                // 将 LocalDateTime 转换为格式化字符串，避免 FastExcel 找不到 Converter
+                if (value instanceof LocalDateTime dateTime) {
+                    value = DATE_FORMATTER.format(dateTime);
                 } else if (value instanceof Collection<?> coll) {
                     // 将集合类型转换为逗号分隔的字符串
                     value = coll.stream()

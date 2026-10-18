@@ -22,6 +22,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 
+import java.time.LocalDateTime;
+
 /**
  * Converts authenticated principals and HTTP request metadata into online-session
  * response objects.
@@ -51,5 +53,5 @@ public interface OnlineUserAssembler {
             String ip,
             String address,
             String key,
-            java.util.Date loginTime);
+            LocalDateTime loginTime);
 }

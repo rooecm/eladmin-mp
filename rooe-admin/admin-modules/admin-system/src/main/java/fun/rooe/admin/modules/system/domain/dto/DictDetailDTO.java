@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.system.domain.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Dictionary-entry response model.
@@ -20,8 +20,8 @@ public class DictDetailDTO {
     private String updateBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp updateTime;
+    private LocalDateTime updateTime;
 }

@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.system.domain.entity;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Persistence model for sys_log.
@@ -70,7 +70,7 @@ public class SysLogDO implements Serializable {
      * Creation time.
      */
     @TableField(fill = FieldFill.INSERT)
-    private Timestamp createTime;
+    private LocalDateTime createTime;
 
     public SysLogDO() {
     }
@@ -168,11 +168,11 @@ public class SysLogDO implements Serializable {
         this.exceptionDetail = exceptionDetail;
     }
 
-    public Timestamp getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Timestamp createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 }

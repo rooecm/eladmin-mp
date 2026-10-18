@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -76,7 +77,7 @@ public class OnlineUserService implements OnlineSessionService {
             String key = EncryptUtils.desEncrypt(token);
             onlineUserDto =
                     assembler.toOnlineUser(
-                            jwtUserDto, id, dept, browser, ip, address, key, new Date());
+                            jwtUserDto, id, dept, browser, ip, address, key, LocalDateTime.now());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -114,7 +115,10 @@ public class OnlineUserService implements OnlineSessionService {
         Collections.reverse(keys);
         List<OnlineUserDTO> onlineUserDtos = new ArrayList<>();
         for (String key : keys) {
-            onlineUserDtos.add(redisUtils.get(key, OnlineUserDTO.class));
+            OnlineUserDTO onlineUser = redisUtils.get(key, OnlineUserDTO.class);
+            if (onlineUser != null) {
+                onlineUserDtos.add(onlineUser);
+            }
         }
         onlineUserDtos.sort((o1, o2) -> o2.getLoginTime().compareTo(o1.getLoginTime()));
         return onlineUserDtos;

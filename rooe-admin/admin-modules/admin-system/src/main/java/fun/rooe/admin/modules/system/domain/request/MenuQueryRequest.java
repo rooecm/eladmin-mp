@@ -1,8 +1,9 @@
 package fun.rooe.admin.modules.system.domain.request;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -11,7 +12,8 @@ import java.util.List;
 @Data
 public class MenuQueryRequest {
     private String blurry;
-    private List<Timestamp> createTime;
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private List<LocalDateTime> createTime;
     private Boolean pidIsNull;
     private Long pid;
 }

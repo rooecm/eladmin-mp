@@ -21,7 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 在线用户
@@ -59,5 +59,5 @@ public class OnlineUserDTO implements Serializable {
     private String key;
 
     @Schema(description = "登录时间")
-    private Date loginTime;
+    private LocalDateTime loginTime;
 }
