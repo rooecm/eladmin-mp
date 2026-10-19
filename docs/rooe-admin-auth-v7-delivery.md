@@ -165,6 +165,8 @@ mvn -pl rooe-admin/admin-bootstrap -am test "-Dtest=SecurityHttpIntegrationTest,
 
 - 删除 `annotation.rest` 下6个匿名访问注解，以及不再使用的扫描工具 `AnonTagUtils` 和专用枚举 `RequestMethodEnum`。
 - 首页改为普通 `@GetMapping("/")`；公开路径继续由 `SecurityPaths.PUBLIC_PATHS` 统一配置，匿名访问范围保持一致。
+- `clean verify` 清理构建通过，安全过滤链10项、Controller授权覆盖1项全部通过，无失败、错误或跳过；成品 JAR
+  已确认不含删除的注解、扫描工具和枚举。
 
 ## 运维核验状态
 
