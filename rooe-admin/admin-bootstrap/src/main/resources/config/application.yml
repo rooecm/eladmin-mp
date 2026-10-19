@@ -92,11 +92,10 @@ auth:
   initial-password: ${AUTH_INITIAL_PASSWORD:}
   super-admin-role-code: SUPER_ADMIN
   session:
-    idle-timeout: 30m
-    max-lifetime: 12h
-    renew-exclude-paths:
-      - /api/auth/logout
-      - /actuator/**
+    access-ttl: 15m
+    refresh-ttl: 30d
+    replay-marker-ttl: 10m
+
   cache:
     user-ttl: 60s
     role-permission-ttl: 5m

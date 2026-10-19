@@ -63,7 +63,7 @@ class SecurityHttpIntegrationTest {
         sessions = context.getBean(SessionService.class);
         identities = context.getBean(AuthIdentityService.class);
         token = context.getBean(TokenService.class).generateToken();
-        when(sessions.authenticateAndRenew(anyString(), anyBoolean())).thenReturn(new SessionInfo("sid", 1, 1, Long.MAX_VALUE, 2, true, 1800));
+        when(sessions.authenticate(anyString())).thenReturn(new SessionInfo("sid", 1, 1, Long.MAX_VALUE, 2, false, 900));
         when(identities.getUserForSession(1, 2)).thenReturn(new UserSnapshot(1, "user", "User", true, false, 2, List.of(1L)));
         when(identities.getAuthorities(anyList())).thenReturn(List.of(new SimpleGrantedAuthority("user:list")));
     }
@@ -104,19 +104,19 @@ class SecurityHttpIntegrationTest {
     }
 
     @Test
-    void methodDenialRemains403ThroughGlobalAdviceAndMayIncludeRenewalHeader() throws Exception {
+    void methodDenialRemains403ThroughGlobalAdviceAndNeverRenews() throws Exception {
         var response = call("/denied");
         assertEquals(403, response.getStatus());
-        assertEquals("1800", response.getHeader("X-Session-Expires-In"));
+        assertNull(response.getHeader("X-Session-Expires-In"));
         assertTrue(response.getContentAsString().contains("PERMISSION_1001"));
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         assertEquals(200, call("/protected").getStatus());
-        verify(sessions, times(2)).authenticateAndRenew(anyString(), eq(true));
+        verify(sessions, times(2)).authenticate(anyString());
     }
 
     @Test
     void outageIs503AndCannotFallThroughAsAnonymousOrAuthenticated() throws Exception {
-        when(sessions.authenticateAndRenew(anyString(), anyBoolean())).thenThrow(new org.springframework.data.redis.RedisConnectionFailureException("secret"));
+        when(sessions.authenticate(anyString())).thenThrow(new org.springframework.data.redis.RedisConnectionFailureException("secret"));
         var response = call("/protected");
         assertEquals(503, response.getStatus());
         assertTrue(response.getContentAsString().contains("AUTH_UNAVAILABLE"));
@@ -136,7 +136,7 @@ class SecurityHttpIntegrationTest {
             assertEquals(401, response.getStatus());
             assertNull(response.getHeader("X-Session-Expires-In"));
         }
-        verify(sessions, times(4)).revokeByDigest(anyString());
+        verify(sessions, times(4)).revokeBySessionId(anyString());
     }
 
     @Test
@@ -150,7 +150,7 @@ class SecurityHttpIntegrationTest {
     }
 
     @Test
-    void publicEndpointsIgnoreBadTokensAndCorsPreflightExposesRenewal() throws Exception {
+    void publicEndpointsIgnoreBadTokensAndCorsPreflightAllowsAuthorization() throws Exception {
         token = "bad";
         assertEquals(200, call("/error").getStatus());
         verifyNoInteractions(sessions);
@@ -162,12 +162,12 @@ class SecurityHttpIntegrationTest {
         token = context.getBean(TokenService.class).generateToken();
         response = mvc.perform(get("/protected").servletPath("/protected").header("Origin", "http://localhost:8013")
                 .header("Authorization", "Bearer " + token)).andReturn().getResponse();
-        assertTrue(response.getHeader("Access-Control-Expose-Headers").contains("X-Session-Expires-In"));
+        assertEquals("http://localhost:8013", response.getHeader("Access-Control-Allow-Origin"));
     }
 
     @Test
     void logoutDoesNotRenewAndSubsequentControllerFailureDoesNotBecome503() throws Exception {
-        when(sessions.authenticateAndRenew(anyString(), eq(false))).thenReturn(new SessionInfo("sid", 1, 1, Long.MAX_VALUE, 2, false, 12));
+
         var response = call("/api/auth/logout");
         assertEquals(200, response.getStatus());
         assertNull(response.getHeader("X-Session-Expires-In"));
@@ -266,7 +266,7 @@ class SecurityHttpIntegrationTest {
             cors.setAllowedOrigins(List.of("http://localhost:8013"));
             cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
             cors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
-            cors.setExposedHeaders(List.of("X-Session-Expires-In"));
+            cors.setExposedHeaders(List.of());
             source.registerCorsConfiguration("/**", cors);
             return source;
         }
@@ -299,3 +299,5 @@ class SecurityHttpIntegrationTest {
         }
     }
 }
+
+

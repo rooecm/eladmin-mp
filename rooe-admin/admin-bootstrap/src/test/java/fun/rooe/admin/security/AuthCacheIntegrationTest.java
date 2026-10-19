@@ -87,9 +87,9 @@ class AuthCacheIntegrationTest {
         var tokens = new TokenService();
         String token = tokens.generateToken(), digest = tokens.digest(token);
         var sessions = new RedisSessionService(redis, properties, Clock.systemUTC(), telemetry);
-        sessions.create(digest, uid, 2, "WEB", "127.0.0.1", "test");
+        sessions.create(digest, tokens.digest(tokens.generateToken()), uid, 2, "WEB", "127.0.0.1", "test");
         try {
-            sessions.authenticateAndRenew(digest, true); // Warm Redis' script cache before measuring the ordinary path.
+            sessions.authenticate(digest); // Warm Redis' script cache before measuring the ordinary path.
             cache.fill(RedisAuthCache.USER + uid, json.writeValueAsString(user(2)), System.currentTimeMillis() + 60000);
             cache.fill(RedisAuthCache.ROLE + rid, json.writeValueAsString(new RolePermissions("USER", true, Set.of("user:list"))), System.currentTimeMillis() + 300000);
             clearInvocations(redis, cache);
@@ -105,7 +105,7 @@ class AuthCacheIntegrationTest {
                 assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("user:list")));
             });
             assertEquals(200, response.getStatus());
-            assertNotNull(response.getHeader("X-Session-Expires-In"));
+            assertNull(response.getHeader("X-Session-Expires-In"));
             verify(cache, times(1)).get(RedisAuthCache.USER + uid);
             verify(cache, times(1)).multiGet(List.of(RedisAuthCache.ROLE + rid));
             long scripts = mockingDetails(redis).getInvocations().stream().filter(i -> i.getMethod().getName().equals("execute")
@@ -113,7 +113,7 @@ class AuthCacheIntegrationTest {
             assertEquals(1, scripts);
             verifyNoInteractions(reads);
         } finally {
-            sessions.revokeByDigest(digest);
+            sessions.revokeByAccessDigest(digest);
         }
     }
 
@@ -161,3 +161,5 @@ class AuthCacheIntegrationTest {
         assertTrue(roles.authorities(List.of(rid)).stream().anyMatch(a -> a.getAuthority().equals("user:list")));
     }
 }
+
+

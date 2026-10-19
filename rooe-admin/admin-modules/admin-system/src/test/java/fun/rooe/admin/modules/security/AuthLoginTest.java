@@ -3,9 +3,11 @@ package fun.rooe.admin.modules.security;
 import fun.rooe.admin.framework.security.AuthFailure;
 import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.framework.security.config.SpringSecurityConfig;
+import fun.rooe.admin.framework.security.service.AuthIdentityService;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
+import fun.rooe.admin.modules.security.domain.request.RefreshRequest;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
 import fun.rooe.admin.modules.security.service.*;
 import fun.rooe.admin.modules.security.service.impl.AuthServiceImpl;
@@ -18,6 +20,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.Clock;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,6 +28,7 @@ import static org.mockito.Mockito.*;
 class AuthLoginTest {
     private final AuthReadService reads = mock(AuthReadService.class);
     private final SessionService sessions = mock(SessionService.class);
+    private final AuthIdentityService identities = mock(AuthIdentityService.class);
     private final AuthMapper mapper = mock(AuthMapper.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(4);
     private AuthServiceImpl service;
@@ -33,8 +37,8 @@ class AuthLoginTest {
     @BeforeEach
     void setup() {
         var manager = new SpringSecurityConfig().authenticationManager(new LoginService(reads), encoder);
-        service = new AuthServiceImpl(manager, new TokenService(), sessions, mapper, mock(UserMapper.class), encoder,
-                mock(AuthVersionService.class), mock(AuthCacheInvalidator.class), mock(AdminPrivilegeGuard.class),
+        service = new AuthServiceImpl(manager, new TokenService(), sessions, identities, mapper, mock(UserMapper.class),
+                encoder, mock(AuthVersionService.class), mock(AuthCacheInvalidator.class), mock(AdminPrivilegeGuard.class),
                 mock(AuthTelemetry.class), Clock.systemUTC());
         user = new UserDO();
         user.setId(2L);
@@ -73,7 +77,7 @@ class AuthLoginTest {
     void singleCanonicalSnapshotSuppliesSessionVersionAndErasesHash() {
         var verified = service.verifyCredentials(request(" ALICE ", "Password8!"));
         assertNull(verified.getPassword());
-        when(sessions.create(anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
+        when(sessions.create(anyString(), anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
                 .thenReturn(new fun.rooe.admin.framework.security.model.SessionInfo("sid", 2, 1, 1000, 7, false, 1800));
         var result = service.establishSession(verified, "WEB", "ip", "agent");
         assertEquals("SUCCESS", result.getStatus());
@@ -96,7 +100,7 @@ class AuthLoginTest {
     @Test
     void repeatedSuccessfulLoginsContinueCreatingSessions() {
         String hash = user.getPassword();
-        when(sessions.create(anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
+        when(sessions.create(anyString(), anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
                 .thenReturn(new fun.rooe.admin.framework.security.model.SessionInfo("sid", 2, 1, 1000, 7, false, 1800));
         // 模拟每次数据库查询取得完整密码快照，超过原成功次数配额后仍可创建会话。
         for (int attempt = 0; attempt < 35; attempt++) {
@@ -105,7 +109,37 @@ class AuthLoginTest {
             assertEquals("SUCCESS", service.establishSession(verified, "WEB", "ip", "agent").getStatus());
             assertNull(verified.getPassword());
         }
-        verify(sessions, times(35)).create(anyString(), eq(2L), eq(7L), any(), eq("ip"), any());
+        verify(sessions, times(35)).create(anyString(), anyString(), eq(2L), eq(7L), any(), eq("ip"), any());
+    }
+
+    @Test
+    void refreshRotatesCredentialsAndRejectsUnknownTokens() {
+        var request = new RefreshRequest();
+        request.setRefreshToken("old-refresh");
+        var replayed = new TokenService().digest("old-refresh");
+        when(sessions.refresh(eq(replayed), anyString(), anyString())).thenReturn(null);
+        assertEquals(401, assertThrows(AuthFailure.class, () -> service.refresh(request)).getStatus());
+
+        when(sessions.refresh(eq(replayed), anyString(), anyString()))
+                .thenReturn(new fun.rooe.admin.framework.security.model.SessionTokens("sid", 2, 1, 1000, 7, 900));
+        when(identities.getUserForSession(2, 7))
+                .thenReturn(new fun.rooe.admin.framework.security.model.UserSnapshot(2, "alice", "Alice", true, false, 7, List.of()));
+        var result = service.refresh(request);
+        assertTrue(new TokenService().isValid(result.getAccessToken()));
+        assertTrue(new TokenService().isValid(result.getRefreshToken()));
+        assertEquals(900, result.getExpiresIn());
+    }
+
+    @Test
+    void refreshRevokesTheRotatedSessionWhenTheUserIsNoLongerValid() {
+        var request = new RefreshRequest();
+        request.setRefreshToken("old-refresh");
+        when(sessions.refresh(anyString(), anyString(), anyString()))
+                .thenReturn(new fun.rooe.admin.framework.security.model.SessionTokens("sid", 2, 1, 1000, 7, 900));
+        when(identities.getUserForSession(2, 7)).thenReturn(null);
+
+        assertEquals(401, assertThrows(AuthFailure.class, () -> service.refresh(request)).getStatus());
+        verify(sessions).revokeBySessionId("sid");
     }
 
     @Test
@@ -118,10 +152,12 @@ class AuthLoginTest {
     @Test
     void sessionOutageFailsClosedWith503AndErasesCredentials() {
         var verified = service.verifyCredentials(request("alice", "Password8!"));
-        when(sessions.create(anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
+        when(sessions.create(anyString(), anyString(), eq(2L), eq(7L), any(), eq("ip"), any()))
                 .thenThrow(new org.springframework.data.redis.RedisConnectionFailureException("secret"));
         assertEquals(503, assertThrows(AuthFailure.class,
                 () -> service.establishSession(verified, "WEB", "ip", "agent")).getStatus());
         assertNull(verified.getPassword());
     }
 }
+
+

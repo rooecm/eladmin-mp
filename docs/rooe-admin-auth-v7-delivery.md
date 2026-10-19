@@ -4,15 +4,15 @@
 
 ## 模块职责
 
-| 层 | 实现 |
-| --- | --- |
-| admin-common | 复用统一 ApiResult 和错误码，补充认证错误码 |
-| admin-framework / framework | Spring Security 配置、TokenAuthenticationFilter、TokenService、SessionService 与身份读取接口、PermissionChecker、PasswordPolicy、审计指标 |
-| admin-framework / infrastructure | 复用 StringRedisTemplate / Redisson，承载会话、认证缓存和单 Key Lua |
-| admin-system / modules.security | 登录快照、认证业务、权威读事务、用户与角色缓存、AdminPrivilegeGuard、认证版本递增、事务提交后失效 |
-| admin-system / modules.system | 在现有用户、角色、菜单写事务接入守卫和缓存失效；个人资料、头像只更新对应字段 |
-| admin-bootstrap | 配置、增量 V4 迁移、组装及集成测试 |
-| rooe-admin-web | localStorage Bearer、强制改密、可信交互 touch、跨标签登出、空闲退出、CSP |
+| 层                                | 实现                                                                                                                     |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| admin-common                     | 复用统一 ApiResult 和错误码，补充认证错误码                                                                                            |
+| admin-framework / framework      | Spring Security 配置、TokenAuthenticationFilter、TokenService、SessionService 与身份读取接口、PermissionChecker、PasswordPolicy、审计指标 |
+| admin-framework / infrastructure | 复用 StringRedisTemplate / Redisson，承载会话、认证缓存和单 Key Lua                                                                  |
+| admin-system / modules.security  | 登录快照、认证业务、权威读事务、用户与角色缓存、AdminPrivilegeGuard、认证版本递增、事务提交后失效                                                             |
+| admin-system / modules.system    | 在现有用户、角色、菜单写事务接入守卫和缓存失效；个人资料、头像只更新对应字段                                                                                 |
+| admin-bootstrap                  | 配置、增量 V4 迁移、组装及集成测试                                                                                                    |
+| rooe-admin-web                   | localStorage 双 Token、401 静默续期与请求重放、强制改密、跨标签登出、空闲退出、CSP                                                                 |
 
 旧 JWT、验证码登录、在线会话与踢人接口已移除。旧的 JWT Token 不能用于新认证链路。数据范围逻辑仍归原有 DataService 管理。
 
@@ -20,17 +20,18 @@
 
 认证统一使用 `Authorization: Bearer <token>`，不使用 Cookie 登录凭证。Token 为 32 字节安全随机数的 43 字符 Base64URL；Redis 只存 SHA-256 摘要索引。
 
-| 方法与路径 | 请求 / 行为 |
-| --- | --- |
-| POST /api/auth/login | username、password、可选 clientType；返回 status=SUCCESS、accessToken、tokenType、expiresIn、absoluteExpiresAt、mustChangePassword、上次登录时间与 IP；禁止缓存 |
-| GET /api/auth/me | 用户资料、有效权限码集合 roles、mustChangePassword；不返回密码和内部角色码 |
-| POST /api/auth/logout | 删除当前摘要会话，不续期，204 |
-| POST /api/auth/touch | 仅用于有可信用户交互、近期无业务续期的情况，204 |
-| POST /api/auth/password | oldPassword、newPassword；旧密码错误400，成功204，认证版本递增，重新登录 |
+| 方法与路径                   | 请求 / 行为                                                                                                                                             |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| POST /api/auth/login    | username、password、可选 clientType；返回 status=SUCCESS、accessToken、refreshToken、tokenType、expiresIn、absoluteExpiresAt、mustChangePassword、上次登录时间与 IP；禁止缓存 |
+| GET /api/auth/me        | 用户资料、有效权限码集合 roles、mustChangePassword；不返回密码和内部角色码                                                                                                   |
+| POST /api/auth/logout   | 按会话吊销 Access 与 Refresh 两把凭证，204                                                                                                                     |
+| POST /api/auth/refresh  | refreshToken；轮换并返回新的 accessToken 与 refreshToken，旧凭证立即失效；凭证重放吊销整条会话；禁止缓存                                                                             |
+| POST /api/auth/password | oldPassword、newPassword；旧密码错误400，成功204，认证版本递增，重新登录                                                                                                  |
 
 原 `/auth/*` 登录和 `/api/users/updatePass` 调用方需要切换。401 返回 WWW-Authenticate: Bearer；普通权限拒绝403；认证基础设施不可用503。登录和修改密码已取消次数限流。前端仅在401时清理登录，403/503保留；强制改密403跳转专用页面。
 
-强制改密用户仅可访问 me、password、logout、touch，并且没有业务 authorities。超管基于启用的 SUPER_ADMIN 角色判断，不使用 isAdmin 字段放行。
+强制改密用户仅可访问 me、password、logout、refresh，并且没有业务 authorities。超管基于启用的 SUPER_ADMIN 角色判断，不使用
+isAdmin 字段放行。
 
 ## 配置、迁移与初始化
 
@@ -39,9 +40,11 @@
 - V4 仅禁用仍使用已知演示密码哈希的 admin/test；已自定义密码的账户保持原状态。
 - `AUTH_INITIAL_PASSWORD` 必须至少8字符、不等于用户名、UTF-8不超过72字节。配置后一次性初始化历史演示 admin，并要求改密；没有配置时不恢复已禁用演示账户。新建用户和管理员重置密码也读取该配置。
 - `AUTH_ALLOWED_ORIGINS` 配置实际前端来源，用逗号分隔，禁止通配符。
-- 默认服务端空闲30分钟、绝对12小时；用户缓存60秒、角色权限缓存5分钟，均有±10%抖动；auth 配置不再包含登录或改密限流参数。
-- 默认前端空闲20分钟、提前2分钟提示、真实交互且5分钟无成功业务续期才触发 touch。计时器、页面重新可见和网络恢复只检查过期。
-- `renew-exclude-paths` 目前是 logout、actuator；未发现仍使用的业务后台轮询。今后新增轮询应在服务端补充排除，前端以2xx响应的 X-Session-Expires-In 判断续期，不维护路径清单。
+- 默认 Access 15 分钟、Refresh 30 天（即会话绝对生命周期）；用户缓存60秒、角色权限缓存5分钟，均有±10%抖动；auth
+  配置不再包含登录或改密限流参数。
+- 默认前端空闲20分钟、提前2分钟提示。Access 过期由 401 触发一次性静默续期并重放原请求；计时器、页面重新可见和网络恢复只检查过期，不产生网络请求。
+- 服务端不再按请求续期，因此没有 `renew-exclude-paths`；续期只发生在 `/api/auth/refresh`，且必须轮换 Refresh。前端并发 401
+  通过单飞 Promise 合并为一次续期。
 - 登录密码通过 HTTPS 传输，不再依赖前端 RSA 登录包装。已有邮箱验证相关逻辑保留。
 
 部署前需要前后端一起升级，并运行 Flyway 迁移。初始化密码不得写进仓库或日志。
@@ -50,7 +53,9 @@
 
 禁用、删除、本人改密、管理员重置/强制改密与 auth_version 在同一数据库事务提交或回滚。普通用户重新启用和角色关系变化不递增版本；权限靠缓存失效和 TTL 刷新。
 
-缓存失效统一要求活动事务及事务同步，提交后删除，失败重试3次并记指标。该进程内事件没有可靠投递保证；进程崩溃或失效失败时，用户旧缓存窗口最多约66秒，角色旧权限窗口最多约5.5分钟。DB 回源通过独立 READ_COMMITTED 短事务读取主库；回填截止时间在查询前确定，NX/PXAT 和 compare-and-refresh 防止覆盖并发新值或延长旧快照窗口。
+缓存失效统一要求活动事务及事务同步，提交后删除，失败重试3次并记指标。该进程内事件没有可靠投递保证；进程崩溃或失效失败时，用户旧缓存窗口最多约66秒，角色旧权限窗口最多约5.5分钟。DB
+回源通过独立 READ_COMMITTED 短事务读取主库；回填截止时间在查询前确定，回填用 `setIfAbsent`（`SET NX PX`）防止覆盖并发新值，刷新用
+compare-and-refresh 脚本防止覆盖并发新值或延长旧快照窗口。
 
 普通退出依赖 Redis DEL；Redis 故障转移丢失该删除时，旧会话可能复活。用户级撤销依赖持久化 auth_version，不能与普通退出的保证混淆。
 
@@ -99,7 +104,7 @@ npm run build:prod
 
 - framework：复用路径匹配器并预编译令牌格式表达式，减少认证请求中的重复分配；过滤器将认证准备与下游业务调用分开，统一在 finally 清理上下文，覆盖匿名请求、拒绝响应写出失败及下游异常。
 - 前端认证工具：统一校验请求携带的 Bearer 是否属于当前会话；旧会话的401/强制改密403不能清除或修改新会话，旧响应也不能刷新新会话的续期时间。
-- 会话交互：绝对过期窗口内只提示一次；仅在空闲截止时间实际延长后重新允许提示；touch 同步异常、退出回调异常均恢复状态标记，保留交互触发与重试间隔。
+- 会话交互：绝对过期窗口内只提示一次；仅在空闲截止时间实际延长后重新允许提示；续期失败与退出回调异常均恢复状态标记，避免无限重试。
 - Vuex：使用 async/await 简化用户信息和退出操作，返回时校验会话归属，避免旧用户信息覆盖新登录或旧退出清除新登录。
 - 路由：等待菜单路由和侧栏生成完成，统一捕获失败并恢复重试状态；会话切换后丢弃旧菜单，不再安装旧动态路由。
 
@@ -170,14 +175,14 @@ mvn -pl rooe-admin/admin-bootstrap -am test "-Dtest=SecurityHttpIntegrationTest,
 
 ## 运维核验状态
 
-| 项目 | 状态 |
-| --- | --- |
-| Redis 6.2+、单分片非 Cluster | 临时本地 Redis8 单实例已验证；实际部署未验证 |
-| Redis 持久化、复制、noeviction、ACL、TLS与故障转移 | 未验证，未更改部署 |
-| HTTPS、可信代理与来源配置 | 代码使用 remoteAddr；实际反向代理信任边界未验证 |
-| 应用与 Redis NTP 时间同步 | 未验证；PXAT 依赖节点时间同步 |
-| MySQL 迁移与 InnoDB 并发锁 | 隔离事务测试覆盖；实际数据库连通与迁移未验证 |
-| 日志脱敏 | 配置覆盖 Authorization、Cookie及新旧密码、accessToken 等 JSON 字段；自动化输出检查见测试结果 |
-| 浏览器 CSP | 生产构建输出无内联启动脚本；实际部署来源与业务页面浏览器验收未验证 |
+| 项目                                   | 状态                                                                      |
+|--------------------------------------|-------------------------------------------------------------------------|
+| Redis 6.2+、单分片非 Cluster              | 会话脚本与 cache-refresh 脚本依赖 PXAT，临时本地 Redis8 单实例已验证；实际部署未验证                |
+| Redis 持久化、复制、noeviction、ACL、TLS与故障转移 | 未验证，未更改部署                                                               |
+| HTTPS、可信代理与来源配置                      | 代码使用 remoteAddr；实际反向代理信任边界未验证                                           |
+| 应用与 Redis NTP 时间同步                   | 未验证；会话脚本与 cache-refresh 脚本的 PXAT 依赖节点时间同步（缓存回填已改用 `setIfAbsent`，不再有该依赖） |
+| MySQL 迁移与 InnoDB 并发锁                 | 隔离事务测试覆盖；实际数据库连通与迁移未验证                                                  |
+| 日志脱敏                                 | 配置覆盖 Authorization、Cookie及新旧密码、accessToken 等 JSON 字段；自动化输出检查见测试结果       |
+| 浏览器 CSP                              | 生产构建输出无内联启动脚本；实际部署来源与业务页面浏览器验收未验证                                       |
 
 不包含 MFA、数据权限新设计、顶号、会话列表、按用户会话索引或踢人功能。

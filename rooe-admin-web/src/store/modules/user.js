@@ -1,6 +1,6 @@
-import { login, getInfo, logout } from '@/api/login'
-import { getToken, setToken, removeToken } from '@/utils/auth'
-import { initializeSession } from '@/utils/session'
+import {getInfo, login, logout} from '@/api/login'
+import {getToken, removeToken, setCredentials} from '@/utils/auth'
+import {initializeSession} from '@/utils/session'
 
 const user = {
   state: {
@@ -35,7 +35,7 @@ const user = {
     async Login({ commit }, userInfo) {
       const result = await login(userInfo.username, userInfo.password)
       if (result.status !== 'SUCCESS' || !result.accessToken) throw new Error('Login was not completed')
-      setToken(result.accessToken)
+      setCredentials(result.accessToken, result.refreshToken)
       initializeSession(result.absoluteExpiresAt)
       commit('SET_TOKEN', result.accessToken)
       commit('SET_PASSWORD_CHANGE', result.mustChangePassword)
@@ -91,3 +91,4 @@ export const setUserInfo = (res, commit) => {
 }
 
 export default user
+

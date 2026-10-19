@@ -6,13 +6,17 @@ import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.security.AuthFailure;
 import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.service.AuthIdentityService;
+import fun.rooe.admin.framework.security.service.RefreshReplayException;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.security.domain.dto.LoginCredentialSnapshot;
 import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
+import fun.rooe.admin.modules.security.domain.dto.RefreshResponse;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.domain.request.PasswordChangeRequest;
+import fun.rooe.admin.modules.security.domain.request.RefreshRequest;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
 import fun.rooe.admin.modules.security.service.*;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
@@ -30,7 +34,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 /**
- * 编排登录、会话与改密流程；Redis 会话细节由框架接口及基础设施实现承接。
+ * 编排登录、续期、会话与改密流程；Redis 会话细节由框架接口及基础设施实现承接。
  */
 @Service
 @Slf4j
@@ -39,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokens;
     private final SessionService sessions;
+    private final AuthIdentityService identities;
     private final AuthMapper authMapper;
     private final UserMapper users;
     private final PasswordEncoder passwords;
@@ -77,9 +82,11 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse establishSession(LoginCredentialSnapshot verified, String clientType, String ip, String agent) {
         var user = verified.snapshot();
         try {
-            String token = tokens.generateToken();
-            // 原始 Token 仅返回客户端，Redis 使用摘要作为会话键。
-            var session = sessions.create(tokens.digest(token), user.getId(), user.getAuthVersion(), clientType, ip, agent);
+            String access = tokens.generateToken();
+            String refresh = tokens.generateToken();
+            // 原始凭证仅返回客户端，Redis 使用摘要作为键。
+            var session = sessions.create(tokens.digest(access), tokens.digest(refresh), user.getId(),
+                    user.getAuthVersion(), clientType, ip, agent);
             try {
                 // 登录信息属于辅助记录，更新失败不撤销已创建的会话。
                 authMapper.recordLogin(user.getId(), LocalDateTime.ofInstant(clock.instant(), ZoneId.of("Asia/Shanghai")), ip);
@@ -88,14 +95,49 @@ public class AuthServiceImpl implements AuthService {
             }
             telemetry.count("auth_login_total", "result", "success");
             telemetry.audit("LOGIN_SUCCESS", user.getId(), "success");
-            return new LoginResponse("SUCCESS", token, "Bearer", session.getTtlSeconds(), session.getAbsoluteExpireAt(),
-                    Boolean.TRUE.equals(user.getMustChangePassword()), user.getLastLoginAt(), user.getLastLoginIp());
+            return new LoginResponse("SUCCESS", access, refresh, "Bearer", session.getTtlSeconds(),
+                    session.getAbsoluteExpireAt(), Boolean.TRUE.equals(user.getMustChangePassword()),
+                    user.getLastLoginAt(), user.getLastLoginIp());
         } catch (RuntimeException e) {
             telemetry.count("auth_redis_error_total", "op", "session");
             throw new AuthFailure(503, AuthErrorCode.UNAVAILABLE);
         } finally {
             // 签发成功或失败都擦除登录快照中的密码哈希。
             verified.eraseCredentials();
+        }
+    }
+
+    @Override
+    public RefreshResponse refresh(RefreshRequest request) {
+        try {
+            String access = tokens.generateToken();
+            String refresh = tokens.generateToken();
+            var rotated = sessions.refresh(tokens.digest(request.getRefreshToken()), tokens.digest(access),
+                    tokens.digest(refresh));
+            if (rotated == null) {
+                // 凭证不存在或已过期：对外只表达会话无效，避免泄漏凭证具体状态。
+                telemetry.count("auth_refresh_total", "result", "invalid");
+                throw new AuthFailure(401, AuthErrorCode.SESSION_INVALID);
+            }
+            // 轮换后重新校验用户状态与版本，禁用、改密或踢出对续期立即生效。
+            var user = identities.getUserForSession(rotated.getUserId(), rotated.getAuthVersion());
+            if (user == null || !user.isEnabled() || rotated.getAuthVersion() != user.getAuthVersion()) {
+                sessions.revokeBySessionId(rotated.getSessionId());
+                telemetry.count("auth_refresh_total", "result", "rejected");
+                telemetry.audit("SESSION_REVOKED", rotated.getUserId(), user == null ? "user_missing" : "session_stale");
+                throw new AuthFailure(401, AuthErrorCode.SESSION_INVALID);
+            }
+            telemetry.count("auth_refresh_total", "result", "success");
+            return new RefreshResponse(access, refresh, "Bearer", rotated.getAccessTtlSeconds(),
+                    rotated.getAbsoluteExpireAt());
+        } catch (RefreshReplayException e) {
+            // 重放已由存储层吊销整条会话，这里只对客户端表达会话失效。
+            throw new AuthFailure(401, AuthErrorCode.SESSION_INVALID);
+        } catch (AuthFailure e) {
+            throw e;
+        } catch (RuntimeException e) {
+            telemetry.count("auth_redis_error_total", "op", "session");
+            throw new AuthFailure(503, AuthErrorCode.UNAVAILABLE);
         }
     }
 
@@ -132,7 +174,7 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String token) {
         try {
             if (tokens.isValid(token)) {
-                sessions.revokeByDigest(tokens.digest(token));
+                sessions.revokeByAccessDigest(tokens.digest(token));
             }
             telemetry.audit("LOGOUT", SecurityUtils.getCurrentUserId(), "logout");
         } catch (org.springframework.dao.DataAccessException e) {

@@ -7,7 +7,8 @@ import {upload} from '@/utils/upload'
 import {Notification} from 'element-ui'
 import store from '@/store'
 import router from '@/router/routers'
-import {removeToken, setToken} from '@/utils/auth'
+import {getRefreshToken, getToken, removeToken, setCredentials, setToken} from '@/utils/auth'
+import {refreshClient, resetRefreshState} from '@/utils/refresh'
 
 // Jest 23 使用 Axios 的 CommonJS 入口，仍通过真实拦截器验证响应
 jest.mock('axios', () => jest.requireActual('axios/dist/browser/axios.cjs'))
@@ -30,6 +31,7 @@ function respondWith(data) {
 describe('ApiResult 响应适配', () => {
   const originalAdapter = request.defaults.adapter
   const originalAxiosAdapter = axios.defaults.adapter
+  const originalRefreshAdapter = refreshClient.defaults.adapter
 
   beforeAll(() => {
     jest.spyOn(window.location, 'reload').mockImplementation(() => {
@@ -37,8 +39,10 @@ describe('ApiResult 响应适配', () => {
   })
 
   afterEach(() => {
+    resetRefreshState()
     request.defaults.adapter = originalAdapter
     axios.defaults.adapter = originalAxiosAdapter
+    refreshClient.defaults.adapter = originalRefreshAdapter
     jest.clearAllMocks()
     removeToken()
   })
@@ -142,13 +146,107 @@ describe('ApiResult 响应适配', () => {
     expect(Notification.error).toHaveBeenCalledWith({title: '用户名或密码错误', duration: 5000})
   })
 
-  it('会话失效时执行重新登录流程', async () => {
+  it('Refresh 缺失时立即执行重新登录流程，不尝试续期', async () => {
     setToken('existing-token')
+    let refreshCalls = 0
+    refreshClient.defaults.adapter = config => {
+      refreshCalls++
+      return Promise.reject(new Error('should not be called'))
+    }
     rejectWith(401, {code: 'AUTH_1005', message: '登录状态已失效，请重新登录', data: null})
     await expect(getDepts({})).rejects.toMatchObject({code: 'AUTH_1005'})
+    expect(refreshCalls).toBe(0)
     expect(store.dispatch).toHaveBeenCalledWith('ClearAuth')
   })
 
+  // 用同一个 adapter 模拟业务服务：Token 未轮换时返回 401，轮换后返回数据。
+  function gateOnToken() {
+    return config => {
+      if (config.headers.Authorization !== 'Bearer new-access') {
+        return Promise.reject(Object.assign(new Error('Request failed'), {
+          config, response: {status: 401, config, data: {code: 'AUTH_SESSION_INVALID', message: '过期'}}
+        }))
+      }
+      return Promise.resolve({
+        data: {code: '0', message: 'success', data: page},
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config
+      })
+    }
+  }
+
+  function replyRefresh(body) {
+    refreshClient.defaults.adapter = config => Promise.resolve({
+      data: body, status: 200, statusText: 'OK', headers: {}, config
+    })
+  }
+
+  it('Access 过期时静默续期并重放原请求', async () => {
+    setCredentials('expired-access', 'valid-refresh')
+    let refreshCalls = 0
+    refreshClient.defaults.adapter = config => {
+      refreshCalls++
+      return Promise.resolve({
+        data: {code: '0', message: 'success', data: {accessToken: 'new-access', refreshToken: 'new-refresh'}},
+        status: 200, statusText: 'OK', headers: {}, config
+      })
+    }
+    request.defaults.adapter = gateOnToken()
+
+    expect(await initData('api/dept', {})).toEqual(page)
+    expect(refreshCalls).toBe(1)
+    expect(getToken()).toBe('new-access')
+    expect(getRefreshToken()).toBe('new-refresh')
+    expect(store.dispatch).not.toHaveBeenCalled()
+  })
+
+  it('并发的过期请求只触发一次续期', async () => {
+    setCredentials('expired-access', 'valid-refresh')
+    let refreshCalls = 0
+    refreshClient.defaults.adapter = config => {
+      refreshCalls++
+      return new Promise(resolve => setTimeout(() => resolve({
+        data: {code: '0', message: 'success', data: {accessToken: 'new-access', refreshToken: 'new-refresh'}},
+        status: 200, statusText: 'OK', headers: {}, config
+      }), 10))
+    }
+    request.defaults.adapter = gateOnToken()
+
+    const results = await Promise.all([initData('api/dept', {}), getDepts({}), initData('api/dept', {})])
+    results.forEach(result => expect(result).toEqual(page))
+    expect(refreshCalls).toBe(1)
+  })
+
+  it('续期失败时清理登录态并跳转登录页', async () => {
+    setCredentials('expired-access', 'stale-refresh')
+    replyRefresh({code: 'AUTH_1005', message: '登录状态已失效', data: null})
+    request.defaults.adapter = gateOnToken()
+
+    await expect(initData('api/dept', {})).rejects.toMatchObject({httpStatus: 401})
+    expect(store.dispatch).toHaveBeenCalledWith('ClearAuth')
+    expect(router.replace).toHaveBeenCalledWith({path: '/login'})
+  })
+
+  it('重放后再次 401 不会重复续期，避免无限循环', async () => {
+    setCredentials('expired-access', 'valid-refresh')
+    let refreshCalls = 0
+    refreshClient.defaults.adapter = config => {
+      refreshCalls++
+      return Promise.resolve({
+        data: {code: '0', message: 'success', data: {accessToken: 'new-access', refreshToken: 'new-refresh'}},
+        status: 200, statusText: 'OK', headers: {}, config
+      })
+    }
+    // 续期后仍然 401，验证重放不会再次进入续期分支。
+    request.defaults.adapter = config => Promise.reject(Object.assign(new Error('Request failed'), {
+      config, response: {status: 401, config, data: {code: 'AUTH_SESSION_INVALID', message: '过期'}}
+    }))
+
+    await expect(initData('api/dept', {})).rejects.toMatchObject({httpStatus: 401})
+    expect(refreshCalls).toBe(1)
+  })
   it('无权限时保留业务码并跳转权限提示页', async () => {
     rejectWith(403, {code: 'PERMISSION_1001', message: '没有权限执行此操作', data: null})
     await expect(getDepts({})).rejects.toMatchObject({code: 'PERMISSION_1001'})
@@ -241,3 +339,4 @@ describe('ApiResult 响应适配', () => {
     expect(Notification.error).toHaveBeenCalledTimes(2)
   })
 })
+

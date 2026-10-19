@@ -1,9 +1,14 @@
 import Config from '@/settings'
 
 export const TokenKey = Config.TokenKey
+export const RefreshTokenKey = Config.RefreshTokenKey
 
 export function getToken() {
   return localStorage.getItem(TokenKey)
+}
+
+export function getRefreshToken() {
+  return localStorage.getItem(RefreshTokenKey)
 }
 
 export function authorization() {
@@ -22,10 +27,20 @@ export function isCurrentSessionRequest(config) {
 export function setToken(token) {
   localStorage.setItem(TokenKey, token)
 }
+
+export function setRefreshToken(token) {
+  if (token) localStorage.setItem(RefreshTokenKey, token)
+}
+
+// 轮换后同时写入两把凭证，任何一步失败都不应留下半套状态。
+export function setCredentials(accessToken, refreshToken) {
+  setToken(accessToken)
+  setRefreshToken(refreshToken)
+}
+
 export function removeToken() {
   localStorage.removeItem(TokenKey)
+  localStorage.removeItem(RefreshTokenKey)
   localStorage.removeItem('rooe.auth.lastActiveAt')
-  localStorage.removeItem('rooe.auth.lastRenewableServerContactAt')
   localStorage.removeItem('rooe.auth.absoluteExpiresAt')
-  localStorage.removeItem('rooe.auth.lastTouchAt')
 }

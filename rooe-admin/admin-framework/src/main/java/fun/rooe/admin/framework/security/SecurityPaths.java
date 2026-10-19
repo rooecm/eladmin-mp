@@ -6,9 +6,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class SecurityPaths {
-    public static final String[] PUBLIC_PATHS = {"/api/auth/login", "/actuator/health", "/actuator/health/**", "/error", "/", "/avatar/**"};
+    public static final String[] PUBLIC_PATHS = {"/api/auth/login", "/api/auth/refresh", "/actuator/health",
+            "/actuator/health/**", "/error", "/", "/avatar/**"};
     public static final List<String> PASSWORD_CHANGE_ALLOWED_PATHS = List.of(
-            "/api/auth/me", "/api/auth/password", "/api/auth/logout", "/api/auth/touch");
+            "/api/auth/me", "/api/auth/password", "/api/auth/logout", "/api/auth/refresh");
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 

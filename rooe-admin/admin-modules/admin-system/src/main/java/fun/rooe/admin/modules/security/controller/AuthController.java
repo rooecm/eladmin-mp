@@ -6,8 +6,10 @@ import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.security.domain.dto.CurrentUser;
 import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
+import fun.rooe.admin.modules.security.domain.dto.RefreshResponse;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.domain.request.PasswordChangeRequest;
+import fun.rooe.admin.modules.security.domain.request.RefreshRequest;
 import fun.rooe.admin.modules.security.service.AuthService;
 import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
@@ -54,16 +56,18 @@ public class AuthController {
         return new CurrentUser(users.getLoginData(principal.getUsername()), effective, principal.isMustChangePassword());
     }
 
+    @PostMapping("/refresh")
+    public RefreshResponse refresh(@Valid @RequestBody RefreshRequest request, HttpServletResponse response) {
+        // 续期响应同样禁止缓存，避免新凭证被中间层留存。
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragma", "no-cache");
+        return auth.refresh(request);
+    }
+
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {
         auth.logout(SecurityUtils.getToken());
-    }
-
-    @PostMapping("/touch")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void touch() {
-        // 续期已在认证过滤器完成，此端点仅提供可由用户活动触发的轻量请求。
     }
 
     @PostMapping("/password")

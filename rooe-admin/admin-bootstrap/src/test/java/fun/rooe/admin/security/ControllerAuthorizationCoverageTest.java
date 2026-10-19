@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 class ControllerAuthorizationCoverageTest {
     // 这些接口只要求登录，由全局过滤链认证；其余非公开接口仍须声明业务权限。
     private static final Set<String> AUTHENTICATED_ENDPOINTS = Set.of(
-            "GET /api/auth/me", "POST /api/auth/logout", "POST /api/auth/touch", "POST /api/auth/password",
+            "GET /api/auth/me", "POST /api/auth/logout", "POST /api/auth/password",
             "GET /api/dictDetail", "GET /api/dictDetail/map", "GET /api/menus/build", "GET /api/roles/level",
             "GET /api/logs/user", "PUT /api/users/center", "POST /api/users/updateAvatar");
 
@@ -87,3 +87,4 @@ class ControllerAuthorizationCoverageTest {
     static class Web {
     }
 }
+

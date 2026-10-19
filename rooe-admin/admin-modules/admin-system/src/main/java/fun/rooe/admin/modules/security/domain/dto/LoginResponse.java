@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 /**
- * 登录成功响应载荷；Token 为不透明随机串，过期时间以秒为单位。
+ * 登录成功响应载荷；Access 与 Refresh 均为不透明随机串，过期时间以秒为单位。
  */
 @Getter
 @AllArgsConstructor
@@ -16,19 +16,23 @@ public class LoginResponse {
      */
     private final String status;
     /**
-     * Opaque access token.
+     * Opaque access token; short-lived and never renewed.
      */
     private final String accessToken;
+    /**
+     * Opaque refresh token; exchanged for a new access token when the access token expires.
+     */
+    private final String refreshToken;
     /**
      * Token type prefix, always Bearer.
      */
     private final String tokenType;
     /**
-     * Idle TTL in seconds.
+     * Access token TTL in seconds.
      */
     private final long expiresIn;
     /**
-     * Absolute expiry timestamp in seconds.
+     * Absolute expiry timestamp in seconds; the refresh token never outlives it.
      */
     private final long absoluteExpiresAt;
     /**

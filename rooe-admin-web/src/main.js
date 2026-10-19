@@ -17,8 +17,8 @@ import './assets/styles/element-variables.scss'
 // global css
 import './assets/styles/index.scss'
 
-import { startSessionActivity } from '@/utils/session'
-import { logout, touch } from '@/api/login'
+import {startSessionActivity} from '@/utils/session'
+import {logout} from '@/api/login'
 import App from './App'
 import store from './store'
 import router from './router/routers'
@@ -36,7 +36,6 @@ Vue.use(Element, {
 Vue.config.productionTip = false
 
 startSessionActivity({
-  touch,
   logout,
   onWarning: () => Element.Notification.warning({
     title: '登录即将过期',
@@ -58,3 +57,4 @@ new Vue({
   store,
   render: h => h(App)
 })
+

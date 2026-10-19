@@ -6,6 +6,7 @@ import fun.rooe.admin.framework.security.AuthFailure;
 import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.model.LoginUser;
+import fun.rooe.admin.framework.security.service.AuthIdentityService;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
@@ -438,6 +439,11 @@ class AuthMutationIntegrationTest {
         @Bean
         SessionService sessions() {
             return mock(SessionService.class);
+        }
+
+        @Bean
+        AuthIdentityService identities() {
+            return mock(AuthIdentityService.class);
         }
 
         @Bean

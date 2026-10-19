@@ -1,32 +1,29 @@
-import { getToken, isCurrentSessionRequest, TokenKey } from '@/utils/auth'
+import {getToken, isCurrentSessionRequest, TokenKey} from '@/utils/auth'
 
 const prefix = 'rooe.auth.'
-export const defaults = { touchInterval: 5 * 60 * 1000, idleTimeout: 20 * 60 * 1000, warningBefore: 2 * 60 * 1000 }
+// Access 由服务端固定过期并静默续期，前端只负责在本地空闲窗口到达时登出。
+export const defaults = {idleTimeout: 20 * 60 * 1000, warningBefore: 2 * 60 * 1000}
 const read = name => Number(localStorage.getItem(prefix + name) || 0)
 const write = (name, value) => localStorage.setItem(prefix + name, String(value))
 
 export function initializeSession(absoluteExpiresAt, now = Date.now()) {
   // 登录接口的绝对到期时间单位为秒，浏览器统一以毫秒保存并跨标签页共享。
   write('lastActiveAt', now)
-  write('lastRenewableServerContactAt', now)
   write('absoluteExpiresAt', absoluteExpiresAt * 1000)
-  write('lastTouchAt', 0)
 }
 
 export function recordRenewal(response, now = Date.now()) {
-  const ttl = Number((response.headers || {})['x-session-expires-in'])
-  // 只有当前会话的 2xx 响应携带续期头才算有效联系，失败或旧会话响应不推进时间。
-  if (response.status >= 200 && response.status < 300 && ttl > 0 && isCurrentSessionRequest(response.config)) {
-    write('lastRenewableServerContactAt', now)
+  // 续期响应到达即视为本地活跃，延长空闲窗口；失败或旧会话响应不推进时间。
+  if (response && response.status >= 200 && response.status < 300 && isCurrentSessionRequest(response.config)) {
+    write('lastActiveAt', now)
   }
 }
 
 // 监听真实用户活动与跨标签页变化；返回清理函数，供组件卸载时解除所有监听。
-export function startSessionActivity({ touch, logout, onLogout, onWarning }, options = {}) {
+export function startSessionActivity({logout, onLogout, onWarning}, options = {}) {
   const settings = { ...defaults, ...options }
   let stopping = false
   let warned = false
-  let touching = false
   let currentToken = getToken()
   const notifyLogout = async changed => {
     try {
@@ -45,15 +42,6 @@ export function startSessionActivity({ touch, logout, onLogout, onWarning }, opt
       // 等待注销期间可能已重新登录，不能清理新的 Token。
       if (getToken() === token) await notifyLogout()
       stopping = false
-    }
-  }
-  const keepAlive = async() => {
-    touching = true
-    try {
-      await touch()
-    } catch (e) { /* 失败后仅在后续真实活动中重试，仍受触发间隔约束。 */
-    } finally {
-      touching = false
     }
   }
   const check = () => {
@@ -82,11 +70,6 @@ export function startSessionActivity({ touch, logout, onLogout, onWarning }, opt
     if (!event.isTrusted || !check()) return
     const now = Date.now()
     if (now - read('lastActiveAt') >= 1000) write('lastActiveAt', now)
-    if (!touching && now - read('lastRenewableServerContactAt') >= settings.touchInterval && now - read('lastTouchAt') >= 10000) {
-      // 普通成功请求已续期时无需 touch；提前记录触发时间，失败也保留重试间隔。
-      write('lastTouchAt', now)
-      keepAlive()
-    }
   }
   const sync = event => {
     if (event.key === TokenKey) notifyLogout(!!event.newValue)
@@ -96,7 +79,7 @@ export function startSessionActivity({ touch, logout, onLogout, onWarning }, opt
   window.addEventListener('storage', sync)
   window.addEventListener('online', check)
   document.addEventListener('visibilitychange', check)
-  // 定时器仅检查本地过期状态，touch 只能由真实用户活动触发。
+  // 定时器仅检查本地过期状态，不产生任何网络请求。
   const timer = window.setInterval(check, 1000)
   return () => {
     clearInterval(timer)

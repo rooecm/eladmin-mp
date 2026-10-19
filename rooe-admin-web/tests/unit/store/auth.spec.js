@@ -1,29 +1,35 @@
 /* eslint-env jest */
 jest.mock('@/api/login', () => ({login: jest.fn(), getInfo: jest.fn(), logout: jest.fn()}))
-jest.mock('@/utils/auth', () => ({getToken: jest.fn(), setToken: jest.fn(), removeToken: jest.fn()}))
+jest.mock('@/utils/auth', () => ({getToken: jest.fn(), setCredentials: jest.fn(), removeToken: jest.fn()}))
 jest.mock('@/utils/session', () => ({initializeSession: jest.fn()}))
 import user from '@/store/modules/user'
 import {getInfo, login, logout} from '@/api/login'
-import {getToken, removeToken, setToken} from '@/utils/auth'
+import {getToken, removeToken, setCredentials} from '@/utils/auth'
 import {initializeSession} from '@/utils/session'
 
 describe('authentication store contract', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.clearAllMocks()
     getToken.mockReturnValue('current-token')
   })
   it('rejects an unknown login status before persisting credentials', async () => {
     login.mockResolvedValue({status: 'FUTURE_STATUS', accessToken: 'token'})
     await expect(user.actions.Login({commit: jest.fn()}, {username: 'user', password: 'password'})).rejects.toThrow()
-    expect(setToken).not.toHaveBeenCalled()
+    expect(setCredentials).not.toHaveBeenCalled()
     expect(initializeSession).not.toHaveBeenCalled()
   })
   it('persists only a completed login and initializes the shared lifecycle', async () => {
-    const result = {status: 'SUCCESS', accessToken: 'opaque', absoluteExpiresAt: 1000, mustChangePassword: true}
+    const result = {
+      status: 'SUCCESS',
+      accessToken: 'opaque',
+      refreshToken: 'opaque-refresh',
+      absoluteExpiresAt: 1000,
+      mustChangePassword: true
+    }
     login.mockResolvedValue(result)
     const commit = jest.fn()
     expect(await user.actions.Login({commit}, {username: 'user', password: 'password'})).toBe(result)
-    expect(setToken).toHaveBeenCalledWith('opaque')
+    expect(setCredentials).toHaveBeenCalledWith('opaque', 'opaque-refresh')
     expect(initializeSession).toHaveBeenCalledWith(1000)
     expect(commit).toHaveBeenCalledWith('SET_PASSWORD_CHANGE', true)
   })
@@ -69,3 +75,4 @@ describe('authentication store contract', () => {
     expect(commit).toHaveBeenCalledWith('SET_LOAD_MENUS', true)
   })
 })
+

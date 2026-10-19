@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * 请求认证入口：验证服务端会话、用户状态与认证版本，再构建本次请求的安全上下文。
+ * Access 凭证固定有效，认证过程只读不续期；续期由客户端凭 Refresh 调用专用端点完成。
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -64,7 +65,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         try {
             String header = request.getHeader("Authorization");
             String token = header != null && header.regionMatches(true, 0, "Bearer ", 0, 7) ? header.substring(7) : null;
-            if (tokens.isValid(token) && !authenticate(request, response, token)) {
+            if (tokens.isValid(token) && !authenticate(request.getServletPath(), response, token)) {
                 return;
             }
             // 下游业务异常交给后续处理链，避免被认证基础设施异常处理误转为 503。
@@ -75,12 +76,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private boolean authenticate(HttpServletRequest request, HttpServletResponse response, String token) throws IOException {
+    private boolean authenticate(String path, HttpServletResponse response, String token) throws IOException {
         try {
-            String digest = tokens.digest(token);
-            boolean renew = !SecurityPaths.matchesAny(request.getServletPath(), properties.getSession().getRenewExcludePaths());
-            // Lua 原子读取会话并按策略续期，注销及配置的排除路径不会续期。
-            var session = sessions.authenticateAndRenew(digest, renew);
+            var session = sessions.authenticate(tokens.digest(token));
             if (session == null) {
                 errors.write(response, HttpStatus.UNAUTHORIZED, AuthErrorCode.SESSION_INVALID);
                 return false;
@@ -88,17 +86,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             var user = identities.getUserForSession(session.getUserId(), session.getAuthVersion());
             String reason = rejectionReason(user, session);
             if (reason != null) {
-                sessions.revokeByDigest(digest);
+                sessions.revokeBySessionId(session.getSessionId());
                 telemetry.count("auth_session_rejected_total", "reason", reason);
                 telemetry.audit("SESSION_REVOKED", session.getUserId(), reason);
                 if (reason.equals("auth_version_inconsistent"))
                     log.error("Authentication version is ahead of authoritative user version");
                 errors.write(response, HttpStatus.UNAUTHORIZED, AuthErrorCode.SESSION_INVALID);
                 return false;
-            }
-            if (session.isRenewed()) {
-                response.setHeader("X-Session-Expires-In", Long.toString(session.getTtlSeconds()));
-                telemetry.count("auth_session_renew_total");
             }
             // 强制改密期间清空业务权限，并在下方将访问范围限制到改密相关端点。
             var authorities = user.isMustChangePassword() ? List.<org.springframework.security.core.GrantedAuthority>of()
@@ -107,7 +101,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             var context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(principal, null, authorities));
             SecurityContextHolder.setContext(context);
-            if (user.isMustChangePassword() && !SecurityPaths.PASSWORD_CHANGE_ALLOWED_PATHS.contains(request.getServletPath())) {
+            if (user.isMustChangePassword() && !SecurityPaths.PASSWORD_CHANGE_ALLOWED_PATHS.contains(path)) {
                 errors.write(response, HttpStatus.FORBIDDEN, AuthErrorCode.PASSWORD_CHANGE_REQUIRED);
                 return false;
             }

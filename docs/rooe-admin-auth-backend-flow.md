@@ -95,7 +95,9 @@ sequenceDiagram
 Token 使用 32 字节安全随机数，经 Base64URL 编码为 43 个字符；Redis 会话键为 `rooe:auth:session:<SHA-256摘要>`。会话记录保存创建时的
 authVersion，不包含密码。
 
-默认空闲期限为30分钟、绝对期限为12小时；续期只能延长空闲期限，不能越过绝对期限。登录和修改密码不做次数限流；登录记录的 IP 取
+默认 Access 期限为15分钟、Refresh 期限为30天（即会话绝对生命周期）。Access 固定有效且不按请求续期，过期后由客户端凭 Refresh
+调用 /api/auth/refresh 换取新凭证；Refresh 每次轮换，重复使用视为泄露并吊销整条会话。登录和修改密码不做次数限流；登录记录的
+IP 取
 remoteAddr。
 
 ## 4. 每次请求的认证与授权
@@ -106,8 +108,8 @@ flowchart TD
     B --> C{Token 格式有效？}
     C -->|否| ANON[匿名进入下游过滤链]
     ANON --> E401[Spring Security 拒绝：401]
-    C -->|是| D[计算摘要，确定本路径能否续期]
-    D --> E[RedisSessionService.authenticateAndRenew]
+    C -->|是| D[计算摘要，只读校验凭证]
+    D --> E[RedisSessionService.authenticate]
     E --> F{Lua 返回有效会话？}
     F -->|不存在或过期| E401
     F -->|有效| G[AuthIdentityServiceImpl → UserCacheServiceImpl]
@@ -118,8 +120,7 @@ flowchart TD
     LOAD --> CHECK{用户存在、启用且版本等于会话？}
     CHECK -->|否| DEL[删除该摘要会话、记录拒绝原因]
     DEL --> E401
-    CHECK -->|是| HEADER[本次已续期时设置 X-Session-Expires-In]
-    HEADER --> FORCE{mustChangePassword？}
+    CHECK -->|是| FORCE{mustChangePassword？}
     FORCE -->|否| ROLE[RolePermissionServiceImpl：MGET 角色权限缓存]
     ROLE --> RHIT{所需角色全部命中？}
     RHIT -->|否| RLOAD[加锁复查并从主库加载缺失角色]
@@ -141,7 +142,7 @@ flowchart TD
 
 角色权限缓存命中时直接组装 authorities；回源只发生在缺失、过期、损坏或缓存不可用等情况。用户缓存若落后于当前会话版本，会先回源修复；若最终用户快照与会话版本不相等，则拒绝会话。
 
-强制改密只允许 `/api/auth/me`、`/api/auth/password`、`/api/auth/logout`、`/api/auth/touch`。权限检查支持启用的 SUPER_ADMIN
+强制改密只允许 `/api/auth/me`、`/api/auth/password`、`/api/auth/logout`、`/api/auth/refresh`。权限检查支持启用的 SUPER_ADMIN
 角色；不依据用户 isAdmin 标志放行。
 
 认证准备阶段的运行时异常由过滤器转换为503；下游业务异常由业务异常处理链处理。过滤器执行的各分支最终都会清理上下文。公开路径由
@@ -150,8 +151,9 @@ shouldNotFilter 跳过；OPTIONS 由安全链允许，跨域预检由 CORS 处�
 普通非强制改密请求在用户、角色缓存命中且 Redis 脚本预热时，认证部分为：一次会话 Lua、一次用户 GET、一次角色 MGET，共3次 Redis
 操作、0次数据库读取。该预算不包含业务处理器自己的查询。
 
-缓存回源通过 `AuthReadService` 的独立 READ_COMMITTED 事务读取主库，回填截止时间在查询前计算；NX/PXAT 与
-compare-and-refresh 避免覆盖并发新值、延长旧快照寿命。用户缓存默认60秒、角色权限默认5分钟，均有约±10%抖动。缓存读写故障会尝试数据库回源；会话存储故障直接拒绝请求。
+缓存回源通过 `AuthReadService` 的独立 READ_COMMITTED 事务读取主库，回填截止时间在查询前计算。回填用
+`StringRedisTemplate.setIfAbsent(key, json, ttl)`（单条 `SET NX`，自身原子，已不再使用 Lua）；刷新用
+compare-and-refresh 脚本，避免覆盖并发新值、延长旧快照寿命。用户缓存默认60秒、角色权限默认5分钟，均有约±10%抖动。缓存读写故障会尝试数据库回源；会话存储故障直接拒绝请求。
 
 ## 5. 安全写入、权限更新与会话失效
 
@@ -209,13 +211,13 @@ InitialAdminInitializer 在配置初始密码且满足历史演示账户条件�
 
 ## 6. 认证端点及错误返回
 
-| 端点                      | 过滤器之后的主要业务                                      |
-|-------------------------|-------------------------------------------------|
-| POST /api/auth/login    | 凭证验证、随机令牌、创建 Redis 会话                           |
-| GET /api/auth/me        | 从 principal 读取身份，查询用户展示数据及有效权限，返回强制改密标记         |
-| POST /api/auth/touch    | 续期发生在过滤器中；Controller 无额外写入，返回204                |
-| POST /api/auth/logout   | 此路径不续期；AuthServiceImpl 删除当前摘要对应的 Redis 会话，返回204 |
-| POST /api/auth/password | 限流、锁与守卫、密码校验、事务内改密及版本递增、提交后失效，成功204             |
+| 端点                      | 过滤器之后的主要业务                                        |
+|-------------------------|---------------------------------------------------|
+| POST /api/auth/login    | 凭证验证、随机令牌、创建 Redis 会话                             |
+| GET /api/auth/me        | 从 principal 读取身份，查询用户展示数据及有效权限，返回强制改密标记           |
+| POST /api/auth/refresh  | 凭 Refresh 轮换出新的 Access 与 Refresh；旧凭证立即失效，重放吊销整条会话 |
+| POST /api/auth/logout   | 此路径不续期；AuthServiceImpl 删除当前摘要对应的 Redis 会话，返回204   |
+| POST /api/auth/password | 限流、锁与守卫、密码校验、事务内改密及版本递增、提交后失效，成功204               |
 
 普通退出只删除当前会话，没有用户会话索引、会话列表、批量踢人链路。用户级版本撤销由后续请求逐个识别旧会话。
 

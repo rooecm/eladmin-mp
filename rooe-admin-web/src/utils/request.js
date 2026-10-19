@@ -1,9 +1,9 @@
 import axios from 'axios'
 import router from '@/router/routers'
-import { Notification } from 'element-ui'
+import {Notification} from 'element-ui'
 import store from '../store'
-import { authorization, getToken, isCurrentSessionRequest } from '@/utils/auth'
-import { recordRenewal } from '@/utils/session'
+import {authorization, getToken, isCurrentSessionRequest} from '@/utils/auth'
+import {isRefreshRequest, refreshCredentials} from '@/utils/refresh'
 import Config from '@/settings'
 import Cookies from 'js-cookie'
 
@@ -37,7 +37,33 @@ function readBlob(blob) {
   })
 }
 
+// 统一补齐业务码与提示信息，确保续期失败等提前返回路径也携带完整上下文。
+function normalize(error, result, status, code) {
+  const message = result && typeof result.message === 'string' && result.message
+    ? result.message
+    : (/timeout/i.test(error.message || '') ? '网络请求超时' : '接口请求失败')
+  if (code) {
+    error.code = code
+    error.businessCode = code
+  }
+  error.message = message
+  error.httpStatus = status
+  return error
+}
+
 let redirectingToLogin = false
+
+async function expireSession() {
+  if (redirectingToLogin) return
+  redirectingToLogin = true
+  try {
+    await store.dispatch('ClearAuth')
+    Cookies.set('point', 401)
+    await router.replace({path: '/login'})
+  } finally {
+    redirectingToLogin = false
+  }
+}
 
 // 普通请求、直接上传和 Blob 下载共用错误处理，统一业务错误码与会话跳转行为。
 export async function handleApiError(error) {
@@ -53,41 +79,40 @@ export async function handleApiError(error) {
     }
   }
   const code = result && typeof result.code === 'string' ? result.code : undefined
-  const message = result && typeof result.message === 'string' && result.message
-    ? result.message
-    : (/timeout/i.test(error.message || '') ? '网络请求超时' : '接口请求失败')
-  if (code) {
-    error.code = code
-    error.businessCode = code
-  }
-  error.message = message
-  error.httpStatus = status
-
-  Notification.error({ title: message, duration: 5000 })
-
   const config = error.config || (response && response.config) || {}
   const loginRequest = /(?:^|\/)auth\/login(?:\?|$)/.test(config.url || '')
+  // 仅当前会话的请求可以触发续期或清理登录态，旧会话响应不得影响新登录。
   const currentSession = isCurrentSessionRequest(config)
-  // 仅当前会话的 401 清理登录态；强制改密的 403 跳转改密页，其他 403/503 保留会话。
-  if (status === 401 && !loginRequest && currentSession && !redirectingToLogin) {
-    redirectingToLogin = true
+
+  // Access 过期时先静默续期再重放原请求；重放带 _retry 标记，避免续期失败后无限循环。
+  if (status === 401 && !config._retry && !isRefreshRequest(config) && !loginRequest && currentSession) {
     try {
-      await store.dispatch('ClearAuth')
-      Cookies.set('point', 401)
-      await router.replace({ path: '/login' })
-    } finally {
-      redirectingToLogin = false
+      await refreshCredentials()
+      const replay = {...config, _retry: true}
+      // 重放前重读当前 Token：续期已写入新凭证，旧请求头必须被覆盖。
+      replay.headers = {...(config.headers || {}), Authorization: authorization()}
+      return service(replay)
+    } catch (refreshError) {
+      // 续期失败说明 Refresh 也已失效，无法继续该请求，只能回到登录页。
+      await expireSession()
+      throw normalize(error, result, status, code)
     }
+  }
+
+  const normalized = normalize(error, result, status, code)
+  Notification.error({title: normalized.message, duration: 5000})
+  // 仅当前会话的 401 清理登录态；强制改密的 403 跳转改密页，其他 403/503 保留会话。
+  if (status === 401 && !loginRequest && currentSession) {
+    await expireSession()
   } else if (status === 403 && code === 'AUTH_PASSWORD_CHANGE_REQUIRED' && currentSession) {
     store.commit('SET_PASSWORD_CHANGE', true)
     await router.replace({ path: '/change-password' })
   }
-  throw error
+  throw normalized
 }
 
-// 统一记录服务端续期结果，解包 ApiResult，同时兼容仍直接返回业务数据的接口。
+// 解包 ApiResult，同时兼容仍直接返回业务数据的接口。
 export function handleApiResponse(response) {
-  recordRenewal(response)
   const result = response.data
   if (!isApiResult(result)) return result
   if (result.code === '0') return result.data

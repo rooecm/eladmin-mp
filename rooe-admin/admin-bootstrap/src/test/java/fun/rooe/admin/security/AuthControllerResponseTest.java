@@ -7,6 +7,7 @@ import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.modules.security.controller.AuthController;
 import fun.rooe.admin.modules.security.domain.dto.LoginCredentialSnapshot;
 import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
+import fun.rooe.admin.modules.security.domain.dto.RefreshResponse;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.AuthService;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
@@ -56,7 +57,7 @@ class AuthControllerResponseTest {
         var verified = mock(LoginCredentialSnapshot.class);
         when(auth.verifyCredentials(any(LoginRequest.class))).thenReturn(verified);
         when(auth.establishSession(verified, "WEB", "127.0.0.1", "test-agent"))
-                .thenReturn(new LoginResponse("SUCCESS", "opaque-token", "Bearer", 1800, 43200, false, null, null));
+                .thenReturn(new LoginResponse("SUCCESS", "opaque-token", "opaque-refresh", "Bearer", 900, 43200, false, null, null));
 
         var response = mvc.perform(post("/api/auth/login").header("User-Agent", "test-agent")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -111,8 +112,8 @@ class AuthControllerResponseTest {
     }
 
     @Test
-    void logoutTouchAndPasswordKeepNoContentResponses() throws Exception {
-        for (String path : List.of("logout", "touch", "password")) {
+    void logoutAndPasswordKeepNoContentResponses() throws Exception {
+        for (String path : List.of("logout", "password")) {
             var response = mvc.perform(post("/api/auth/" + path)
                             .header("Authorization", "Bearer opaque-token")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -125,6 +126,29 @@ class AuthControllerResponseTest {
         verify(auth).changePassword(argThat(request -> "NewPass8!".equals(request.getNewPassword())));
     }
 
+    @Test
+    void refreshReturnsRotatedCredentialsAndForbidsCaching() throws Exception {
+        when(auth.refresh(any())).thenReturn(new RefreshResponse("new-access", "new-refresh", "Bearer", 900, 43200));
+
+        var response = mvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"old-refresh\"}"))
+                .andReturn().getResponse();
+        var body = mapper.readTree(response.getContentAsByteArray());
+
+        assertEquals(200, response.getStatus());
+        assertEquals("no-store", response.getHeader("Cache-Control"));
+        assertEquals("new-access", body.path("data").path("accessToken").asText());
+        assertEquals("new-refresh", body.path("data").path("refreshToken").asText());
+    }
+
+    @Test
+    void refreshRejectsBlankRefreshTokens() throws Exception {
+        assertEquals(400, mvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"refreshToken\":\"\"}"))
+                .andReturn().getResponse().getStatus());
+    }
+
     private void authenticate(boolean mustChangePassword) {
         var principal = new LoginUser(2, "alice", "Alice", "session", mustChangePassword, List.of());
         SecurityContextHolder.getContext().setAuthentication(
@@ -134,3 +158,4 @@ class AuthControllerResponseTest {
         when(users.getLoginData("alice")).thenReturn(user);
     }
 }
+

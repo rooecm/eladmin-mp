@@ -24,6 +24,10 @@ module.exports = {
    */
   TokenKey: 'ROOE ADMIN-TOEKN',
   /**
+   * @description 续期凭证 key
+   */
+  RefreshTokenKey: 'ROOE ADMIN-REFRESH',
+  /**
    * @description 请求超时时间，毫秒（默认2分钟）
    */
   timeout: 1200000,
@@ -44,3 +48,4 @@ module.exports = {
    */
   caseNumber: ''
 }
+

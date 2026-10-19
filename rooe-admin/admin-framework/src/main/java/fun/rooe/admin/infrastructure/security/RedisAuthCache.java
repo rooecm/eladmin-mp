@@ -20,7 +20,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class RedisAuthCache {
     public static final String USER = "rooe:auth:user:";
     public static final String ROLE = "rooe:auth:role-permissions:";
-    private static final DefaultRedisScript<Long> FILL = RedisScripts.load("security/cache-fill.lua", Long.class);
     private static final DefaultRedisScript<Long> REFRESH = RedisScripts.load("security/cache-refresh.lua", Long.class);
     private final StringRedisTemplate redis;
     private final Clock clock;
@@ -43,8 +42,9 @@ public class RedisAuthCache {
      * 仅填充空键，使用查询前计算的绝对过期时间，不覆盖已存在的缓存。
      */
     public void fill(String key, String json, long deadline) {
-        if (deadline > clock.millis()) {
-            redis.execute(FILL, List.of(key), json, Long.toString(deadline));
+        long ttlMillis = deadline - clock.millis();
+        if (ttlMillis > 0) {
+            redis.opsForValue().setIfAbsent(key, json, Duration.ofMillis(ttlMillis));
         }
     }
 
