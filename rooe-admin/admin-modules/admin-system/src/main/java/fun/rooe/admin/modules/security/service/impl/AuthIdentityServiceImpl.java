@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.security.service.impl;
 
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.framework.security.service.AuthIdentityService;
 import fun.rooe.admin.modules.security.service.RolePermissionService;
 import fun.rooe.admin.modules.security.service.UserCacheService;
@@ -20,7 +20,7 @@ public class AuthIdentityServiceImpl implements AuthIdentityService {
     private final RolePermissionService roles;
 
     @Override
-    public AuthenticatedUser getUserForSession(long uid, long version) {
+    public UserSnapshot getUserForSession(long uid, long version) {
         return users.getUserForSession(uid, version);
     }
 

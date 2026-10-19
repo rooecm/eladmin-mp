@@ -3,7 +3,7 @@ package fun.rooe.admin.modules.security.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.AuthTelemetry;
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.infrastructure.security.RedisAuthCache;
 import fun.rooe.admin.modules.security.service.AuthReadService;
 import fun.rooe.admin.modules.security.service.UserCacheService;
@@ -29,10 +29,10 @@ public class UserCacheServiceImpl implements UserCacheService {
     private final Object[] locks = IntStream.range(0, 64).mapToObj(i -> new Object()).toArray();
 
     @Override
-    public AuthenticatedUser getUserForSession(long uid, long version) {
+    public UserSnapshot getUserForSession(long uid, long version) {
         String key = RedisAuthCache.USER + uid;
         String observed = read(key);
-        AuthenticatedUser cached = parse(observed);
+        UserSnapshot cached = parse(observed);
         // 更新的用户版本也直接返回，由过滤器判断旧会话是否应失效。
         if (cached != null && cached.getAuthVersion() >= version) {
             return cached;
@@ -50,7 +50,7 @@ public class UserCacheServiceImpl implements UserCacheService {
             }
             // 查询前计算绝对过期时间，慢查询不会额外延长旧快照的存活窗口。
             long deadline = cache.deadline(properties.getCache().getUserTtl());
-            AuthenticatedUser user = reads.user(uid);
+            UserSnapshot user = reads.user(uid);
             if (user != null) {
                 try {
                     String value = json.writeValueAsString(user);
@@ -76,9 +76,9 @@ public class UserCacheServiceImpl implements UserCacheService {
         }
     }
 
-    private AuthenticatedUser parse(String value) {
+    private UserSnapshot parse(String value) {
         try {
-            return value == null ? null : json.readValue(value, AuthenticatedUser.class);
+            return value == null ? null : json.readValue(value, UserSnapshot.class);
         } catch (Exception e) {
             cache.failure();
             return null;

@@ -9,8 +9,8 @@ import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
 import fun.rooe.admin.framework.utils.SecurityUtils;
+import fun.rooe.admin.modules.security.domain.dto.LoginCredentialSnapshot;
 import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
-import fun.rooe.admin.modules.security.domain.dto.LoginUserDetails;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.domain.request.PasswordChangeRequest;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
@@ -49,12 +49,12 @@ public class AuthServiceImpl implements AuthService {
     private final Clock clock;
 
     @Override
-    public LoginUserDetails verifyCredentials(LoginRequest request) {
-        String username = LoginUserDetailsService.canonical(request.getUsername());
+    public LoginCredentialSnapshot verifyCredentials(LoginRequest request) {
+        String username = LoginService.canonical(request.getUsername());
         try {
             var authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(username, request.getPassword()));
-            var verified = (LoginUserDetails) authentication.getPrincipal();
+            var verified = (LoginCredentialSnapshot) authentication.getPrincipal();
             // 密码验证通过后才区分禁用账号，登录快照来自主库而非用户缓存。
             if (!Boolean.TRUE.equals(verified.snapshot().getEnabled())) {
                 telemetry.count("auth_login_total", "result", "disabled");
@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse establishSession(LoginUserDetails verified, String clientType, String ip, String agent) {
+    public LoginResponse establishSession(LoginCredentialSnapshot verified, String clientType, String ip, String agent) {
         var user = verified.snapshot();
         try {
             String token = tokens.generateToken();

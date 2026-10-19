@@ -6,8 +6,8 @@ import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
 import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
 import fun.rooe.admin.framework.security.model.SessionInfo;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.framework.security.service.AuthIdentityService;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
@@ -65,7 +65,7 @@ class SecurityHttpIntegrationTest {
         identities = context.getBean(AuthIdentityService.class);
         token = context.getBean(TokenService.class).generateToken();
         when(sessions.authenticateAndRenew(anyString(), anyBoolean())).thenReturn(new SessionInfo("sid", 1, 1, Long.MAX_VALUE, 2, true, 1800));
-        when(identities.getUserForSession(1, 2)).thenReturn(new AuthenticatedUser(1, "user", "User", true, false, 2, List.of(1L)));
+        when(identities.getUserForSession(1, 2)).thenReturn(new UserSnapshot(1, "user", "User", true, false, 2, List.of(1L)));
         when(identities.getAuthorities(anyList())).thenReturn(List.of(new SimpleGrantedAuthority("user:list")));
     }
 
@@ -128,10 +128,10 @@ class SecurityHttpIntegrationTest {
 
     @Test
     void staleDisabledMissingAndInconsistentVersionsRevokeTheSession() throws Exception {
-        for (AuthenticatedUser user : new AuthenticatedUser[]{
-                new AuthenticatedUser(1, "u", "U", true, false, 3, List.of()),
-                new AuthenticatedUser(1, "u", "U", false, false, 2, List.of()),
-                new AuthenticatedUser(1, "u", "U", true, false, 1, List.of()), null}) {
+        for (UserSnapshot user : new UserSnapshot[]{
+                new UserSnapshot(1, "u", "U", true, false, 3, List.of()),
+                new UserSnapshot(1, "u", "U", false, false, 2, List.of()),
+                new UserSnapshot(1, "u", "U", true, false, 1, List.of()), null}) {
             when(identities.getUserForSession(1, 2)).thenReturn(user);
             var response = call("/protected");
             assertEquals(401, response.getStatus());
@@ -142,7 +142,7 @@ class SecurityHttpIntegrationTest {
 
     @Test
     void forcedPasswordChangeBlocksEveryOtherPathEvenWhenOnlyAuthenticationIsRequired() throws Exception {
-        when(identities.getUserForSession(1, 2)).thenReturn(new AuthenticatedUser(1, "u", "U", true, true, 2, List.of(1L)));
+        when(identities.getUserForSession(1, 2)).thenReturn(new UserSnapshot(1, "u", "U", true, true, 2, List.of(1L)));
         var response = call("/authenticated");
         assertEquals(403, response.getStatus());
         assertTrue(response.getContentAsString().contains("AUTH_PASSWORD_CHANGE_REQUIRED"));
@@ -195,7 +195,7 @@ class SecurityHttpIntegrationTest {
 
     @Test
     void rejectionWriterFailureAlsoClearsAuthenticatedContext() throws Exception {
-        when(identities.getUserForSession(1, 2)).thenReturn(new AuthenticatedUser(1, "u", "U", true, true, 2, List.of()));
+        when(identities.getUserForSession(1, 2)).thenReturn(new UserSnapshot(1, "u", "U", true, true, 2, List.of()));
         var writer = mock(SecurityErrorResponseWriter.class);
         doThrow(new IOException("client disconnected")).when(writer)
                 .write(any(), eq(HttpStatus.FORBIDDEN), eq(AuthErrorCode.PASSWORD_CHANGE_REQUIRED));

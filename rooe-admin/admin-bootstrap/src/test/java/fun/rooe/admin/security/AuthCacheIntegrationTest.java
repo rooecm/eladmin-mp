@@ -5,7 +5,7 @@ import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
 import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.framework.security.TokenAuthenticationFilter;
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.framework.security.service.TokenService;
 import fun.rooe.admin.infrastructure.security.RedisAuthCache;
 import fun.rooe.admin.infrastructure.security.RedisSessionService;
@@ -78,8 +78,8 @@ class AuthCacheIntegrationTest {
         redis.delete(List.of(RedisAuthCache.USER + uid, RedisAuthCache.ROLE + rid));
     }
 
-    private AuthenticatedUser user(long version) {
-        return new AuthenticatedUser(uid, "user", "User", true, false, version, List.of(rid));
+    private UserSnapshot user(long version) {
+        return new UserSnapshot(uid, "user", "User", true, false, version, List.of(rid));
     }
 
     @Test
@@ -132,7 +132,7 @@ class AuthCacheIntegrationTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(8);
         try {
-            List<Future<AuthenticatedUser>> pending = new ArrayList<>();
+            List<Future<UserSnapshot>> pending = new ArrayList<>();
             for (int i = 0; i < 40; i++) {
                 pending.add(pool.submit(() -> users.getUserForSession(uid, 2)));
             }

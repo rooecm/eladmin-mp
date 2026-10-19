@@ -162,7 +162,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         // 在同一事务内先串行化管理写操作并校验角色授予范围，再保存用户及关联关系。
         privilegeGuard.lockAdministration();
         privilegeGuard.assignRoles(null, roleIds(request.getRoles()));
-        request.setUsername(LoginUserDetailsService.canonical(request.getUsername()));
+        request.setUsername(LoginService.canonical(request.getUsername()));
         Long deptId = request.getDept().getId();
         Set<Long> roleIds = roleIds(request.getRoles());
         dataService.checkDeptAccess(deptId);
@@ -184,7 +184,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         privilegeGuard.lockAdministration();
         privilegeGuard.changeUser(request.getId(), !Boolean.TRUE.equals(request.getEnabled()));
         privilegeGuard.assignRoles(request.getId(), roleIds(request.getRoles()));
-        request.setUsername(LoginUserDetailsService.canonical(request.getUsername()));
+        request.setUsername(LoginService.canonical(request.getUsername()));
         UserDO user = getById(request.getId());
         checkUserAccess(user);
         checkLevel(roleMapper.findByUserId(user.getId()).stream()

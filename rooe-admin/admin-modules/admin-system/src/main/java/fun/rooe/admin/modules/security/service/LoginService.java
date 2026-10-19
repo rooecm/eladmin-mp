@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.modules.security.domain.dto.LoginUserDetails;
+import fun.rooe.admin.modules.security.domain.dto.LoginCredentialSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,7 +13,7 @@ import java.util.Locale;
  */
 @Service
 @RequiredArgsConstructor
-public class LoginUserDetailsService implements UserDetailsService {
+public class LoginService implements UserDetailsService {
     private final AuthReadService reads;
 
     public static String canonical(String username) {
@@ -22,11 +22,11 @@ public class LoginUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public LoginUserDetails loadUserByUsername(String username) {
+    public LoginCredentialSnapshot loadUserByUsername(String username) {
         var user = reads.login(canonical(username));
         if (user == null) {
             throw new UsernameNotFoundException("Invalid credentials");
         }
-        return new LoginUserDetails(user);
+        return new LoginCredentialSnapshot(user);
     }
 }

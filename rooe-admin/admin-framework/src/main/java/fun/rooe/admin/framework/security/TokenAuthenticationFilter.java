@@ -3,9 +3,9 @@ package fun.rooe.admin.framework.security;
 import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
 import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.framework.security.model.SessionInfo;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.framework.security.service.AuthIdentityService;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
@@ -36,7 +36,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     private final SecurityErrorResponseWriter errors;
     private final AuthTelemetry telemetry;
 
-    private static String rejectionReason(AuthenticatedUser user, SessionInfo session) {
+    private static String rejectionReason(UserSnapshot user, SessionInfo session) {
         if (user == null) {
             return "user_missing";
         }

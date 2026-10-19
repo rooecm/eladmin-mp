@@ -5,8 +5,8 @@ import fun.rooe.admin.framework.advice.ApiResultResponseAdvice;
 import fun.rooe.admin.framework.security.PermissionChecker;
 import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.modules.security.controller.AuthController;
+import fun.rooe.admin.modules.security.domain.dto.LoginCredentialSnapshot;
 import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
-import fun.rooe.admin.modules.security.domain.dto.LoginUserDetails;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.AuthService;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
@@ -53,7 +53,7 @@ class AuthControllerResponseTest {
 
     @Test
     void loginReturnsOneEnvelopeAndKeepsCacheHeaders() throws Exception {
-        var verified = mock(LoginUserDetails.class);
+        var verified = mock(LoginCredentialSnapshot.class);
         when(auth.verifyCredentials(any(LoginRequest.class))).thenReturn(verified);
         when(auth.establishSession(verified, "WEB", "127.0.0.1", "test-agent"))
                 .thenReturn(new LoginResponse("SUCCESS", "opaque-token", "Bearer", 1800, 43200, false, null, null));

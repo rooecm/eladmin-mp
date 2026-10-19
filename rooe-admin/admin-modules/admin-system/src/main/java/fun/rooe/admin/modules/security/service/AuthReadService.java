@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 import fun.rooe.admin.modules.security.domain.dto.RolePermissions;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
@@ -26,9 +26,9 @@ public class AuthReadService {
         return mapper.findForLogin(canonicalUsername);
     }
 
-    public AuthenticatedUser user(long id) {
+    public UserSnapshot user(long id) {
         UserDO user = mapper.findUser(id);
-        return user == null ? null : new AuthenticatedUser(user.getId(), user.getUsername(), user.getNickName(),
+        return user == null ? null : new UserSnapshot(user.getId(), user.getUsername(), user.getNickName(),
                 Boolean.TRUE.equals(user.getEnabled()), Boolean.TRUE.equals(user.getMustChangePassword()),
                 user.getAuthVersion(), List.copyOf(mapper.roleIds(id)));
     }

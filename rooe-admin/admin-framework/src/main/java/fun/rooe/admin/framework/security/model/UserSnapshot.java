@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthenticatedUser {
+public class UserSnapshot {
     /**
      * User ID.
      */

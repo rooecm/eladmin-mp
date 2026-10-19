@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.framework.security.model.AuthenticatedUser;
+import fun.rooe.admin.framework.security.model.UserSnapshot;
 
 public interface UserCacheService {
-    AuthenticatedUser getUserForSession(long userId, long sessionAuthVersion);
+    UserSnapshot getUserForSession(long userId, long sessionAuthVersion);
 }

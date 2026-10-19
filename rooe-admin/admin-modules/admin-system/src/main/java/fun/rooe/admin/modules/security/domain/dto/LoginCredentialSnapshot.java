@@ -11,10 +11,10 @@ import java.util.List;
 /**
  * 登录专用的密码校验快照，不进入缓存、日志或接口响应；认证后擦除密码哈希。
  */
-public class LoginUserDetails implements UserDetails, CredentialsContainer {
+public class LoginCredentialSnapshot implements UserDetails, CredentialsContainer {
     private final UserDO snapshot;
 
-    public LoginUserDetails(UserDO snapshot) {
+    public LoginCredentialSnapshot(UserDO snapshot) {
         this.snapshot = snapshot;
     }
 

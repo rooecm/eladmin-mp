@@ -58,7 +58,7 @@ sequenceDiagram
     participant A as AuthController
     participant S as AuthServiceImpl
     participant P as ProviderManager / DaoAuthenticationProvider
-    participant U as LoginUserDetailsService
+    participant U as LoginService
     participant Q as AuthReadService / AuthMapper
     participant DB as 主数据库
     participant R as TokenService / RedisSessionService
@@ -75,7 +75,7 @@ sequenceDiagram
     Note over Q,DB: REQUIRES_NEW + READ_COMMITTED，只读主库
     DB-->>Q: UserDO
     Q-->>U: 同次数据库快照
-    U-->>P: LoginUserDetails
+    U-->>P: LoginCredentialSnapshot
     P->>P: BCrypt 校验；成功后擦除凭证
     P-->>S: 已验证的同次用户快照
     S->>S: 正确密码之后检查 enabled

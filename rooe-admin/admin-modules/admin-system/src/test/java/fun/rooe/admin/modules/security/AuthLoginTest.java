@@ -32,7 +32,7 @@ class AuthLoginTest {
 
     @BeforeEach
     void setup() {
-        var manager = new SpringSecurityConfig().authenticationManager(new LoginUserDetailsService(reads), encoder);
+        var manager = new SpringSecurityConfig().authenticationManager(new LoginService(reads), encoder);
         service = new AuthServiceImpl(manager, new TokenService(), sessions, mapper, mock(UserMapper.class), encoder,
                 mock(AuthVersionService.class), mock(AuthCacheInvalidator.class), mock(AdminPrivilegeGuard.class),
                 mock(AuthTelemetry.class), Clock.systemUTC());

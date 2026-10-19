@@ -127,7 +127,7 @@ Agent 无权或不适合直接修改部署环境时，应输出检查清单和�
 - `TokenService`：生成随机 Token、计算 Token 摘要。
 - `SessionService`：创建会话、认证并续期（单次 Lua）、撤销单个会话（删除 Key）。
 - `TokenAuthenticationFilter`：解析 Bearer Token，验证会话并设置 SecurityContext，处理强制改密限制。
-- `LoginUserDetailsService`：登录时从数据库主库直接读取用户（不走缓存），同一次读取返回 `status`、`auth_version` 与
+- `LoginService`：登录时从数据库主库直接读取用户（不走缓存），同一次读取返回 `status`、`auth_version` 与
   `must_change_password`，避免登录响应或新会话使用多次读取拼出的不一致快照。
 - `UserCacheService`：用户基础信息缓存。
 - `RolePermissionService`：角色权限缓存与有效权限加载；另提供「直接读库计算有效权限」的方法供越权校验使用。
@@ -419,10 +419,11 @@ Redis、应用服务器均须保持 NTP 时间同步，因为会话绝对过期�
 1. 校验请求参数（用户名长度上限；密码长度上限由项目密码策略决定，注意 BCrypt 只使用前 72 字节）。
 2. 登录尝试准入（6.2）：按账号与 IP 原子预占固定窗口额度；任一维度超限即返回 429，不进行密码校验。
 3. 调用 `AuthenticationManager.authenticate(...)`：
-    - `LoginUserDetailsService` 从数据库直接读取用户，不使用缓存；同一次读取返回 `status` 与 `auth_version`，后续步骤使用这份快照。
+    - `LoginService` 从数据库直接读取用户，不使用缓存；同一次读取返回 `status` 与 `auth_version`，后续步骤使用这份快照。
     - 用户不存在与密码错误统一抛出 `BadCredentialsException`。保持 `hideUserNotFoundExceptions` 默认值，
       `DaoAuthenticationProvider` 会对不存在的用户执行一次哈希比对以抵消时序差异。
-    - `LoginUserDetails` 的 enabled / accountNonLocked 恒为 true，用户状态检查推迟到第 5 步，避免在密码验证前泄露账号状态；同一次查询快照同时携带
+    - `LoginCredentialSnapshot` 的 enabled / accountNonLocked 恒为 true，用户状态检查推迟到第 5
+      步，避免在密码验证前泄露账号状态；同一次查询快照同时携带
       `status`、`auth_version`、`must_change_password`。
 4. 认证失败：记录审计与指标，返回统一的「账号或密码错误」（HTTP 401）。尝试额度已经在密码校验前原子预占，不在失败后另行递增。
 5. 认证成功：使用第 3 步同一次数据库读取的快照复核用户状态；已禁用则返回明确的「账号已禁用」业务错误（HTTP
@@ -1035,7 +1036,7 @@ TTL，不依赖事件保证立即失效。并发旧回源可能在删除后回�
    `renew-min-interval`。
 3. **Token 与 SessionService**：实现 Token 生成/摘要；实现会话创建与原子认证续期的 Lua 脚本（均只访问单个 Key），以及单会话撤销（
    `DEL`）。为脚本结果、绝对过期、Redis 异常和并发竞态编写单元/集成测试，测试运行在真实 Redis 上。
-4. **登录与限流**：实现或复用 `LoginRateLimiter`、`LoginUserDetailsService`、`AuthService`；确保固定窗口计数只在首次创建 Key
+4. **登录与限流**：实现或复用 `LoginRateLimiter`、`LoginService`、`AuthService`；确保固定窗口计数只在首次创建 Key
    时设置 TTL；实现成功登录频率限制；登录时用同一次数据库读取的快照获得 `status` 与 `auth_version` 并写入会话。
 5. **API 与安全过滤器**：实现或复用登录、退出、touch、当前用户、修改本人密码 API；实现 `TokenAuthenticationFilter`（按 7.2
    的顺序，含 `auth_version` 版本校验、缓存版本落后时回源主库与 `X-Session-Expires-In` 响应头）、`SecurityConfig`（含 CORS
