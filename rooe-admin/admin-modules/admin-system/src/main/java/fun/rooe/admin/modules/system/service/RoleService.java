@@ -3,7 +3,6 @@ package fun.rooe.admin.modules.system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
 import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
@@ -34,7 +33,7 @@ public interface RoleService extends IService<RoleDO> {
 
     int getCurrentUserLevel();
 
-    List<AuthorityDTO> buildPermissions(UserLoginDTO user);
+    List<AuthorityDTO> buildPermissions(Long userId);
 
     List<RoleDO> findByMenuId(Long menuId);
 }

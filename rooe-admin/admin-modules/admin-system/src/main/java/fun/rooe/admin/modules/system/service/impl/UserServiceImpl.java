@@ -6,13 +6,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BusinessException;
+import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.infrastructure.error.StorageErrorCode;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.*;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
-import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
@@ -20,7 +19,6 @@ import fun.rooe.admin.modules.system.converter.UserAssembler;
 import fun.rooe.admin.modules.system.domain.dto.JobDTO;
 import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.entity.UserJobDO;
@@ -40,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -341,12 +338,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     }
 
     @Override
-    public UserLoginDTO getLoginData(String userName) {
+    public UserDTO getLoginData(String userName) {
         UserDO user = findByUsername(userName);
         if (user == null) {
             return null;
         }
-        UserLoginDTO dto = assembler.toLoginDto(user);
+        UserDTO dto = assembler.toDto(user);
         if (user.getDeptId() != null)
             dto.setDept(deptAssembler.toDto(deptMapper.selectById(user.getDeptId())));
         dto.setRoles(Collections.emptySet());

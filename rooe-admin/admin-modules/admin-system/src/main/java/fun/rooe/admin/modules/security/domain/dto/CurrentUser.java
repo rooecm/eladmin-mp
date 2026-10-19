@@ -1,6 +1,6 @@
 package fun.rooe.admin.modules.security.domain.dto;
 
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +15,7 @@ public class CurrentUser {
     /**
      * 可向客户端返回的用户资料。
      */
-    private final UserLoginDTO user;
+    private final UserDTO user;
     /**
      * 当前请求实际拥有的权限码。
      */

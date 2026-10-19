@@ -2,7 +2,6 @@ package fun.rooe.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import fun.rooe.admin.modules.system.domain.dto.UserDTO;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.response.PageResult;
@@ -18,7 +17,7 @@ public interface UserService extends IService<UserDO> {
 
     UserDO findByName(String userName);
 
-    UserLoginDTO getLoginData(String userName);
+    UserDTO getLoginData(String userName);
 
     PageResult<UserDTO> queryAll(UserQueryRequest request);
 

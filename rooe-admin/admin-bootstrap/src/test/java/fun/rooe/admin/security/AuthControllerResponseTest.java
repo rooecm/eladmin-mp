@@ -9,7 +9,7 @@ import fun.rooe.admin.modules.security.domain.dto.LoginResponse;
 import fun.rooe.admin.modules.security.domain.dto.LoginUserDetails;
 import fun.rooe.admin.modules.security.domain.request.LoginRequest;
 import fun.rooe.admin.modules.security.service.AuthService;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
+import fun.rooe.admin.modules.system.domain.dto.UserDTO;
 import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.mapper.MenuMapper;
 import fun.rooe.admin.modules.system.service.UserService;
@@ -129,7 +129,7 @@ class AuthControllerResponseTest {
         var principal = new LoginUser(2, "alice", "Alice", "session", mustChangePassword, List.of());
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities()));
-        var user = new UserLoginDTO();
+        var user = new UserDTO();
         user.setUsername("alice");
         when(users.getLoginData("alice")).thenReturn(user);
     }

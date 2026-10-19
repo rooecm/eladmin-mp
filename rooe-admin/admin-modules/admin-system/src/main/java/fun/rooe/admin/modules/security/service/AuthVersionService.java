@@ -4,6 +4,7 @@ import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 敏感变更时递增用户认证版本，使旧版本会话在后续认证校验中失效。
@@ -20,7 +21,7 @@ public class AuthVersionService {
         if (mapper.bumpVersion(uid) != 1) {
             throw new IllegalStateException("Authentication user missing");
         }
-        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+        TransactionSynchronizationManager.registerSynchronization(
                 new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {

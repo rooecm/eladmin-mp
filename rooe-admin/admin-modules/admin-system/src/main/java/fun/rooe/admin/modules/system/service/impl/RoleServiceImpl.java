@@ -18,7 +18,6 @@ import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
 import fun.rooe.admin.modules.system.domain.dto.RoleDTO;
-import fun.rooe.admin.modules.system.domain.dto.UserLoginDTO;
 import fun.rooe.admin.modules.system.domain.entity.*;
 import fun.rooe.admin.modules.system.domain.request.*;
 import fun.rooe.admin.modules.system.mapper.*;
@@ -350,10 +349,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
 
     /** Builds deduplicated menu permissions for the authentication principal. */
     @Override
-    public List<AuthorityDTO> buildPermissions(UserLoginDTO user) {
+    public List<AuthorityDTO> buildPermissions(Long userId) {
         // Legacy API delegates to server-owned role permissions, never the isAdmin account flag.
         Set<String> permissions = new HashSet<>();
-        for (RoleDO role : roleMapper.findByUserId(user.getId())) {
+        for (RoleDO role : roleMapper.findByUserId(userId)) {
             if (!Boolean.TRUE.equals(role.getEnabled())) {
                 continue;
             }
