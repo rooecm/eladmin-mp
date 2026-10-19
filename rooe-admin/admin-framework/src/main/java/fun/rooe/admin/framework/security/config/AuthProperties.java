@@ -1,4 +1,4 @@
-package fun.rooe.admin.framework.config.security.config;
+package fun.rooe.admin.framework.security.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Data;

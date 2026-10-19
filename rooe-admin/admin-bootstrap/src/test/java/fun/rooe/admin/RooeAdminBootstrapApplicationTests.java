@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
-import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
+import fun.rooe.admin.framework.security.config.SpringSecurityConfig;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
 import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.domain.entity.RoleDO;

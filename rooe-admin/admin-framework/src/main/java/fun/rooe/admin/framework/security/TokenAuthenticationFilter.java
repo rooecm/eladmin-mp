@@ -1,8 +1,7 @@
 package fun.rooe.admin.framework.security;
 
 import fun.rooe.admin.error.AuthErrorCode;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
-import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.framework.security.model.SessionInfo;
 import fun.rooe.admin.framework.security.model.UserSnapshot;

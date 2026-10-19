@@ -1,8 +1,7 @@
-package fun.rooe.admin.framework.config.security.security;
+package fun.rooe.admin.framework.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.error.ErrorCode;
-import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.response.ApiResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

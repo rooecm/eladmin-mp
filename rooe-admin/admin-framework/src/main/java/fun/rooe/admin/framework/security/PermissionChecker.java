@@ -1,6 +1,6 @@
 package fun.rooe.admin.framework.security;
 
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

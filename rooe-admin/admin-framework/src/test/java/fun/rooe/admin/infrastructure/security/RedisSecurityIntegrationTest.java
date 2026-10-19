@@ -1,7 +1,7 @@
 package fun.rooe.admin.infrastructure.security;
 
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.service.TokenService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;

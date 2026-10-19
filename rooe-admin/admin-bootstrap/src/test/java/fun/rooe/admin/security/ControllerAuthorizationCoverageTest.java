@@ -28,9 +28,7 @@ class ControllerAuthorizationCoverageTest {
     private static final Set<String> AUTHENTICATED_ENDPOINTS = Set.of(
             "GET /api/auth/me", "POST /api/auth/logout", "POST /api/auth/touch", "POST /api/auth/password",
             "GET /api/dictDetail", "GET /api/dictDetail/map", "GET /api/menus/build", "GET /api/roles/level",
-            "GET /api/logs/user", "PUT /api/users/center", "POST /api/users/updateAvatar",
-            "POST /api/users/updateEmail/{code}", "POST /api/code/resetEmail", "POST /api/code/email/resetPass",
-            "GET /api/code/validated");
+            "GET /api/logs/user", "PUT /api/users/center", "POST /api/users/updateAvatar");
 
     @Test
     void businessHandlersDeclarePermissionsAndPermissionCodesAreSeeded() throws Exception {
@@ -48,7 +46,7 @@ class ControllerAuthorizationCoverageTest {
             }
             context.refresh();
             var mapping = context.getBean(RequestMappingHandlerMapping.class);
-            assertTrue(mapping.getHandlerMethods().size() > 60, "Must inspect the real production controller inventory");
+            assertTrue(mapping.getHandlerMethods().size() > 50, "Must inspect the real production controller inventory");
             StringBuilder seeds = new StringBuilder();
             try (var files = Files.list(Path.of("src/main/resources/db/migration"))) {
                 for (Path path : files.filter(p -> p.toString().endsWith(".sql")).toList()) {

@@ -17,9 +17,7 @@
 </template>
 
 <script>
-import { upload } from '@/utils/upload'
-import { Toolbar, Editor } from '@wangeditor/editor-for-vue'
-import { mapGetters } from 'vuex'
+import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 
 export default {
   name: 'WangEditor',
@@ -37,34 +35,20 @@ export default {
     }
   },
   data() {
-    const _this = this
     return {
       toolbarConfig: {},
       editorConfig: { placeholder: '请输入内容...', MENU_CONF: {
         'uploadImage': {
           // 选择文件时的类型限制，默认为 ['image/*'] 。如不想限制，则设置为 []
           allowedFileTypes: ['image/*'],
-          // 自定义上传
-          async customUpload(file, insertFn) { // JS 语法
-            upload(_this.imagesUploadApi, file).then(res => {
-              const data = res.data
-              const url = _this.baseApi + '/file/' + data.type + '/' + data.realName
-              // 最后插入图片
-              insertFn(url, '', '')
-            })
-          }
+          // 图片以 base64 格式插入
+          base64LimitSize: 10 * 1024 * 1024
         }
       }},
       editMode: 'simple',
       editor: null,
       editValue: null
     }
-  },
-  computed: {
-    ...mapGetters([
-      'imagesUploadApi',
-      'baseApi'
-    ])
   },
   watch: {
     editValue(newVal, oldVal) {

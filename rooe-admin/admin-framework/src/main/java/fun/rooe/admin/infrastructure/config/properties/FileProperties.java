@@ -15,8 +15,8 @@
  */
 package fun.rooe.admin.infrastructure.config.properties;
 
-import lombok.Data;
 import fun.rooe.admin.constant.ElConstant;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -27,9 +27,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 @ConfigurationProperties(prefix = "file")
 public class FileProperties {
-
-    /** 文件大小限制 */
-    private Long maxSize;
 
     /** 头像大小限制 */
     private Long avatarMaxSize;
@@ -52,8 +49,6 @@ public class FileProperties {
 
     @Data
     public static class ElPath{
-
-        private String path;
 
         private String avatar;
     }

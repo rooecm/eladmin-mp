@@ -6,18 +6,18 @@ spring:
         enabled: false
       # 开发环境默认连接本地 Redis，可通过环境变量覆盖
       database: ${REDIS_DATABASE:0}
-      host: ${REDIS_HOST:192.168.2.10}
+      host: ${REDIS_HOST:192.168.1.4}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
+      password: ${REDIS_PASSWORD:Redis309315!}
       timeout: ${REDIS_TIMEOUT:3s}
       connect-timeout: ${REDIS_CONNECT_TIMEOUT:3s}
   datasource:
     druid:
       db-type: com.alibaba.druid.pool.DruidDataSource
       driverClassName: com.p6spy.engine.spy.P6SpyDriver
-      url: jdbc:p6spy:mysql://192.168.2.10:3306/rooe-admin?serverTimezone=Asia/Shanghai&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      url: jdbc:p6spy:mysql://192.168.1.4:3306/rooe-admin?serverTimezone=Asia/Shanghai&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
       username: root
-      password: 123456
+      password: Mysql309315!
       # 初始连接数，建议设置为与最小空闲连接数相同
       initial-size: 20
       # 最小空闲连接数，保持足够的空闲连接以应对请求
@@ -67,35 +67,13 @@ spring:
 swagger:
   enabled: true
 
-# 文件存储路径
+# 头像存储路径
 file:
   mac:
-    path: ~/file/
     avatar: ~/avatar/
   linux:
-    path: /home/rooe-admin/file/
     avatar: /home/rooe-admin/avatar/
   windows:
-    path: C:\rooe-admin\file\
     avatar: C:\rooe-admin\avatar\
-  # 文件大小 /M
-  maxSize: 100
+  # 头像大小 /M
   avatarMaxSize: 5
-
-# 亚马逊S3协议云存储配置
-#支持七牛云，阿里云OSS，腾讯云COS，华为云OBS，移动云EOS等
-amz:
-  s3:
-    # 地域
-    region: test
-    # 地域对应的 endpoint
-    endPoint: https://s3.test.com
-    # 访问的域名
-    domain: https://s3.test.com
-    # 账号的认证信息，或者子账号的认证信息
-    accessKey: 填写你的AccessKey
-    secretKey: 填写你的SecretKey
-    # 存储桶（Bucket）
-    defaultBucket: 填写你的存储桶名称
-    # 文件存储路径
-    timeformat: yyyy-MM

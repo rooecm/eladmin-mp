@@ -16,7 +16,7 @@
 package fun.rooe.admin.framework.config.webConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -75,9 +75,7 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         FileProperties.ElPath path = properties.getPath();
         String avatarUtl = "file:" + path.getAvatar().replace("\\","/");
-        String pathUtl = "file:" + path.getPath().replace("\\","/");
         registry.addResourceHandler("/avatar/**").addResourceLocations(avatarUtl).setCachePeriod(0);
-        registry.addResourceHandler("/file/**").addResourceLocations(pathUtl).setCachePeriod(0);
         registry.addResourceHandler("/**").addResourceLocations("classpath:/META-INF/resources/").setCachePeriod(0);
     }
 

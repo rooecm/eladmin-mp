@@ -35,7 +35,5 @@ public interface UserService extends IService<UserDO> {
 
     Map<String, String> updateAvatar(MultipartFile file);
 
-    void updateEmail(String username, String email);
-
     void download(List<UserDTO> users, HttpServletResponse response) throws IOException;
 }

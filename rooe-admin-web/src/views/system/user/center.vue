@@ -28,7 +28,6 @@
                 <svg-icon icon-class="anq" /> 安全设置
                 <div class="user-right">
                   <a @click="$refs.pass.dialog = true">修改密码</a>
-                  <a @click="$refs.email.dialog = true">修改邮箱</a>
                 </div>
               </li>
             </ul>
@@ -99,26 +98,24 @@
         </el-card>
       </el-col>
     </el-row>
-    <updateEmail ref="email" :email="user.email" />
     <updatePass ref="pass" />
   </div>
 </template>
 
 <script>
 import myUpload from 'vue-image-crop-upload'
-import { mapGetters } from 'vuex'
+import {mapGetters} from 'vuex'
 import updatePass from './center/updatePass'
-import updateEmail from './center/updateEmail'
-import { authorization } from '@/utils/auth'
+import {authorization} from '@/utils/auth'
 import store from '@/store'
-import { isvalidPhone } from '@/utils/validate'
+import {isvalidPhone} from '@/utils/validate'
 import crud from '@/mixins/crud'
-import { editUser } from '@/api/system/user'
+import {editUser} from '@/api/system/user'
 import Avatar from '@/assets/images/avatar.png'
 
 export default {
   name: 'Center',
-  components: { updatePass, updateEmail, myUpload },
+  components: {updatePass, myUpload},
   mixins: [crud],
   data() {
     // 自定义验证

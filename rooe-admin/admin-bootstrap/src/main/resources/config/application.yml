@@ -8,8 +8,6 @@ spring:
     baseline-version: 1
     # clean 会清空整个 schema，显式关掉以免版本升级或误操作让它重新可用
     clean-disabled: true
-  freemarker:
-    check-template-location: false
   jackson:
     # 与前端约定的日期格式，保持与旧序列化器一致
     date-format: yyyy-MM-dd HH:mm:ss
@@ -44,7 +42,6 @@ logbook:
       - path: /v3/api-docs/**
       - path: /webjars/**
       - path: /avatar/**
-      - path: /file/**
       - path: /webSocket/**
       - path: /doc.html
       - path: /favicon.ico
@@ -88,14 +85,6 @@ task:
     keep-alive-seconds: 60
     # 队列容量
     queue-capacity: 50
-
-#邮箱验证码有效时间/秒
-code:
-  expiration: 300
-
-#密码加密传输，前端公钥加密，后端私钥解密
-rsa:
-  private_key: MIIBUwIBADANBgkqhkiG9w0BAQEFAASCAT0wggE5AgEAAkEA0vfvyTdGJkdbHkB8mp0f3FE0GYP3AYPaJF7jUd1M0XxFSE2ceK3k2kw20YvQ09NJKk+OMjWQl9WitG9pB6tSCQIDAQABAkA2SimBrWC2/wvauBuYqjCFwLvYiRYqZKThUS3MZlebXJiLB+Ue/gUifAAKIg1avttUZsHBHrop4qfJCwAI0+YRAiEA+W3NK/RaXtnRqmoUUkb59zsZUBLpvZgQPfj1MhyHDz0CIQDYhsAhPJ3mgS64NbUZmGWuuNKp5coY2GIj/zYDMJp6vQIgUueLFXv/eZ1ekgz2Oi67MNCk5jeTF2BurZqNLR3MSmUCIFT3Q6uHMtsB9Eha4u7hS31tj1UWE+D+ADzp59MGnoftAiBeHT7gDMuqeJHPL4b+kC+gzV4FGTfhR9q3tTbklZkD2A==
 
 # Opaque sessions. Set explicit deployment origins and a secure password for create/reset operations.
 auth:

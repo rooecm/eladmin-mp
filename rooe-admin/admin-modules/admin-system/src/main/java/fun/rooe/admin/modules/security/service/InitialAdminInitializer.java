@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.security.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
 import fun.rooe.admin.modules.system.mapper.UserMapper;

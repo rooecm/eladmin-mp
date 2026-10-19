@@ -9,6 +9,7 @@ import fun.rooe.admin.exception.BadRequestException;
 import fun.rooe.admin.framework.advice.ApiResultResponseAdvice;
 import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.config.webConfig.ConfigurerAdapter;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.observability.logging.InfoHttpLogWriter;
 import fun.rooe.starter.support.env.YamlDefaultsEnvironmentPostProcessor;
@@ -141,7 +142,7 @@ class LogbookWebLoggingTest {
     @Test
     void excludesMonitoringDocumentationAndStaticFiles() {
         withLogging((mvc, events) -> {
-            for (String path : new String[]{"/actuator/health", "/swagger-ui/index.html", "/file/example.txt"}) {
+            for (String path : new String[]{"/actuator/health", "/swagger-ui/index.html", "/avatar/example.txt"}) {
                 assertEquals(200, mvc.perform(get(path)).andReturn().getResponse().getStatus());
             }
             assertTrue(events.list.isEmpty());
@@ -224,7 +225,7 @@ class LogbookWebLoggingTest {
                 var mvc = MockMvcBuilders.standaloneSetup(new TestController())
                         .addFilters(filters)
                         .addFilters(new org.springframework.web.filter.CorsFilter(new ConfigurerAdapter(new FileProperties(), new ObjectMapper())
-                                .corsConfigurationSource(new fun.rooe.admin.framework.config.security.config.AuthProperties())))
+                                .corsConfigurationSource(new AuthProperties())))
                         .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
                 assertion.verify(mvc, events);
             } finally {
@@ -269,7 +270,7 @@ class LogbookWebLoggingTest {
             response.flushBuffer();
         }
 
-        @GetMapping({"/actuator/health", "/swagger-ui/index.html", "/file/example.txt"})
+        @GetMapping({"/actuator/health", "/swagger-ui/index.html", "/avatar/example.txt"})
         Map<String, String> excluded() {
             return Map.of("status", "ok");
         }

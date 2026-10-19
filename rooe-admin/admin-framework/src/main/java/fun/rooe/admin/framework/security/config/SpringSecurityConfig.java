@@ -1,9 +1,9 @@
-package fun.rooe.admin.framework.config.security.config;
+package fun.rooe.admin.framework.security.config;
 
 import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.error.CommonErrorCode;
-import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
 import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.SecurityErrorResponseWriter;
 import fun.rooe.admin.framework.security.SecurityPaths;
 import fun.rooe.admin.framework.security.TokenAuthenticationFilter;
 import fun.rooe.admin.framework.security.service.AuthIdentityService;

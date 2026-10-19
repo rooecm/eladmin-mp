@@ -1,9 +1,9 @@
 package fun.rooe.admin.modules.security.service;
 
 import fun.rooe.admin.error.AuthErrorCode;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.AuthFailure;
 import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.modules.security.domain.dto.RolePermissions;
 import fun.rooe.admin.modules.security.mapper.AuthMapper;

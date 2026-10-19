@@ -47,7 +47,6 @@
     "fuse.js": "3.4.4",
     "js-beautify": "^1.10.2",
     "js-cookie": "2.2.0",
-    "jsencrypt": "^3.0.0-rc.1",
     "jszip": "^3.7.1",
     "mavon-editor": "^2.9.1",
     "normalize.css": "7.0.0",

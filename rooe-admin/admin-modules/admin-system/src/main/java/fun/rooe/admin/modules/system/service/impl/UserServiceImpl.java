@@ -6,10 +6,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BusinessException;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
-import fun.rooe.admin.infrastructure.error.StorageErrorCode;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.service.*;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
@@ -396,10 +395,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                             multipartFile.getOriginalFilename(),
                             properties.getPath().getAvatar());
         } catch (IOException e) {
-            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试", e);
+            throw new BusinessException(CommonErrorCode.BUSINESS_REJECTED, "文件上传失败，请稍后重试", e);
         }
         if (file == null) {
-            throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试");
+            throw new BusinessException(CommonErrorCode.BUSINESS_REJECTED, "文件上传失败，请稍后重试");
         }
         userMapper.update(Wrappers.<UserDO>lambdaUpdate().eq(UserDO::getId, user.getId())
                 .set(UserDO::getAvatarPath, file.getPath())
@@ -409,15 +408,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         flushCache(user.getUsername());
         return Map.of("avatar", file.getName());
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateEmail(String username, String email) {
-        userMapper.update(Wrappers.<UserDO>lambdaUpdate()
-                .eq(UserDO::getUsername, username)
-                .set(UserDO::getEmail, email));
-        flushCache(username);
     }
 
     @Override

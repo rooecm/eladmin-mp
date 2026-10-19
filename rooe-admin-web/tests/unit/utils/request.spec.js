@@ -90,11 +90,11 @@ describe('ApiResult 响应适配', () => {
     }
     axios.defaults.adapter = config => Promise.resolve({...response, config})
 
-    const result = await upload('/api/localStorage/pictures', new Blob(['file']))
+    const result = await upload('/api/users/updateAvatar', new Blob(['file']))
     expect(result.data).toEqual(file)
     expect(result.status).toBe(201)
     expect(result.headers['x-upload-id']).toBe('upload-1')
-    expect(result.config.url).toBe('/api/localStorage/pictures')
+    expect(result.config.url).toBe('/api/users/updateAvatar')
   })
 
   it('业务失败时显示消息并拒绝 Promise，避免触发成功处理', async() => {
@@ -218,26 +218,26 @@ describe('ApiResult 响应适配', () => {
   it('下载失败会等待 Blob JSON 解析后再返回业务错误', async () => {
     const data = {code: 'COMMON_1002', message: '文件不存在或已被删除', data: null}
     rejectWith(404, new Blob([JSON.stringify(data)], {type: 'application/json'}))
-    await expect(download('api/storage/download', {})).rejects.toMatchObject({code: data.code, message: data.message})
+    await expect(download('api/users/download', {})).rejects.toMatchObject({code: data.code, message: data.message})
     expect(Notification.error).toHaveBeenCalledTimes(1)
   })
 
   it('下载错误返回非 JSON 时仍保留原始错误', async () => {
     const error = rejectWith(502, new Blob(['bad gateway'], {type: 'text/html'}))
-    await expect(download('api/storage/download', {})).rejects.toBe(error)
+    await expect(download('api/users/download', {})).rejects.toBe(error)
   })
 
   it('直接上传出现业务失败或 HTTP 失败时拒绝 Promise', async () => {
-    const data = {code: 'STORAGE_1003', message: '文件上传失败，请稍后重试', data: null}
+    const data = {code: 'COMMON_1005', message: '当前操作无法完成', data: null}
     axios.defaults.adapter = config => Promise.resolve({data, status: 200, headers: {}, config})
-    await expect(upload('/api/localStorage/pictures', new Blob(['file']))).rejects.toMatchObject({code: data.code})
+    await expect(upload('/api/users/updateAvatar', new Blob(['file']))).rejects.toMatchObject({code: data.code})
     axios.defaults.adapter = () => Promise.reject(Object.assign(new Error('Request failed'), {
       response: {
         status: 503,
         data
       }
     }))
-    await expect(upload('/api/localStorage/pictures', new Blob(['file']))).rejects.toMatchObject({code: data.code})
+    await expect(upload('/api/users/updateAvatar', new Blob(['file']))).rejects.toMatchObject({code: data.code})
     expect(Notification.error).toHaveBeenCalledTimes(2)
   })
 })

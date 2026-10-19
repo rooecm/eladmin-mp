@@ -1,7 +1,7 @@
 package fun.rooe.admin.modules.security.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.infrastructure.security.RedisAuthCache;
 import fun.rooe.admin.modules.security.domain.dto.RolePermissions;
 import fun.rooe.admin.modules.security.service.AuthReadService;

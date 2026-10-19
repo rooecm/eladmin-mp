@@ -43,8 +43,6 @@
 - 系统日志：记录用户操作日志与异常日志，方便开发人员定位排错
 - SQL监控：采用druid 监控数据库访问性能，默认用户名admin，密码123456
 - 定时任务：整合Quartz做定时任务，加入任务日志，任务运行情况一目了然
-- 邮件工具：配合富文本，发送html格式的邮件
-- 亚马逊S3云存储：支持市面上大多数对象存储，兼容亚马逊S3协议，如七牛云，阿里云等
 - 支付宝支付：整合了支付宝支付并且提供了测试账号，可自行测试
 - 服务监控：监控服务器的负载情况
 - 运维管理：一键部署你的应用
@@ -79,15 +77,12 @@
 - rooe-admin-framework 框架模块
     - fun.rooe.admin.framework 应用运行支撑
         - annotation、aspect 框架注解与限流切面
-        - config Web、Swagger、异步线程池、RSA、权限与 Spring Security 配置
+        - config Web、Swagger、异步线程池、权限与 Spring Security 配置
         - exception 全局异常处理
         - utils 请求、安全与 Spring Bean 工具
     - fun.rooe.admin.infrastructure 外部资源适配
-        - config Redis、Redisson、MyBatis-Plus、Druid、Quartz、S3 与文件路径配置
+        - config Redis、Redisson、MyBatis-Plus、Druid、Quartz 与文件路径配置
         - cache、utils Redis 缓存适配与分页工具
-        - mapper 数据库访问接口与 XML
-        - service 邮件、S3 与本地文件服务
-        - controller 基础设施管理接口
 - rooe-admin-bootstrap 应用启动模块
     - RooeAdminApplication Spring Boot 启动入口（fun.rooe.admin 包）
     - resources/config application.yml 及 dev、prod、quartz 环境配置
@@ -118,7 +113,7 @@ admin 父 POM 导入的 `rooe-starter-dependencies` BOM 管理。starter 负责�
 
 部署入口为 `java -jar rooe-admin/admin-bootstrap/target/admin-bootstrap-1.1.jar`，可追加 `--spring.profiles.active=prod`
 指定环境。开发时运行 bootstrap 中的 `fun.rooe.admin.RooeAdminApplication`；安装各模块后也可执行
-`mvn -pl rooe-admin/admin-bootstrap spring-boot:run`。Mapper XML 与业务邮件模板继续随所属模块的 JAR 加载，应用配置集中维护在
+`mvn -pl rooe-admin/admin-bootstrap spring-boot:run`。Mapper XML 继续随所属模块的 JAR 加载，应用配置集中维护在
 `admin-bootstrap/src/main/resources`。
 
 #### 特别鸣谢

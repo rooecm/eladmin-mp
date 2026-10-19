@@ -2,9 +2,9 @@ package fun.rooe.admin.security;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
-import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.AuthFailure;
 import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.config.AuthProperties;
 import fun.rooe.admin.framework.security.model.LoginUser;
 import fun.rooe.admin.framework.security.service.SessionService;
 import fun.rooe.admin.framework.security.service.TokenService;
@@ -298,7 +298,7 @@ class AuthMutationIntegrationTest {
     @Test
     void existingUserAndRoleHttpEndpointsReturn403ForPrivilegeViolations() throws Exception {
         var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(
-                        new fun.rooe.admin.modules.system.controller.UserController(mock(UserCredentialService.class), properties, users, mock(VerifyService.class)),
+                        new fun.rooe.admin.modules.system.controller.UserController(properties, users),
                         new fun.rooe.admin.modules.system.controller.RoleController(roles))
                 .setControllerAdvice(new fun.rooe.admin.framework.advice.GlobalExceptionAdvice(mock(AuthTelemetry.class))).build();
         var json = new com.fasterxml.jackson.databind.ObjectMapper();

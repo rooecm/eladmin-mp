@@ -157,7 +157,6 @@ CREATE TABLE `sys_log` (
 -- Records of sys_log
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_log` (`id`, `description`, `log_type`, `method`, `params`, `request_ip`, `time`, `username`, `address`, `browser`, `exception_detail`, `create_time`) VALUES (13753, '删除多个文件', 'INFO', 'me.zhengjie.rest.S3StorageController.deleteAllQiNiu()', '{\"reqBodyList\":[2]}', '127.0.0.1', 225, 'admin', '内网IP', 'Chrome 137', NULL, '2025-06-19 16:55:15');
 COMMIT;
 
 -- ----------------------------
@@ -204,11 +203,13 @@ INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `comp
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (6, NULL, 4, 0, '系统监控', NULL, NULL, 10, 'monitor', 'monitor', b'0', b'0', b'0', NULL, NULL, NULL, '2018-12-18 15:17:48', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (7, 6, 0, 1, '操作日志', 'Log', 'monitor/log/index', 11, 'log', 'logs', b'0', b'1', b'0', NULL, NULL, 'admin', '2018-12-18 15:18:26', '2020-06-06 13:11:57');
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (9, 6, 0, 1, 'SQL监控', 'Sql', 'monitor/sql/index', 18, 'sqlMonitor', 'druid', b'0', b'0', b'0', NULL, NULL, NULL, '2018-12-18 15:19:34', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (14, 36, 0, 1, '邮件工具', 'Email', 'tools/email/index', 35, 'email', 'email', b'0', b'0', b'0', NULL, NULL, NULL, '2018-12-27 10:13:09', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (18, 36, 1, 1, '存储管理', 'Storage', 'tools/storage/index', 34, 'qiniu', 'storage', b'0', b'0', b'0', 'storage:list', NULL, NULL, '2018-12-31 11:12:15', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (32, 6, 0, 1, '异常日志', 'ErrorLog', 'monitor/log/errorLog', 12, 'error', 'errorLog', b'0', b'0', b'0', NULL, NULL, NULL, '2019-01-13 13:49:03', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (35, 1, 3, 1, '部门管理', 'Dept', 'system/dept/index', 6, 'dept', 'dept', b'0', b'0', b'0', 'dept:list', NULL, NULL, '2019-03-25 09:46:00', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (36, NULL, 2, 0, '系统工具', NULL, '', 30, 'sys-tools', 'sys-tools', b'0', b'0', b'0', NULL, NULL, NULL, '2019-03-29 10:57:35', NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`,
+                        `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`,
+                        `update_time`)
+VALUES (36, NULL, 0, 0, '系统工具', NULL, '', 30, 'sys-tools', 'sys-tools', b'0', b'0', b'0', NULL, NULL, NULL,
+        '2019-03-29 10:57:35', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (37, 1, 3, 1, '岗位管理', 'Job', 'system/job/index', 7, 'Steve-Jobs', 'job', b'0', b'0', b'0', 'job:list', NULL, NULL, '2019-03-29 13:51:18', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (39, 1, 3, 1, '字典管理', 'Dict', 'system/dict/index', 8, 'dictionary', 'dict', b'0', b'0', b'0', 'dict:list', NULL, NULL, '2019-04-10 11:49:04', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (41, 6, 0, 1, '在线用户', 'OnlineUser', 'monitor/online/index', 10, 'Steve-Jobs', 'online', b'0', b'0', b'0', NULL, NULL, NULL, '2019-10-26 22:08:43', NULL);
@@ -230,7 +231,6 @@ INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `comp
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (64, 39, 0, 2, '字典新增', NULL, '', 2, '', '', b'0', b'0', b'0', 'dict:add', NULL, NULL, '2019-10-29 13:00:17', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (65, 39, 0, 2, '字典编辑', NULL, '', 3, '', '', b'0', b'0', b'0', 'dict:edit', NULL, NULL, '2019-10-29 13:00:42', NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (66, 39, 0, 2, '字典删除', NULL, '', 4, '', '', b'0', b'0', b'0', 'dict:del', NULL, NULL, '2019-10-29 13:00:59', NULL);
-INSERT INTO `sys_menu` (`id`, `pid`, `sub_count`, `type`, `title`, `name`, `component`, `menu_sort`, `icon`, `path`, `i_frame`, `cache`, `hidden`, `permission`, `create_by`, `update_by`, `create_time`, `update_time`) VALUES (79, 18, 0, 2, '文件删除', NULL, '', 4, '', '', b'0', b'0', b'0', 'storage:del', NULL, NULL, '2019-10-29 13:09:34', NULL);
 COMMIT;
 
 -- ----------------------------
@@ -327,12 +327,6 @@ VALUES (9, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (9, 2);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (14, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (14, 2);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (18, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (32, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (32, 2);
@@ -384,8 +378,6 @@ INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (65, 1);
 INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
 VALUES (66, 1);
-INSERT INTO `sys_role_menu` (`menu_id`, `role_id`)
-VALUES (79, 1);
 COMMIT;
 
 -- ----------------------------
@@ -471,76 +463,6 @@ INSERT INTO `sys_user_role` (`user_id`, `role_id`)
 VALUES (1, 1);
 INSERT INTO `sys_user_role` (`user_id`, `role_id`)
 VALUES (2, 2);
-COMMIT;
-
--- ----------------------------
--- Table structure for tool_email_config
--- ----------------------------
-DROP TABLE IF EXISTS `tool_email_config`;
-CREATE TABLE `tool_email_config` (
-                                     `config_id` bigint(20) NOT NULL COMMENT 'ID',
-                                     `from_user` varchar(255) DEFAULT NULL COMMENT '收件人',
-                                     `host` varchar(255) DEFAULT NULL COMMENT '邮件服务器SMTP地址',
-                                     `pass` varchar(255) DEFAULT NULL COMMENT '密码',
-                                     `port` varchar(255) DEFAULT NULL COMMENT '端口',
-                                     `user` varchar(255) DEFAULT NULL COMMENT '发件者用户名',
-                                     PRIMARY KEY (`config_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='邮箱配置';
-
--- ----------------------------
--- Records of tool_email_config
--- ----------------------------
-BEGIN;
-COMMIT;
-
--- ----------------------------
--- Table structure for tool_local_storage
--- ----------------------------
-DROP TABLE IF EXISTS `tool_local_storage`;
-CREATE TABLE `tool_local_storage` (
-                                      `storage_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-                                      `real_name` varchar(255) DEFAULT NULL COMMENT '文件真实的名称',
-                                      `name` varchar(255) DEFAULT NULL COMMENT '文件名',
-                                      `suffix` varchar(255) DEFAULT NULL COMMENT '文件后缀',
-                                      `path` varchar(255) DEFAULT NULL COMMENT '文件存储路径',
-                                      `type` varchar(255) DEFAULT NULL COMMENT '文件类型',
-                                      `size` varchar(256) DEFAULT NULL COMMENT '文件大小',
-                                      `create_by` varchar(255) DEFAULT NULL COMMENT '创建者',
-                                      `update_by` varchar(255) DEFAULT NULL COMMENT '更新者',
-                                      `create_time` datetime DEFAULT NULL COMMENT '创建日期',
-                                      `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-                                      PRIMARY KEY (`storage_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='本地存储';
-
--- ----------------------------
--- Records of tool_local_storage
--- ----------------------------
-BEGIN;
-COMMIT;
-
--- ----------------------------
--- Table structure for tool_s3_storage
--- ----------------------------
-DROP TABLE IF EXISTS `tool_s3_storage`;
-CREATE TABLE `tool_s3_storage` (
-                                   `storage_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-                                   `file_name` varchar(255) NOT NULL COMMENT '文件名称',
-                                   `file_real_name` varchar(255) NOT NULL COMMENT '真实存储的名称',
-                                   `file_size` varchar(100) NOT NULL COMMENT '文件大小',
-                                   `file_mime_type` varchar(50) NOT NULL COMMENT '文件MIME 类型',
-                                   `file_type` varchar(50) NOT NULL COMMENT '文件类型',
-                                   `file_path` tinytext NOT NULL COMMENT '文件路径',
-                                   `create_by` varchar(255) NOT NULL COMMENT '创建者',
-                                   `update_by` varchar(255) NOT NULL COMMENT '更新者',
-                                   `create_time` datetime NOT NULL COMMENT '创建日期',
-                                   `update_time` datetime NOT NULL COMMENT '更新时间',
-                                   PRIMARY KEY (`storage_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='s3 协议对象存储';
-
--- ----------------------------
--- Records of tool_s3_storage
--- ----------------------------
-BEGIN;
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
