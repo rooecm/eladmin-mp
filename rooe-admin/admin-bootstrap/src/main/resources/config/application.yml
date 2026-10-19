@@ -18,6 +18,19 @@ spring:
   profiles: # 激活的环境
     active: dev
 logbook:
+  obfuscate:
+    json-body-fields:
+      - password
+      - oldPass
+      - newPass
+      - oldPassword
+      - newPassword
+      - confirmPassword
+      - token
+      - accessToken
+      - access_token
+      - refresh_token
+      - secret
   filter:
     enabled: ${WEB_LOG_ENABLED:true}
   secure-filter:
@@ -83,3 +96,18 @@ code:
 #密码加密传输，前端公钥加密，后端私钥解密
 rsa:
   private_key: MIIBUwIBADANBgkqhkiG9w0BAQEFAASCAT0wggE5AgEAAkEA0vfvyTdGJkdbHkB8mp0f3FE0GYP3AYPaJF7jUd1M0XxFSE2ceK3k2kw20YvQ09NJKk+OMjWQl9WitG9pB6tSCQIDAQABAkA2SimBrWC2/wvauBuYqjCFwLvYiRYqZKThUS3MZlebXJiLB+Ue/gUifAAKIg1avttUZsHBHrop4qfJCwAI0+YRAiEA+W3NK/RaXtnRqmoUUkb59zsZUBLpvZgQPfj1MhyHDz0CIQDYhsAhPJ3mgS64NbUZmGWuuNKp5coY2GIj/zYDMJp6vQIgUueLFXv/eZ1ekgz2Oi67MNCk5jeTF2BurZqNLR3MSmUCIFT3Q6uHMtsB9Eha4u7hS31tj1UWE+D+ADzp59MGnoftAiBeHT7gDMuqeJHPL4b+kC+gzV4FGTfhR9q3tTbklZkD2A==
+
+# Opaque sessions. Set explicit deployment origins and a secure password for create/reset operations.
+auth:
+  allowed-origins: ${AUTH_ALLOWED_ORIGINS:http://localhost:8013,http://127.0.0.1:8013}
+  initial-password: ${AUTH_INITIAL_PASSWORD:}
+  super-admin-role-code: SUPER_ADMIN
+  session:
+    idle-timeout: 30m
+    max-lifetime: 12h
+    renew-exclude-paths:
+      - /api/auth/logout
+      - /actuator/**
+  cache:
+    user-ttl: 60s
+    role-permission-ttl: 5m

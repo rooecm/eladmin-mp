@@ -17,6 +17,8 @@ import './assets/styles/element-variables.scss'
 // global css
 import './assets/styles/index.scss'
 
+import { startSessionActivity } from '@/utils/session'
+import { logout, touch } from '@/api/login'
 import App from './App'
 import store from './store'
 import router from './router/routers'
@@ -32,6 +34,23 @@ Vue.use(Element, {
 })
 
 Vue.config.productionTip = false
+
+startSessionActivity({
+  touch,
+  logout,
+  onWarning: () => Element.Notification.warning({
+    title: '登录即将过期',
+    message: '长时间未操作，即将退出；继续操作可保持登录。'
+  }),
+  onLogout: async tokenChanged => {
+    if (tokenChanged) {
+      location.reload()
+      return
+    }
+    await store.dispatch('ClearAuth')
+    router.replace('/login')
+  }
+})
 
 new Vue({
   el: '#app',

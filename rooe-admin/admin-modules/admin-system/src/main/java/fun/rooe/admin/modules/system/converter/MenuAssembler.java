@@ -37,6 +37,7 @@ public interface MenuAssembler {
     @Mapping(target = "cache", source = "cache")
     @Mapping(target = "hidden", source = "hidden")
     @Mapping(target = "permission", source = "permission")
+    @Mapping(target = "enabled", source = "enabled")
     MenuDO toEntity(MenuCreateRequest request);
 
     @InheritConfiguration(name = "toEntity")
@@ -44,21 +45,29 @@ public interface MenuAssembler {
 
     /** Builds a forest from a flat menu list while preserving the source query order. */
     default List<MenuDTO> toTree(List<MenuDTO> menus) {
-        if (menus == null || menus.isEmpty()) return new ArrayList<>();
+        if (CollectionUtils.isEmpty(menus)) {
+            return new ArrayList<>();
+        }
         Map<Long, MenuDTO> byId = new LinkedHashMap<>();
         menus.forEach(menu -> byId.putIfAbsent(menu.getId(), menu));
         List<MenuDTO> roots = new ArrayList<>();
         Set<Long> childIds = new HashSet<>();
         for (MenuDTO menu : byId.values()) {
-            if (menu.getPid() == null) roots.add(menu);
+            if (menu.getPid() == null) {
+                roots.add(menu);
+            }
             MenuDTO parent = byId.get(menu.getPid());
             if (parent != null) {
-                if (parent.getChildren() == null) parent.setChildren(new ArrayList<>());
+                if (parent.getChildren() == null) {
+                    parent.setChildren(new ArrayList<>());
+                }
                 parent.getChildren().add(menu);
                 childIds.add(menu.getId());
             }
         }
-        if (!roots.isEmpty()) return roots;
+        if (!roots.isEmpty()) {
+            return roots;
+        }
         return byId.values().stream().filter(menu -> !childIds.contains(menu.getId())).toList();
     }
 

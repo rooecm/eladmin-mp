@@ -46,6 +46,10 @@ public class CustomP6SpyLogger implements MessageFormattingStrategy {
      */
     @Override
     public String formatMessage(int connectionId, String now, long elapsed, String category, String prepared, String sql, String url) {
+        // Never render bound values: password hashes and other credentials can appear in writes.
+        sql = prepared == null ? "[SQL omitted]" : prepared;
+        if (sql.toLowerCase(java.util.Locale.ROOT).matches("(?s).*(password|access_token|refresh_token).*"))
+            sql = "[credential SQL omitted]";
         // 去掉换行和多余空格
         if(org.springframework.util.StringUtils.hasText(sql)){
             sql = sql.replaceAll("\\s+", " ").trim();

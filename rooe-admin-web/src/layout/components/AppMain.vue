@@ -7,7 +7,7 @@
     </transition>
     <el-backtop :bottom="50" :right="40"><i class="el-icon-caret-top" /></el-backtop>
     <div v-if="$store.state.settings.showFooter" id="el-main-footer">
-      <span v-html="$store.state.settings.footerTxt" />
+      <span>{{ $store.state.settings.footerTxt }}</span>
       <span v-if="$store.state.settings.caseNumber"> ⋅ </span>
       <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank">{{ $store.state.settings.caseNumber }}</a>
     </div>

@@ -9,6 +9,9 @@ import lombok.Data;
  */
 @Data
 public class MenuCreateRequest {
+    @NotNull
+    private Boolean enabled = true;
+
     private Long pid;
 
     @NotNull

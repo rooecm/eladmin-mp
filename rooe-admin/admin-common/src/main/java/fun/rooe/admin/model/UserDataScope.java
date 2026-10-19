@@ -1,5 +1,11 @@
 package fun.rooe.admin.model;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -9,9 +15,28 @@ import java.util.Objects;
 /**
  * Represents the union of department-based and self-only data access.
  */
-public record UserDataScope(
-        Mode mode, List<Long> deptIds, Long selfUserId, Long selfDeptId)
-        implements Serializable {
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
+@NoArgsConstructor
+public class UserDataScope implements Serializable {
+    /**
+     * Effective scope after normalization.
+     */
+    private Mode mode;
+    /**
+     * Departments visible under the LIMITED scope; empty otherwise.
+     */
+    private List<Long> deptIds;
+    /**
+     * User ID when the self-only scope participates.
+     */
+    private Long selfUserId;
+    /**
+     * Department ID of the current user when applicable.
+     */
+    private Long selfDeptId;
 
     public UserDataScope(Mode mode, List<Long> deptIds) {
         this(mode, deptIds, null, null);
@@ -21,8 +46,8 @@ public record UserDataScope(
         this(mode, deptIds, selfUserId, null);
     }
 
-    public UserDataScope {
-        mode = Objects.requireNonNullElse(mode, Mode.NONE);
+    public UserDataScope(Mode mode, List<Long> deptIds, Long selfUserId, Long selfDeptId) {
+        this.mode = Objects.requireNonNullElse(mode, Mode.NONE);
         LinkedHashSet<Long> normalizedIds = new LinkedHashSet<>();
         if (deptIds != null) {
             for (Object deptId : deptIds) {
@@ -31,32 +56,34 @@ public record UserDataScope(
                 }
             }
         }
-        deptIds = List.copyOf(normalizedIds);
-        switch (mode) {
+        this.deptIds = List.copyOf(normalizedIds);
+        this.selfUserId = selfUserId;
+        this.selfDeptId = selfDeptId;
+        switch (this.mode) {
             case ALL -> {
-                deptIds = List.of();
-                selfUserId = null;
-                selfDeptId = null;
+                this.deptIds = List.of();
+                this.selfUserId = null;
+                this.selfDeptId = null;
             }
             case LIMITED -> {
-                if (deptIds.isEmpty()) {
-                    mode = selfUserId == null ? Mode.NONE : Mode.SELF;
+                if (this.deptIds.isEmpty()) {
+                    this.mode = this.selfUserId == null ? Mode.NONE : Mode.SELF;
                 }
-                if (selfUserId == null) {
-                    selfDeptId = null;
+                if (this.selfUserId == null) {
+                    this.selfDeptId = null;
                 }
             }
             case SELF -> {
-                deptIds = List.of();
-                if (selfUserId == null) {
-                    mode = Mode.NONE;
-                    selfDeptId = null;
+                this.deptIds = List.of();
+                if (this.selfUserId == null) {
+                    this.mode = Mode.NONE;
+                    this.selfDeptId = null;
                 }
             }
             case NONE -> {
-                deptIds = List.of();
-                selfUserId = null;
-                selfDeptId = null;
+                this.deptIds = List.of();
+                this.selfUserId = null;
+                this.selfDeptId = null;
             }
         }
     }

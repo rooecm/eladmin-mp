@@ -35,19 +35,19 @@ public interface CacheKey {
     /**
      * 菜单
      */
-    String MENU_ID = "menu::id:";
-    String MENU_USER = "menu::user:";
+    String MENU_ID = "menu::id:v7:";
+    String MENU_USER = "menu::user:v7:";
 
     /**
      * 角色授权
      */
     String ROLE_AUTH = "role::auth:";
-    String ROLE_USER = "role::user:";
+    String ROLE_USER = "role::user:v7:";
 
     /**
      * 角色信息
      */
-    String ROLE_ID = "role::id:";
+    String ROLE_ID = "role::id:v7:";
 
     /**
      * 部门

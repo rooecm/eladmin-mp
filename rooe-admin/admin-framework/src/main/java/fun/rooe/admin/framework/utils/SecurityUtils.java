@@ -15,25 +15,18 @@
  */
 package fun.rooe.admin.framework.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.model.UserDataScope;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 获取当前登录的用户
@@ -44,33 +37,17 @@ import java.util.Objects;
 @Component
 public class SecurityUtils {
 
-    public static String header;
-
-    public static String tokenStartWith;
-
-    @Value("${jwt.header}")
-    public void setHeader(String header) {
-        SecurityUtils.header = header;
-    }
-
-    @Value("${jwt.token-start-with}")
-    public void setTokenStartWith(String tokenStartWith) {
-        SecurityUtils.tokenStartWith = tokenStartWith;
-    }
-
     /**
-     * 获取当前登录的用户
-     * @return UserDetails
+     * Read only the principal established by the authentication filter.
      */
     public static UserDetails getCurrentUser() {
-        UserDetailsService userDetailsService = SpringBeanHolder.getBean(UserDetailsService.class);
-        return userDetailsService.loadUserByUsername(getCurrentUsername());
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails user)) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Authentication required");
+        }
+        return user;
     }
 
-    /**
-     * 获取当前用户的数据权限
-     * @return /
-     */
     public static List<Long> getCurrentUserDataScope(){
         // 将 Java 对象转换为 JsonNode 对象
         JsonNode jsonNode = objectMapper().valueToTree(getCurrentUser());
@@ -108,65 +85,20 @@ public class SecurityUtils {
      * @return 系统用户ID
      */
     public static Long getCurrentUserId() {
-        return getCurrentUserId(getToken());
+        return ((fun.rooe.admin.framework.security.model.LoginUser) getCurrentUser()).getId();
     }
 
-    /**
-     * 获取用户ID
-     * @return 系统用户ID
-     */
-    public static Long getCurrentUserId(String token) {
-        JsonNode userId = getClaims(token).get("userId");
-        return userId == null || userId.isNull() ? null : userId.asLong();
-    }
-
-    /**
-     * 获取系统用户名称
-     *
-     * @return 系统用户名称
-     */
     public static String getCurrentUsername() {
-        return getCurrentUsername(getToken());
-    }
-
-    /**
-     * 获取系统用户名称
-     *
-     * @return 系统用户名称
-     */
-    public static String getCurrentUsername(String token) {
-        JsonNode subject = getClaims(token).get("sub");
-        return subject == null || subject.isNull() ? null : subject.asText();
-    }
-
-    /**
-     * 获取Token
-     * @return /
-     */
+        return getCurrentUser().getUsername(); }
     public static String getToken() {
-        HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder
-                .getRequestAttributes())).getRequest();
-        String bearerToken = request.getHeader(header);
-        if (bearerToken != null && bearerToken.startsWith(tokenStartWith)) {
-            // 去掉令牌前缀
-            return bearerToken.replace(tokenStartWith, "");
-        } else {
-            log.debug("非法Token：{}", bearerToken);
+        var attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return null;
         }
-        return null;
-    }
-
-    private static JsonNode getClaims(String token) {
-        String[] tokenParts = token.split("\\.");
-        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]), StandardCharsets.UTF_8);
-        try {
-            return objectMapper().readTree(payload);
-        } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("Invalid token payload", exception);
-        }
+        String header = attributes.getRequest().getHeader("Authorization");
+        return header != null && header.regionMatches(true, 0, "Bearer ", 0, 7) ? header.substring(7) : null;
     }
 
     private static ObjectMapper objectMapper() {
-        return SpringBeanHolder.getBean(ObjectMapper.class);
-    }
+        return SpringBeanHolder.getBean(ObjectMapper.class); }
 }

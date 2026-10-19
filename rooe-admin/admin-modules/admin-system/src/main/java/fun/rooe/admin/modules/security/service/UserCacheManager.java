@@ -1,93 +1,29 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.modules.security.service;
 
-import fun.rooe.admin.framework.config.security.config.LoginProperties;
-import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.security.domain.dto.JwtUserDTO;
-import fun.rooe.admin.utils.StringUtils;
-import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import fun.rooe.admin.modules.system.domain.entity.UserDO;
+import fun.rooe.admin.modules.system.mapper.UserMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.List;
 
 /**
- * @author Zheng Jie
- * @description 用户缓存管理
- * @date 2022-05-26
- **/
+ * Compatibility entry point for existing business cache invalidation. Never caches principals.
+ */
 @Component
+@RequiredArgsConstructor
 public class UserCacheManager {
+    private final AuthCacheInvalidator invalidator;
+    private final UserMapper users;
 
-    @Resource
-    private RedisUtils redisUtils;
-    @Value("${login.user-cache.idle-time}")
-    private long idleTime;
-
-    /**
-     * 返回用户缓存
-     * @param userName 用户名
-     * @return JwtUserDTO
-     */
-    public JwtUserDTO getUserCache(String userName) {
-        // 转小写
-        userName = StringUtils.lowerCase(userName);
-        if (StringUtils.isNotEmpty(userName)) {
-            // 获取数据
-            return redisUtils.get(LoginProperties.cacheKey + userName, JwtUserDTO.class);
-        }
-        return null;
+    public void cleanUserCache(String username) {
+        var user = users.selectOne(Wrappers.<UserDO>lambdaQuery().eq(UserDO::getUsername, username));
+        if (user != null) {
+            invalidator.users(List.of(user.getId())); }
     }
-
-    /**
-     *  添加缓存到Redis
-     * @param userName 用户名
-     */
-    @Async
-    public void addUserCache(String userName, JwtUserDTO user) {
-        // 转小写
-        userName = StringUtils.lowerCase(userName);
-        if (StringUtils.isNotEmpty(userName)) {
-            // 添加数据, 避免数据同时过期
-            long time = idleTime + ThreadLocalRandom.current().nextInt(900, 1800);
-            redisUtils.set(LoginProperties.cacheKey + userName, user, time);
-        }
-    }
-
-    /**
-     * 清理用户缓存信息
-     * 用户信息变更时
-     * @param userName 用户名
-     */
-    @Async
-    public void cleanUserCache(String userName) {
-        // 转小写
-        userName = StringUtils.lowerCase(userName);
-        if (StringUtils.isNotEmpty(userName)) {
-            // 清除数据
-            redisUtils.del(LoginProperties.cacheKey + userName);
-        }
-    }
-
-    /**
-     * Clears cached principals after a department hierarchy change.
-     */
     public void cleanAllUserCaches() {
-        redisUtils.scanDel(LoginProperties.cacheKey + "*");
+        invalidator.users(users.selectList(Wrappers.<UserDO>lambdaQuery().select(UserDO::getId))
+                .stream().map(UserDO::getId).toList());
     }
 }

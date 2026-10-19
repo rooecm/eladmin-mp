@@ -109,12 +109,13 @@ import myUpload from 'vue-image-crop-upload'
 import { mapGetters } from 'vuex'
 import updatePass from './center/updatePass'
 import updateEmail from './center/updateEmail'
-import { getToken } from '@/utils/auth'
+import { authorization } from '@/utils/auth'
 import store from '@/store'
 import { isvalidPhone } from '@/utils/validate'
 import crud from '@/mixins/crud'
 import { editUser } from '@/api/system/user'
 import Avatar from '@/assets/images/avatar.png'
+
 export default {
   name: 'Center',
   components: { updatePass, updateEmail, myUpload },
@@ -136,7 +137,7 @@ export default {
       activeName: 'first',
       saveLoading: false,
       headers: {
-        'Authorization': getToken()
+        'Authorization': authorization()
       },
       form: {},
       rules: {

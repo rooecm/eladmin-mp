@@ -1,136 +1,85 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package fun.rooe.admin.framework.config.security.config;
 
-import fun.rooe.admin.enums.RequestMethodEnum;
-import fun.rooe.admin.framework.config.security.security.*;
-import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
-import fun.rooe.admin.framework.utils.AnonTagUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
-import org.springframework.context.ApplicationContext;
+import fun.rooe.admin.error.AuthErrorCode;
+import fun.rooe.admin.error.CommonErrorCode;
+import fun.rooe.admin.framework.config.security.security.SecurityErrorResponseWriter;
+import fun.rooe.admin.framework.security.AuthTelemetry;
+import fun.rooe.admin.framework.security.SecurityPaths;
+import fun.rooe.admin.framework.security.TokenAuthenticationFilter;
+import fun.rooe.admin.framework.security.service.AuthIdentityService;
+import fun.rooe.admin.framework.security.service.SessionService;
+import fun.rooe.admin.framework.security.service.TokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.Map;
-import java.util.Set;
+import java.time.Clock;
 
 /**
- * @author Zheng Jie
+ * 组装无 HTTP Session 的安全链，接口权限由方法级注解继续校验。
  */
 @Configuration
-@RequiredArgsConstructor
-@EnableMethodSecurity(securedEnabled = true)
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SpringSecurityConfig {
-
-    private final TokenProvider tokenProvider;
-    private final CorsFilter corsFilter;
-    private final JwtAuthenticationEntryPoint authenticationErrorHandler;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final ApplicationContext applicationContext;
-    private final SecurityProperties properties;
-    private final OnlineSessionService onlineSessionService;
-    private final SecurityErrorResponseWriter errorWriter;
-
-    @Value("${swagger.enabled:true}")
-    private boolean swaggerEnabled;
-
     @Bean
-    GrantedAuthorityDefaults grantedAuthorityDefaults() {
-        // 去除 ROLE_ 前缀
-        return new GrantedAuthorityDefaults("");
+    public Clock authClock() {
+        return Clock.systemUTC();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // 密码加密方式
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        // 获取匿名标记
-        Map<String, Set<String>> anonymousUrls = AnonTagUtils.getAnonymousUrl(applicationContext);
-        // 创建 TokenFilter
-        TokenFilter tokenFilter = new TokenFilter(tokenProvider, properties, onlineSessionService, errorWriter);
+    public AuthenticationManager authenticationManager(UserDetailsService users, PasswordEncoder encoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(users);
+        provider.setPasswordEncoder(encoder);
+        // 用户不存在时对外统一为凭证错误，避免暴露账号是否存在。
+        provider.setHideUserNotFoundExceptions(true);
+        return new ProviderManager(provider);
+    }
 
-        return httpSecurity
-                // 添加 TokenFilter
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
-                // 添加 CORS 过滤器
-                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-                // 禁用 CSRF
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, TokenService tokens, SessionService sessions,
+                                           AuthIdentityService identities, AuthProperties properties, SecurityErrorResponseWriter errors,
+                                           AuthTelemetry telemetry, CorsConfigurationSource corsConfigurationSource) throws Exception {
+        return http
+                .cors(c -> c.configurationSource(corsConfigurationSource))
+                // 认证凭证仅通过 Authorization 请求头传递，不使用 Cookie 会话认证。
                 .csrf(AbstractHttpConfigurer::disable)
-                // 授权异常处理
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(authenticationErrorHandler)
-                        .accessDeniedHandler(jwtAccessDeniedHandler))
-                // 防止iframe 造成跨域
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                // 不创建会话
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 授权配置
-                .authorizeHttpRequests(authorize -> {
-                    authorize.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll();
-                        // 静态资源
-                        authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/", "/index.html", "/webSocket/**").permitAll()
-                        // 文件
-                        .requestMatchers("/avatar/**").permitAll()
-                        .requestMatchers("/file/**").permitAll()
-                        // 阿里巴巴 druid
-                        .requestMatchers("/druid/**").permitAll();
-                        // Swagger 文档
-                        if (swaggerEnabled) {
-                            authorize.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/doc.html").permitAll();
-                        }
-                        authorize
-                        // 放行OPTIONS请求
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .requestCache(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) -> errors.write(res, HttpStatus.UNAUTHORIZED, AuthErrorCode.SESSION_INVALID))
+                        .accessDeniedHandler((req, res, ex) -> errors.write(res, HttpStatus.FORBIDDEN, CommonErrorCode.ACCESS_DENIED)))
+                .authorizeHttpRequests(a -> a
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 自定义匿名访问所有url放行
-                        // GET
-                        .requestMatchers(HttpMethod.GET, anonymousUrls.get(RequestMethodEnum.GET.getType()).toArray(new String[0])).permitAll()
-                        // POST
-                        .requestMatchers(HttpMethod.POST, anonymousUrls.get(RequestMethodEnum.POST.getType()).toArray(new String[0])).permitAll()
-                        // PUT
-                        .requestMatchers(HttpMethod.PUT, anonymousUrls.get(RequestMethodEnum.PUT.getType()).toArray(new String[0])).permitAll()
-                        // PATCH
-                        .requestMatchers(HttpMethod.PATCH, anonymousUrls.get(RequestMethodEnum.PATCH.getType()).toArray(new String[0])).permitAll()
-                        // DELETE
-                        .requestMatchers(HttpMethod.DELETE, anonymousUrls.get(RequestMethodEnum.DELETE.getType()).toArray(new String[0])).permitAll()
-                        // 所有类型的接口都放行
-                        .requestMatchers(anonymousUrls.get(RequestMethodEnum.ALL.getType()).toArray(new String[0])).permitAll()
-                        // 所有请求都需要认证
-                        .anyRequest().authenticated();
-                })
+                        .requestMatchers(SecurityPaths.PUBLIC_PATHS).permitAll()
+                        .anyRequest().authenticated())
+                // 只挂入安全过滤链，避免同时注册为 Servlet Filter 导致重复执行。
+                .addFilterBefore(new TokenAuthenticationFilter(tokens, sessions, identities, properties, errors, telemetry),
+                        UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }

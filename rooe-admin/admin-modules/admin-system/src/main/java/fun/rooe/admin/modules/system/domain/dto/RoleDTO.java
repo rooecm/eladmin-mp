@@ -12,6 +12,7 @@ import java.util.Set;
 @Data
 public class RoleDTO {
     private Long id;
+    private Boolean enabled;
     private String name;
     private Integer level;
     private String dataScope;

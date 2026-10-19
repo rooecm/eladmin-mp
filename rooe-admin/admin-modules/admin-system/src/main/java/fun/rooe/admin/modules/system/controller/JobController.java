@@ -30,7 +30,7 @@ public class JobController {
 
     @Operation(summary = "导出岗位数据")
     @GetMapping("/download")
-    @PreAuthorize("@el.check('job:list')")
+    @PreAuthorize("@perm.has('job:list')")
     public void exportJob(HttpServletResponse response, @Valid JobQueryRequest request)
             throws IOException {
       jobService.download(jobService.queryList(request), response);
@@ -38,7 +38,7 @@ public class JobController {
 
     @Operation(summary = "查询岗位")
     @GetMapping
-    @PreAuthorize("@el.check('job:list','user:list')")
+    @PreAuthorize("@perm.has('job:list') or @perm.has('user:list')")
     public PageResult<JobDTO> queryJob(@Valid JobQueryRequest request) {
       return jobService.queryAll(request);
     }
@@ -46,7 +46,7 @@ public class JobController {
     @Log("新增岗位")
     @Operation(summary = "新增岗位")
     @PostMapping
-    @PreAuthorize("@el.check('job:add')")
+    @PreAuthorize("@perm.has('job:add')")
     public void createJob(@Valid @RequestBody JobCreateRequest request) {
       jobService.create(request);
     }
@@ -54,7 +54,7 @@ public class JobController {
     @Log("修改岗位")
     @Operation(summary = "修改岗位")
     @PutMapping
-    @PreAuthorize("@el.check('job:edit')")
+    @PreAuthorize("@perm.has('job:edit')")
     public void updateJob(@Valid @RequestBody JobUpdateRequest request) {
       jobService.update(request);
     }
@@ -62,7 +62,7 @@ public class JobController {
     @Log("删除岗位")
     @Operation(summary = "删除岗位")
     @DeleteMapping
-    @PreAuthorize("@el.check('job:del')")
+    @PreAuthorize("@perm.has('job:del')")
     public void deleteJob(@Valid @RequestBody JobDeleteRequest request) {
       jobService.delete(request);
     }

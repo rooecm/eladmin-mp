@@ -12,7 +12,8 @@ import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
 import fun.rooe.admin.modules.security.domain.dto.AuthorityDTO;
-import fun.rooe.admin.modules.security.service.UserCacheManager;
+import fun.rooe.admin.modules.security.service.AdminPrivilegeGuard;
+import fun.rooe.admin.modules.security.service.AuthCacheInvalidator;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
@@ -48,7 +49,8 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     private final MenuMapper menuMapper;
     private final UserMapper userMapper;
     private final RedisUtils redisUtils;
-    private final UserCacheManager userCacheManager;
+    private final AdminPrivilegeGuard privilegeGuard;
+    private final AuthCacheInvalidator authInvalidator;
     private final DataService dataService;
     private final RoleAssembler assembler;
     private final DeptAssembler deptAssembler;
@@ -125,6 +127,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(RoleCreateRequest request) {
+        privilegeGuard.lockAdministration();
         checkLevel(request.getLevel());
         checkName(request.getName(), null);
         DataScopeEnum dataScope = validateDataScope(
@@ -140,8 +143,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(RoleUpdateRequest request) {
-        RoleDO role = findById(request.getId());
+        privilegeGuard.lockAdministration();
+        privilegeGuard.changeRole(request.getId());
+        RoleDO role = roleMapper.selectById(request.getId());
         checkLevel(role.getLevel());
+        if (!java.util.Objects.equals(role.getEnabled(), request.getEnabled()))
+            privilegeGuard.changeRoleState(role.getId());
         checkLevel(request.getLevel());
         checkName(request.getName(), request.getId());
         DataScopeEnum dataScope = validateDataScope(
@@ -161,24 +168,32 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateMenu(RoleMenuUpdateRequest request) {
-        RoleDO role = findById(request.getId());
+        // 先持有管理锁并校验本次增删权限，再替换关联；防止绕过权限范围或修改自身角色。
+        privilegeGuard.lockAdministration();
+        Set<Long> menuIds = ids(request.getMenus());
+        privilegeGuard.changeRolePermissions(request.getId(), menuIds);
+        RoleDO role = roleMapper.selectById(request.getId());
         checkLevel(role.getLevel());
         List<UserDO> users = userMapper.findByRoleId(role.getId());
         // Menu assignments are replaced as one transaction to avoid partial authorization state.
         roleMenuMapper.delete(
                 Wrappers.<RoleMenuDO>lambdaQuery().eq(RoleMenuDO::getRoleId, role.getId()));
-        Set<Long> menuIds = ids(request.getMenus());
         if (!menuIds.isEmpty()) {
             roleMenuMapper.insert(
                     menuIds.stream().map(id -> toRoleMenu(role.getId(), id)).toList());
         }
+        // 权限变更提交后清理角色及受影响用户缓存，后续请求重新装配权限。
         delCaches(role.getId(), users);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(RoleDeleteRequest request) {
-        for (Long id : request.getIds()) checkLevel(findById(id).getLevel());
+        privilegeGuard.lockAdministration();
+        request.getIds().forEach(privilegeGuard::changeRole);
+        for (Long id : request.getIds()) {
+            checkLevel(roleMapper.selectById(id).getLevel());
+        }
         if (userRoleMapper.selectCount(
                 Wrappers.<UserRoleDO>lambdaQuery().in(UserRoleDO::getRoleId, request.getIds())) > 0)
             throw new BusinessException(CommonErrorCode.DATA_IN_USE, "所选角色存在用户关联，请解除关联后再试");
@@ -310,7 +325,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
 
     @Override
     public Integer findByRoleIds(Set<Long> roleIds) {
-        if (CollectionUtils.isEmpty(roleIds)) return Integer.MAX_VALUE;
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return Integer.MAX_VALUE;
+        }
         return roleMapper.selectBatchIds(roleIds).stream()
                 .map(RoleDO::getLevel)
                 .min(Integer::compareTo)
@@ -334,20 +351,16 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     /** Builds deduplicated menu permissions for the authentication principal. */
     @Override
     public List<AuthorityDTO> buildPermissions(UserLoginDTO user) {
-        String key = CacheKey.ROLE_AUTH + user.getId();
-        List<AuthorityDTO> cached = redisUtils.getList(key, AuthorityDTO.class);
-        if (!CollectionUtils.isEmpty(cached)) return cached;
-        if (Boolean.TRUE.equals(user.getIsAdmin())) return List.of(new AuthorityDTO("admin"));
+        // Legacy API delegates to server-owned role permissions, never the isAdmin account flag.
         Set<String> permissions = new HashSet<>();
         for (RoleDO role : roleMapper.findByUserId(user.getId())) {
-            menuMapper.findByRoleId(role.getId()).stream()
-                    .map(MenuDO::getPermission)
-                    .filter(StringUtils::isNotBlank)
-                    .forEach(permissions::add);
+            if (!Boolean.TRUE.equals(role.getEnabled())) {
+                continue;
+            }
+            menuMapper.findByRoleId(role.getId()).stream().filter(m -> Boolean.TRUE.equals(m.getEnabled()))
+                    .map(MenuDO::getPermission).filter(StringUtils::isNotBlank).forEach(permissions::add);
         }
-        cached = permissions.stream().map(AuthorityDTO::new).toList();
-        redisUtils.set(key, cached, 1, TimeUnit.HOURS);
-        return cached;
+        return permissions.stream().map(AuthorityDTO::new).toList();
     }
 
     @Override
@@ -356,13 +369,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RoleDO> implements 
     }
 
     private void delCaches(Long id, List<UserDO> users) {
-        users = CollectionUtils.isEmpty(users) ? userMapper.findByRoleId(id) : users;
-        for (UserDO user : users) userCacheManager.cleanUserCache(user.getUsername());
-        Set<Long> userIds = users.stream().map(UserDO::getId).collect(Collectors.toSet());
-        redisUtils.delByKeys(CacheKey.DATA_USER, userIds);
-        redisUtils.delByKeys(CacheKey.MENU_USER, userIds);
-        redisUtils.delByKeys(CacheKey.ROLE_AUTH, userIds);
-        redisUtils.delByKeys(CacheKey.ROLE_USER, userIds);
-        redisUtils.del(CacheKey.ROLE_ID + id);
+        users = users == null ? userMapper.findByRoleId(id) : users;
+        authInvalidator.publish(users.stream().map(UserDO::getId).toList(), List.of(id));
     }
 }

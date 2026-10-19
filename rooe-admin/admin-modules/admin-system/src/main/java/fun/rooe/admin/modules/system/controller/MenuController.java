@@ -36,28 +36,28 @@ public class MenuController {
 
     @Operation(summary = "懒加载菜单")
     @GetMapping("/lazy")
-    @PreAuthorize("@el.check('menu:list','roles:list')")
+    @PreAuthorize("@perm.has('menu:list') or @perm.has('roles:list')")
     public List<MenuDTO> queryAllMenu(@RequestParam Long pid) {
         return menuService.getMenus(pid);
     }
 
     @Operation(summary = "获取菜单及全部子节点 ID")
     @GetMapping("/child")
-    @PreAuthorize("@el.check('menu:list','roles:list')")
+    @PreAuthorize("@perm.has('menu:list') or @perm.has('roles:list')")
     public Set<Long> childMenu(@RequestParam @Positive Long id) {
         return menuService.getChildIds(id);
     }
 
     @GetMapping
     @Operation(summary = "查询菜单")
-    @PreAuthorize("@el.check('menu:list')")
+    @PreAuthorize("@perm.has('menu:list')")
     public List<MenuDTO> queryMenu(@Valid MenuQueryRequest request) {
         return menuService.queryAll(request);
     }
 
     @Operation(summary = "查询菜单同级与上级数据")
     @PostMapping("/superior")
-    @PreAuthorize("@el.check('menu:list')")
+    @PreAuthorize("@perm.has('menu:list')")
     public List<MenuDTO> getMenuSuperior(@Valid @RequestBody MenuSuperiorRequest request) {
         return menuService.getSuperior(request);
     }
@@ -65,7 +65,7 @@ public class MenuController {
     @Log("新增菜单")
     @Operation(summary = "新增菜单")
     @PostMapping
-    @PreAuthorize("@el.check('menu:add')")
+    @PreAuthorize("@perm.has('menu:add')")
     public void createMenu(@Valid @RequestBody MenuCreateRequest request) {
         menuService.create(request);
     }
@@ -73,7 +73,7 @@ public class MenuController {
     @Log("修改菜单")
     @Operation(summary = "修改菜单")
     @PutMapping
-    @PreAuthorize("@el.check('menu:edit')")
+    @PreAuthorize("@perm.has('menu:edit')")
     public void updateMenu(@Valid @RequestBody MenuUpdateRequest request) {
         menuService.update(request);
     }
@@ -81,7 +81,7 @@ public class MenuController {
     @Log("删除菜单")
     @Operation(summary = "删除菜单")
     @DeleteMapping
-    @PreAuthorize("@el.check('menu:del')")
+    @PreAuthorize("@perm.has('menu:del')")
     public void deleteMenu(@Valid @RequestBody MenuDeleteRequest request) {
         menuService.delete(request);
     }

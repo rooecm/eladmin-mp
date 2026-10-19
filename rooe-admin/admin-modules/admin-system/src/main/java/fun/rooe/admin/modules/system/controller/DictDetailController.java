@@ -49,7 +49,7 @@ public class DictDetailController {
     @Log("新增字典详情")
     @Operation(summary = "新增字典详情")
     @PostMapping
-    @PreAuthorize("@el.check('dict:add')")
+    @PreAuthorize("@perm.has('dict:add')")
     public void createDictDetail(@Valid @RequestBody DictDetailCreateRequest request) {
       dictDetailService.create(request);
     }
@@ -57,7 +57,7 @@ public class DictDetailController {
     @Log("修改字典详情")
     @Operation(summary = "修改字典详情")
     @PutMapping
-    @PreAuthorize("@el.check('dict:edit')")
+    @PreAuthorize("@perm.has('dict:edit')")
     public void updateDictDetail(@Valid @RequestBody DictDetailUpdateRequest request) {
       dictDetailService.update(request);
     }
@@ -65,7 +65,7 @@ public class DictDetailController {
     @Log("删除字典详情")
     @Operation(summary = "删除字典详情")
     @DeleteMapping("/{id}")
-    @PreAuthorize("@el.check('dict:del')")
+    @PreAuthorize("@perm.has('dict:del')")
     public void deleteDictDetail(@PathVariable @Positive Long id) {
         dictDetailService.delete(id);
     }

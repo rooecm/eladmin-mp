@@ -7,13 +7,12 @@ import {upload} from '@/utils/upload'
 import {Notification} from 'element-ui'
 import store from '@/store'
 import router from '@/router/routers'
-import {getToken} from '@/utils/auth'
+import {removeToken, setToken} from '@/utils/auth'
 
 // Jest 23 使用 Axios 的 CommonJS 入口，仍通过真实拦截器验证响应
 jest.mock('axios', () => jest.requireActual('axios/dist/browser/axios.cjs'))
-jest.mock('@/router/routers', () => ({ push: jest.fn() }))
-jest.mock('@/store', () => ({dispatch: jest.fn(() => Promise.resolve())}))
-jest.mock('@/utils/auth', () => ({ getToken: jest.fn() }))
+jest.mock('@/router/routers', () => ({push: jest.fn(), replace: jest.fn()}))
+jest.mock('@/store', () => ({dispatch: jest.fn(() => Promise.resolve()), commit: jest.fn()}))
 jest.mock('element-ui', () => ({ Notification: { error: jest.fn() }}))
 
 const page = { content: [{ id: 1, name: '部门', hasChildren: true }], totalElements: 1 }
@@ -41,7 +40,7 @@ describe('ApiResult 响应适配', () => {
     request.defaults.adapter = originalAdapter
     axios.defaults.adapter = originalAxiosAdapter
     jest.clearAllMocks()
-    getToken.mockReset()
+    removeToken()
   })
 
   it('部门列表的通用 CRUD 查询和部门树查询都能读取分页数据', async() => {
@@ -83,17 +82,19 @@ describe('ApiResult 响应适配', () => {
     expect(await download('api/dept/download', {})).toBe(file)
   })
 
-  it('直接使用 Axios 的图片上传也能读取业务数据', async() => {
+  it.each([true, false])('直接上传保留完整 Axios 响应（统一包装：%s）', async wrapped => {
     const file = { id: 1, type: 'image', realName: 'test.png' }
-    axios.defaults.adapter = config => Promise.resolve({
-      data: { code: '0', message: 'success', data: file },
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config
-    })
+    const response = {
+      data: wrapped ? {code: '0', message: 'success', data: file} : file,
+      status: 201, statusText: 'Created', headers: {'x-upload-id': 'upload-1'}
+    }
+    axios.defaults.adapter = config => Promise.resolve({...response, config})
 
-    expect((await upload('/api/localStorage/pictures', new Blob(['file']))).data).toEqual(file)
+    const result = await upload('/api/localStorage/pictures', new Blob(['file']))
+    expect(result.data).toEqual(file)
+    expect(result.status).toBe(201)
+    expect(result.headers['x-upload-id']).toBe('upload-1')
+    expect(result.config.url).toBe('/api/localStorage/pictures')
   })
 
   it('业务失败时显示消息并拒绝 Promise，避免触发成功处理', async() => {
@@ -118,8 +119,12 @@ describe('ApiResult 响应适配', () => {
   })
 
   function rejectWith(status, data, url = 'api/test') {
-    const error = Object.assign(new Error('Request failed'), {response: {status, data}, config: {url}})
-    request.defaults.adapter = () => Promise.reject(error)
+    const error = Object.assign(new Error('Request failed'), {response: {status, data}})
+    request.defaults.adapter = config => {
+      error.config = {...config, url}
+      error.response.config = error.config
+      return Promise.reject(error)
+    }
     return error
   }
 
@@ -130,7 +135,7 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('用户名密码错误时展示消息并保持登录流程', async () => {
-    getToken.mockReturnValue('existing-token')
+    setToken('existing-token')
     rejectWith(401, {code: 'AUTH_1001', message: '用户名或密码错误', data: null}, 'auth/login')
     await expect(request({url: 'auth/login', method: 'post'})).rejects.toMatchObject({code: 'AUTH_1001'})
     expect(store.dispatch).not.toHaveBeenCalled()
@@ -138,16 +143,16 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('会话失效时执行重新登录流程', async () => {
-    getToken.mockReturnValue('existing-token')
+    setToken('existing-token')
     rejectWith(401, {code: 'AUTH_1005', message: '登录状态已失效，请重新登录', data: null})
     await expect(getDepts({})).rejects.toMatchObject({code: 'AUTH_1005'})
-    expect(store.dispatch).toHaveBeenCalledWith('LogOut')
+    expect(store.dispatch).toHaveBeenCalledWith('ClearAuth')
   })
 
   it('无权限时保留业务码并跳转权限提示页', async () => {
     rejectWith(403, {code: 'PERMISSION_1001', message: '没有权限执行此操作', data: null})
     await expect(getDepts({})).rejects.toMatchObject({code: 'PERMISSION_1001'})
-    expect(router.push).toHaveBeenCalledWith({path: '/401'})
+    expect(store.dispatch).not.toHaveBeenCalled()
   })
 
   it('业务权限拒绝使用统一权限码并保留当前页面', async () => {
@@ -159,7 +164,7 @@ describe('ApiResult 响应适配', () => {
   })
 
   it('验证码错误和过期使用统一验证码码并保持登录流程', async () => {
-    getToken.mockReturnValue('existing-token')
+    setToken('existing-token')
     rejectWith(400, {code: 'AUTH_1007', message: '验证码不存在或已过期', data: null}, 'auth/login')
     await expect(request({url: 'auth/login', method: 'post'})).rejects.toMatchObject({code: 'AUTH_1007'})
     expect(store.dispatch).not.toHaveBeenCalled()
@@ -174,6 +179,40 @@ describe('ApiResult 响应适配', () => {
     request.defaults.adapter = () => Promise.reject(timeout)
     await expect(getDepts({})).rejects.toBe(timeout)
     expect(Notification.error).toHaveBeenLastCalledWith({title: '网络请求超时', duration: 5000})
+  })
+
+  it.each([401, 403])('旧会话的 %s 响应不能清理或修改新会话', async status => {
+    setToken('old-token')
+    let rejectRequest
+    const started = new Promise(resolve => {
+      request.defaults.adapter = config => new Promise((resolveResponse, reject) => {
+        rejectRequest = () => reject(Object.assign(new Error('Request failed'), {
+          config,
+          response: {
+            status,
+            config,
+            data: {code: status === 401 ? 'AUTH_SESSION_INVALID' : 'AUTH_PASSWORD_CHANGE_REQUIRED', message: 'expired'}
+          }
+        }))
+        resolve()
+      })
+    })
+    const pending = getDepts({})
+    await started
+    setToken('new-token')
+    rejectRequest()
+    await expect(pending).rejects.toMatchObject({httpStatus: status})
+    expect(store.dispatch).not.toHaveBeenCalled()
+    expect(store.commit).not.toHaveBeenCalled()
+    expect(router.replace).not.toHaveBeenCalled()
+  })
+
+  it('当前会话的强制改密响应仍跳转到改密页', async () => {
+    setToken('current-token')
+    rejectWith(403, {code: 'AUTH_PASSWORD_CHANGE_REQUIRED', message: '请修改密码'})
+    await expect(getDepts({})).rejects.toMatchObject({httpStatus: 403})
+    expect(store.commit).toHaveBeenCalledWith('SET_PASSWORD_CHANGE', true)
+    expect(router.replace).toHaveBeenCalledWith({path: '/change-password'})
   })
 
   it('下载失败会等待 Blob JSON 解析后再返回业务错误', async () => {

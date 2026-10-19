@@ -179,9 +179,8 @@ export function param2Obj(url) {
  * @returns {string}
  */
 export function html2Text(val) {
-  const div = document.createElement('div')
-  div.innerHTML = val
-  return div.textContent || div.innerText
+  const doc = new DOMParser().parseFromString(val, 'text/html')
+  return doc.body.textContent || ''
 }
 
 /**

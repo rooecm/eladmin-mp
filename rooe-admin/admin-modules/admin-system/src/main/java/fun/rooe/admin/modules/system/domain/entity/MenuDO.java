@@ -10,6 +10,16 @@ import java.time.LocalDateTime;
  */
 @TableName("sys_menu")
 public class MenuDO implements Serializable {
+    private Boolean enabled = true;
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean value) {
+        this.enabled = value;
+    }
+
     /**
      * Primary key.
      */

@@ -1,16 +1,21 @@
 import { login, getInfo, logout } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
+import { initializeSession } from '@/utils/session'
 
 const user = {
   state: {
     token: getToken(),
     user: {},
+    mustChangePassword: false,
     roles: [],
     // 第一次加载菜单时用到
     loadMenus: false
   },
 
   mutations: {
+    SET_PASSWORD_CHANGE: (state, value) => {
+      state.mustChangePassword = value
+    },
     SET_TOKEN: (state, token) => {
       state.token = token
     },
@@ -27,50 +32,44 @@ const user = {
 
   actions: {
     // 登录
-    Login({ commit }, userInfo) {
-      const rememberMe = userInfo.rememberMe
-      return new Promise((resolve, reject) => {
-        login(userInfo.username, userInfo.password, userInfo.code, userInfo.uuid).then(res => {
-          setToken(res.token, rememberMe)
-          commit('SET_TOKEN', res.token)
-          setUserInfo(res.user, commit)
-          // 第一次加载菜单时用到， 具体见 src 目录下的 permission.js
-          commit('SET_LOAD_MENUS', true)
-          resolve()
-        }).catch(error => {
-          reject(error)
-        })
-      })
+    async Login({ commit }, userInfo) {
+      const result = await login(userInfo.username, userInfo.password)
+      if (result.status !== 'SUCCESS' || !result.accessToken) throw new Error('Login was not completed')
+      setToken(result.accessToken)
+      initializeSession(result.absoluteExpiresAt)
+      commit('SET_TOKEN', result.accessToken)
+      commit('SET_PASSWORD_CHANGE', result.mustChangePassword)
+      commit('SET_LOAD_MENUS', true)
+      return result
     },
 
     // 获取用户信息
-    GetInfo({ commit }) {
-      return new Promise((resolve, reject) => {
-        getInfo().then(res => {
-          setUserInfo(res, commit)
-          resolve(res)
-        }).catch(error => {
-          reject(error)
-        })
-      })
+    async GetInfo({ commit }) {
+      const token = getToken()
+      const res = await getInfo()
+      // 请求返回前会话可能已切换，丢弃旧账号资料，避免覆盖新账号状态。
+      if (!token || token !== getToken()) throw new Error('Session changed while loading user information')
+      setUserInfo(res, commit)
+      commit('SET_LOAD_MENUS', true)
+      return res
     },
     // 登出
-    LogOut({ commit }) {
-      return new Promise((resolve, reject) => {
-        logout().then(res => {
-          logOut(commit)
-          resolve()
-        }).catch(error => {
-          logOut(commit)
-          reject(error)
-        })
-      })
+    ClearAuth({ commit }) {
+      logOut(commit)
+    },
+
+    async LogOut({ commit }) {
+      const token = getToken()
+      try {
+        await logout()
+      } finally {
+        // 网络失败也清理本地状态，但不影响等待期间建立的新会话。
+        if (getToken() === token) logOut(commit)
+      }
     },
 
     updateLoadMenus({ commit }) {
-      return new Promise((resolve, reject) => {
-        commit('SET_LOAD_MENUS', false)
-      })
+      commit('SET_LOAD_MENUS', false)
     }
   }
 }
@@ -78,16 +77,16 @@ const user = {
 export const logOut = (commit) => {
   commit('SET_TOKEN', '')
   commit('SET_ROLES', [])
+  commit('SET_USER', {})
+  commit('SET_PASSWORD_CHANGE', false)
+  commit('SET_LOAD_MENUS', false)
   removeToken()
 }
 
 export const setUserInfo = (res, commit) => {
-  // 如果没有任何权限，则赋予一个默认的权限，避免请求死循环
-  if (res.roles.length === 0) {
-    commit('SET_ROLES', ['ROLE_SYSTEM_DEFAULT'])
-  } else {
-    commit('SET_ROLES', res.roles)
-  }
+  commit('SET_PASSWORD_CHANGE', !!res.mustChangePassword)
+  // 空权限占位仅表示资料已加载，避免路由重复请求；不代表后端业务授权。
+  commit('SET_ROLES', res.roles.length ? res.roles : ['ROLE_SYSTEM_DEFAULT'])
   commit('SET_USER', res.user)
 }
 

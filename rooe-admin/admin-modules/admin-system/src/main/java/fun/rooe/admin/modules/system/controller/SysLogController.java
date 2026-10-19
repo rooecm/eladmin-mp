@@ -33,7 +33,7 @@ public class SysLogController {
     @Log("导出数据")
     @Operation(summary = "导出数据")
     @GetMapping(value = "/download")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:list')")
     public void exportLog(HttpServletResponse response, @Valid SysLogQueryRequest request) throws IOException {
         sysLogService.download(request, response);
     }
@@ -41,14 +41,14 @@ public class SysLogController {
     @Log("导出错误数据")
     @Operation(summary = "导出错误数据")
     @GetMapping(value = "/error/download")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:list')")
     public void exportErrorLog(HttpServletResponse response, @Valid SysLogQueryRequest request) throws IOException {
         sysLogService.downloadErrors(request, response);
     }
 
     @GetMapping
     @Operation(summary = "日志查询")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:list')")
     public PageResult<SysLogDTO> queryLog(@Valid SysLogQueryRequest request) {
         return sysLogService.queryAll(request);
     }
@@ -61,14 +61,14 @@ public class SysLogController {
 
     @GetMapping(value = "/error")
     @Operation(summary = "错误日志查询")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:list')")
     public PageResult<SysLogDTO> queryErrorLog(@Valid SysLogQueryRequest request) {
         return sysLogService.queryErrors(request);
     }
 
     @GetMapping(value = "/error/{id}")
     @Operation(summary = "日志异常详情查询")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:list')")
     public SysLogErrorDetailDTO queryErrorLogDetail(@PathVariable @Positive Long id) {
         return sysLogService.findByErrDetail(id);
     }
@@ -76,7 +76,7 @@ public class SysLogController {
     @DeleteMapping(value = "/del/error")
     @Log("删除所有ERROR日志")
     @Operation(summary = "删除所有ERROR日志")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:del')")
     public void delAllErrorLog() {
         sysLogService.delAllByError();
     }
@@ -84,7 +84,7 @@ public class SysLogController {
     @DeleteMapping(value = "/del/info")
     @Log("删除所有INFO日志")
     @Operation(summary = "删除所有INFO日志")
-    @PreAuthorize("@el.check()")
+    @PreAuthorize("@perm.has('logs:del')")
     public void delAllInfoLog() {
         sysLogService.delAllByInfo();
     }

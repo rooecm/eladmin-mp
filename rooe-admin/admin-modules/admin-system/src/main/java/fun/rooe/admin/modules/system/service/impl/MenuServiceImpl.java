@@ -40,6 +40,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     private static final String HTTP_PRE = "http://";
     private static final String HTTPS_PRE = "https://";
     private final MenuMapper menuMapper;
+    private final fun.rooe.admin.modules.security.service.AuthCacheInvalidator authInvalidator;
+    private final fun.rooe.admin.modules.security.service.AdminPrivilegeGuard privilegeGuard;
     private final RoleMenuMapper roleMenuMapper;
     private final UserMapper userMapper;
     private final RoleService roleService;
@@ -78,7 +80,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     @Override
     public List<MenuRouterDTO> buildCurrentUserMenus() {
         List<MenuDO> menus = findByUser(SecurityUtils.getCurrentUserId());
-        return assembler.toRouterDtos(assembler.toTree(assembler.toDtos(menus)));
+        return assembler.toRouterDtos(assembler.toTree(assembler.toDtos(menus.stream()
+                .filter(menu -> Boolean.TRUE.equals(menu.getEnabled())).toList())));
     }
 
     private MenuDO findById(long id) {
@@ -97,7 +100,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
         if (CollectionUtils.isEmpty(menus)) {
             Set<Long> roleIds =
                     roleService.findByUsersId(userId).stream()
-                            .map(RoleDO::getId)
+                            .filter(r -> Boolean.TRUE.equals(r.getEnabled())).map(RoleDO::getId)
                             .collect(Collectors.toSet());
             menus =
                     roleIds.isEmpty()
@@ -111,10 +114,15 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(MenuCreateRequest request) {
+        // 菜单权限码同样属于授权资源，必须经过管理锁与权限范围检查。
+        privilegeGuard.lockAdministration();
+        privilegeGuard.changePermission(List.of(), null, request.getPermission());
         validateUnique(request.getTitle(), request.getComponentName(), null);
         validateFrame(request.getIFrame(), request.getPath());
         MenuDO menu = assembler.toEntity(request);
-        if (Long.valueOf(0L).equals(menu.getPid())) menu.setPid(null);
+        if (Long.valueOf(0L).equals(menu.getPid())) {
+            menu.setPid(null);
+        }
         menu.setSubCount(0);
         save(menu);
         updateSubCnt(menu.getPid());
@@ -123,14 +131,22 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(MenuUpdateRequest request) {
-        if (request.getId().equals(request.getPid()))
+        privilegeGuard.lockAdministration();
+        if (request.getId().equals(request.getPid())) {
             throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "上级菜单不能为自己");
+        }
         validateUnique(request.getTitle(), request.getComponentName(), request.getId());
         validateFrame(request.getIFrame(), request.getPath());
         MenuDO menu = getById(request.getId());
+        if (!Objects.equals(menu.getPermission(), request.getPermission())
+                || !Objects.equals(menu.getEnabled(), request.getEnabled()))
+            privilegeGuard.changePermission(roleService.findByMenuId(menu.getId()).stream().map(RoleDO::getId).toList(),
+                    menu.getPermission(), request.getPermission());
         Long oldPid = menu.getPid();
         assembler.updateEntity(request, menu);
-        if (Long.valueOf(0L).equals(menu.getPid())) menu.setPid(null);
+        if (Long.valueOf(0L).equals(menu.getPid())) {
+            menu.setPid(null);
+        }
         updateById(menu);
         updateSubCnt(oldPid);
         updateSubCnt(menu.getPid());
@@ -163,9 +179,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(MenuDeleteRequest request) {
+        // 先收集本批次及子菜单并逐项校验，全部删除共享事务，禁止部分成功。
+        privilegeGuard.lockAdministration();
         Map<Long, MenuDO> byId = new LinkedHashMap<>();
-        request.getIds().forEach(id -> collect(findById(id), byId));
+        request.getIds().forEach(id -> collect(getById(id), byId));
         for (MenuDO menu : byId.values()) {
+            privilegeGuard.changePermission(roleService.findByMenuId(menu.getId()).stream().map(RoleDO::getId).toList(),
+                    menu.getPermission(), null);
             delCaches(menu.getId());
             roleMenuMapper.delete(
                     Wrappers.<RoleMenuDO>lambdaQuery().eq(RoleMenuDO::getMenuId, menu.getId()));
@@ -176,7 +196,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
 
     /** Collects a menu subtree once per ID so overlapping delete selections remain idempotent. */
     private void collect(MenuDO menu, Map<Long, MenuDO> byId) {
-        if (menu == null || byId.putIfAbsent(menu.getId(), menu) != null) return;
+        if (menu == null || byId.putIfAbsent(menu.getId(), menu) != null) {
+            return;
+        }
         getMenuEntities(menu.getId()).forEach(child -> collect(child, byId));
     }
 
@@ -212,10 +234,14 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
         Set<Long> adjustedParents = new HashSet<>();
         for (Long id : request.getIds()) {
             MenuDO menu = findById(id);
-            if (menu == null) continue;
+            if (menu == null) {
+                continue;
+            }
             List<MenuDO> branch = getSuperiorEntities(menu, new ArrayList<>());
             if (request.isExclude()) {
-                if (menu.getPid() != null) adjustedParents.add(menu.getPid());
+                if (menu.getPid() != null) {
+                    adjustedParents.add(menu.getPid());
+                }
                 branch =
                         branch.stream()
                                 .filter(item -> !request.getIds().contains(item.getId()))
@@ -256,12 +282,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuDO> implements 
     }
 
     private void delCaches(Long id) {
-        List<UserDO> users = userMapper.findByMenuId(id);
-        redisUtils.del(CacheKey.MENU_ID + id);
-        redisUtils.delByKeys(
-                CacheKey.MENU_USER, users.stream().map(UserDO::getId).collect(Collectors.toSet()));
-        List<RoleDO> roles = roleService.findByMenuId(id);
-        redisUtils.delByKeys(
-                CacheKey.ROLE_ID, roles.stream().map(RoleDO::getId).collect(Collectors.toSet()));
+        authInvalidator.keys(List.of(CacheKey.MENU_ID + id));
+        var users = userMapper.findByMenuId(id);
+        var roles = roleService.findByMenuId(id);
+        authInvalidator.publish(users.stream().map(UserDO::getId).toList(), roles.stream().map(RoleDO::getId).toList());
     }
 }

@@ -6,6 +6,9 @@ import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -20,7 +23,7 @@ class ValidationErrorResponseTest {
     @Test
     void controllerMethodValidationKeepsTheConstraintMessage() throws Exception {
         var mvc = MockMvcBuilders.standaloneSetup(new TestController())
-                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
+                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
         var response = mvc.perform(get("/validation/parameter").param("count", "0"))
                 .andReturn().getResponse();
         var body = new ObjectMapper().readTree(response.getContentAsByteArray());
@@ -32,7 +35,7 @@ class ValidationErrorResponseTest {
     @Test
     void invalidControllerReturnValuesAreReportedAsSystemFailures() throws Exception {
         var mvc = MockMvcBuilders.standaloneSetup(new TestController())
-                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
+                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
         var response = mvc.perform(get("/validation/return")).andReturn().getResponse();
         var body = new ObjectMapper().readTree(response.getContentAsByteArray());
         assertEquals(500, response.getStatus());
@@ -43,7 +46,7 @@ class ValidationErrorResponseTest {
     @Test
     void beanValidationReturnsAFieldMessageAndTheCommonArgumentCode() throws Exception {
         var mvc = MockMvcBuilders.standaloneSetup(new TestController())
-                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
+                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
         var response = mvc.perform(post("/validation").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andReturn().getResponse();
         var body = new ObjectMapper().readTree(response.getContentAsByteArray());
@@ -72,6 +75,11 @@ class ValidationErrorResponseTest {
         }
     }
 
-    record Request(@NotBlank(message = "名称不能为空") String name) {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    static class Request {
+        @NotBlank(message = "名称不能为空")
+        private String name;
     }
 }

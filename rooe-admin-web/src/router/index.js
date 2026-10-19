@@ -3,7 +3,7 @@ import store from '@/store'
 import Config from '@/settings'
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
-import { getToken } from '@/utils/auth' // getToken from cookie
+import { getToken } from '@/utils/auth'
 import { buildMenus } from '@/api/system/menu'
 import { filterAsyncRouter } from '@/store/modules/permission'
 
@@ -17,28 +17,28 @@ router.beforeEach((to, from, next) => {
   }
   NProgress.start()
   if (getToken()) {
-    // 已登录且要跳转的页面是登录页
-    if (to.path === '/login') {
-      next({ path: '/' })
-      NProgress.done()
-    } else {
-      if (store.getters.roles.length === 0) { // 判断当前用户是否已拉取完user_info信息
-        store.dispatch('GetInfo').then(() => { // 拉取user_info
-          // 动态路由，拉取菜单
-          loadMenus(next, to)
-        }).catch(() => {
-          store.dispatch('LogOut').then(() => {
-            location.reload() // 为了重新实例化vue-router对象 避免bug
-          })
-        })
-      // 登录时未拉取 菜单，在此处拉取
+    const proceed = () => {
+      // 强制改密会话在加载业务菜单之前进入改密页，后端过滤器同步限制接口访问。
+      if (store.state.user.mustChangePassword) {
+        next(to.path === '/change-password' ? undefined : { path: '/change-password' })
+        NProgress.done()
+      } else if (to.path === '/login') {
+        next({ path: '/' })
+        NProgress.done()
       } else if (store.getters.loadMenus) {
-        // 修改成false，防止死循环
         store.dispatch('updateLoadMenus')
         loadMenus(next, to)
       } else {
         next()
       }
+    }
+    if (store.getters.roles.length === 0) {
+      store.dispatch('GetInfo').then(proceed).catch(() => {
+        next(false)
+        NProgress.done()
+      })
+    } else {
+      proceed()
     }
   } else {
     /* has no token*/
@@ -51,20 +51,38 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export const loadMenus = (next, to) => {
-  buildMenus().then(res => {
+export const loadMenus = async(next, to) => {
+  // 菜单与路由必须属于发起加载时的会话，账号切换后丢弃旧结果。
+  const token = getToken()
+  try {
+    const res = await buildMenus()
+    if (!token || getToken() !== token) {
+      next(false)
+      return
+    }
     const sdata = JSON.parse(JSON.stringify(res))
     const rdata = JSON.parse(JSON.stringify(res))
     const sidebarRoutes = filterAsyncRouter(sdata)
     const rewriteRoutes = filterAsyncRouter(rdata)
     rewriteRoutes.push({ path: '*', redirect: '/404', hidden: true })
 
-    store.dispatch('GenerateRoutes', rewriteRoutes).then(() => { // 存储路由
-      router.addRoutes(rewriteRoutes) // 动态添加可访问路由表
-      next({ ...to, replace: true })
-    })
-    store.dispatch('SetSidebarRouters', sidebarRoutes)
-  })
+    await Promise.all([
+      store.dispatch('GenerateRoutes', rewriteRoutes),
+      store.dispatch('SetSidebarRouters', sidebarRoutes)
+    ])
+    if (getToken() !== token) {
+      next(false)
+      return
+    }
+    router.addRoutes(rewriteRoutes)
+    next({ ...to, replace: true })
+  } catch (e) {
+    // 当前会话加载失败后恢复标记，允许下次导航重新加载菜单。
+    if (getToken() === token) store.commit('SET_LOAD_MENUS', true)
+    next(false)
+  } finally {
+    NProgress.done()
+  }
 }
 
 router.afterEach(() => {

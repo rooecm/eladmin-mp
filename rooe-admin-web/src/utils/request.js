@@ -2,7 +2,8 @@ import axios from 'axios'
 import router from '@/router/routers'
 import { Notification } from 'element-ui'
 import store from '../store'
-import { getToken } from '@/utils/auth'
+import { authorization, getToken, isCurrentSessionRequest } from '@/utils/auth'
+import { recordRenewal } from '@/utils/session'
 import Config from '@/settings'
 import Cookies from 'js-cookie'
 
@@ -14,7 +15,7 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     if (getToken()) {
-      config.headers['Authorization'] = getToken()
+      config.headers['Authorization'] = authorization()
     }
     config.headers['Content-Type'] = 'application/json'
     return config
@@ -38,7 +39,7 @@ function readBlob(blob) {
 
 let redirectingToLogin = false
 
-// Shared by normal requests, direct Axios uploads, and failed Blob downloads.
+// 普通请求、直接上传和 Blob 下载共用错误处理，统一业务错误码与会话跳转行为。
 export async function handleApiError(error) {
   const response = error.response
   const status = response ? response.status : 0
@@ -64,40 +65,37 @@ export async function handleApiError(error) {
 
   Notification.error({ title: message, duration: 5000 })
 
-  const sessionExpired = code === 'AUTH_1005'
-  const loginRequest = /(?:^|\/)auth\/login(?:\?|$)/.test((error.config || (response && response.config) || {}).url || '')
-  const legacyUnauthorized = status === 401 && (!code || code === '401') && !loginRequest
-  if ((sessionExpired || legacyUnauthorized) && getToken() && !redirectingToLogin) {
+  const config = error.config || (response && response.config) || {}
+  const loginRequest = /(?:^|\/)auth\/login(?:\?|$)/.test(config.url || '')
+  const currentSession = isCurrentSessionRequest(config)
+  // 仅当前会话的 401 清理登录态；强制改密的 403 跳转改密页，其他 403/503 保留会话。
+  if (status === 401 && !loginRequest && currentSession && !redirectingToLogin) {
     redirectingToLogin = true
     try {
-      await store.dispatch('LogOut')
+      await store.dispatch('ClearAuth')
       Cookies.set('point', 401)
-      location.reload()
-    } catch (e) {
-      router.push({ path: '/login' })
+      await router.replace({ path: '/login' })
     } finally {
       redirectingToLogin = false
     }
-  } else if (status === 403 && (!code || code === '403' || code === 'PERMISSION_1001')) {
-    router.push({ path: '/401' })
+  } else if (status === 403 && code === 'AUTH_PASSWORD_CHANGE_REQUIRED' && currentSession) {
+    store.commit('SET_PASSWORD_CHANGE', true)
+    await router.replace({ path: '/change-password' })
   }
   throw error
 }
 
-service.interceptors.response.use(
-  response => {
-    const result = response.data
-    if (isApiResult(result)) {
-      if (result.code === '0') {
-        return result.data
-      }
-      const error = new Error(result.message)
-      error.response = response
-      return handleApiError(error)
-    }
-    return result
-  },
-  handleApiError
-)
+// 统一记录服务端续期结果，解包 ApiResult，同时兼容仍直接返回业务数据的接口。
+export function handleApiResponse(response) {
+  recordRenewal(response)
+  const result = response.data
+  if (!isApiResult(result)) return result
+  if (result.code === '0') return result.data
+  const error = new Error(result.message)
+  error.response = response
+  return handleApiError(error)
+}
+
+service.interceptors.response.use(handleApiResponse, handleApiError)
 
 export default service

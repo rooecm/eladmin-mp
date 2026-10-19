@@ -55,14 +55,14 @@ public class S3StorageController {
 
     @Operation(summary = "导出数据")
     @GetMapping(value = "/download")
-    @PreAuthorize("@el.check('storage:list')")
+    @PreAuthorize("@perm.has('storage:list')")
     public void exportS3Storage(HttpServletResponse response, S3StorageQueryCriteria criteria) throws IOException {
         s3StorageService.download(s3StorageService.queryAll(criteria), response);
     }
 
     @GetMapping
     @Operation(summary = "查询文件")
-    @PreAuthorize("@el.check('storage:list')")
+    @PreAuthorize("@perm.has('storage:list')")
     public PageResult<S3StorageDO> queryS3Storage(S3StorageQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return s3StorageService.queryAll(criteria, page);
@@ -70,6 +70,7 @@ public class S3StorageController {
 
     @PostMapping
     @Operation(summary = "上传文件")
+    @PreAuthorize("@perm.has('storage:add')")
     public Map<String,Object> uploadS3Storage(@RequestParam MultipartFile file){
         S3StorageDO storage = s3StorageService.upload(file);
         Map<String,Object> map = new HashMap<>(3);
@@ -82,6 +83,7 @@ public class S3StorageController {
     @Log("下载文件")
     @Operation(summary = "下载文件")
     @GetMapping(value = "/download/{id}")
+    @PreAuthorize("@perm.has('storage:list')")
     public Map<String,Object> downloadS3Storage(@PathVariable Long id){
         Map<String,Object> map = new HashMap<>(1);
         S3StorageDO storage = s3StorageService.getById(id);
@@ -97,7 +99,7 @@ public class S3StorageController {
     @Log("删除多个文件")
     @DeleteMapping
     @Operation(summary = "删除多个文件")
-    @PreAuthorize("@el.check('storage:del')")
+    @PreAuthorize("@perm.has('storage:del')")
     public void deleteAllS3Storage(@RequestBody List<Long> ids) {
         s3StorageService.deleteAll(ids);
     }

@@ -10,6 +10,44 @@ import java.time.LocalDateTime;
  */
 @TableName("sys_user")
 public class UserDO implements Serializable {
+    @TableField(updateStrategy = FieldStrategy.NEVER)
+    private Long authVersion = 0L;
+    private Boolean mustChangePassword = false;
+    private LocalDateTime lastLoginAt;
+    private String lastLoginIp;
+
+    public Long getAuthVersion() {
+        return authVersion;
+    }
+
+    public void setAuthVersion(Long value) {
+        this.authVersion = value;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean value) {
+        this.mustChangePassword = value;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime value) {
+        this.lastLoginAt = value;
+    }
+
+    public String getLastLoginIp() {
+        return lastLoginIp;
+    }
+
+    public void setLastLoginIp(String value) {
+        this.lastLoginIp = value;
+    }
+
     /**
      * Primary key.
      */

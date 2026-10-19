@@ -30,21 +30,21 @@ public class RoleController {
 
     @Operation(summary = "获取单个角色")
     @GetMapping("/{id}")
-    @PreAuthorize("@el.check('roles:list')")
+    @PreAuthorize("@perm.has('roles:list')")
     public RoleDTO findRoleById(@PathVariable @Positive Long id) {
         return roleService.findDtoById(id);
     }
 
     @Operation(summary = "返回全部角色")
     @GetMapping("/all")
-    @PreAuthorize("@el.check('roles:list','user:add','user:edit')")
+    @PreAuthorize("@perm.has('roles:list') or @perm.has('user:add') or @perm.has('user:edit')")
     public List<RoleDTO> queryAllRole() {
         return roleService.queryAll();
     }
 
     @Operation(summary = "查询角色")
     @GetMapping
-    @PreAuthorize("@el.check('roles:list')")
+    @PreAuthorize("@perm.has('roles:list')")
     public PageResult<RoleDTO> queryRole(@Valid RoleQueryRequest request) {
         return roleService.queryAll(request);
     }
@@ -58,7 +58,7 @@ public class RoleController {
     @Log("新增角色")
     @Operation(summary = "新增角色")
     @PostMapping
-    @PreAuthorize("@el.check('roles:add')")
+    @PreAuthorize("@perm.has('roles:add')")
     public void createRole(@Valid @RequestBody RoleCreateRequest request) {
         roleService.create(request);
     }
@@ -66,7 +66,7 @@ public class RoleController {
     @Log("修改角色")
     @Operation(summary = "修改角色")
     @PutMapping
-    @PreAuthorize("@el.check('roles:edit')")
+    @PreAuthorize("@perm.has('roles:edit')")
     public void updateRole(@Valid @RequestBody RoleUpdateRequest request) {
         roleService.update(request);
     }
@@ -74,7 +74,7 @@ public class RoleController {
     @Log("修改角色菜单")
     @Operation(summary = "修改角色菜单")
     @PutMapping("/menu")
-    @PreAuthorize("@el.check('roles:edit')")
+    @PreAuthorize("@perm.has('roles:edit')")
     public void updateRoleMenu(@Valid @RequestBody RoleMenuUpdateRequest request) {
         roleService.updateMenu(request);
     }
@@ -82,7 +82,7 @@ public class RoleController {
     @Log("删除角色")
     @Operation(summary = "删除角色")
     @DeleteMapping
-    @PreAuthorize("@el.check('roles:del')")
+    @PreAuthorize("@perm.has('roles:del')")
     public void deleteRole(@Valid @RequestBody RoleDeleteRequest request) {
         roleService.delete(request);
     }

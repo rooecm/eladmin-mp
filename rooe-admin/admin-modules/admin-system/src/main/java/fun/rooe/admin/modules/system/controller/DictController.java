@@ -29,7 +29,7 @@ public class DictController {
 
     @Operation(summary = "导出字典数据")
     @GetMapping("/download")
-    @PreAuthorize("@el.check('dict:list')")
+    @PreAuthorize("@perm.has('dict:list')")
     public void exportDict(HttpServletResponse response, @Valid DictQueryRequest request)
             throws IOException {
         dictService.download(dictService.queryList(request), response);
@@ -37,14 +37,14 @@ public class DictController {
 
     @Operation(summary = "查询全部字典")
     @GetMapping("/all")
-    @PreAuthorize("@el.check('dict:list')")
+    @PreAuthorize("@perm.has('dict:list')")
     public List<DictDTO> queryAllDict() {
         return dictService.queryList(new DictQueryRequest());
     }
 
     @Operation(summary = "查询字典")
     @GetMapping
-    @PreAuthorize("@el.check('dict:list')")
+    @PreAuthorize("@perm.has('dict:list')")
     public PageResult<DictDTO> queryDict(@Valid DictQueryRequest request) {
         return dictService.queryAll(request);
     }
@@ -52,7 +52,7 @@ public class DictController {
     @Log("新增字典")
     @Operation(summary = "新增字典")
     @PostMapping
-    @PreAuthorize("@el.check('dict:add')")
+    @PreAuthorize("@perm.has('dict:add')")
     public void createDict(@Valid @RequestBody DictCreateRequest request) {
         dictService.create(request);
     }
@@ -60,7 +60,7 @@ public class DictController {
     @Log("修改字典")
     @Operation(summary = "修改字典")
     @PutMapping
-    @PreAuthorize("@el.check('dict:edit')")
+    @PreAuthorize("@perm.has('dict:edit')")
     public void updateDict(@Valid @RequestBody DictUpdateRequest request) {
         dictService.update(request);
     }
@@ -68,7 +68,7 @@ public class DictController {
     @Log("删除字典")
     @Operation(summary = "删除字典")
     @DeleteMapping
-    @PreAuthorize("@el.check('dict:del')")
+    @PreAuthorize("@perm.has('dict:del')")
     public void deleteDict(@Valid @RequestBody DictDeleteRequest request) {
         dictService.delete(request);
     }

@@ -1,18 +1,31 @@
-import Cookies from 'js-cookie'
 import Config from '@/settings'
 
-const TokenKey = Config.TokenKey
+export const TokenKey = Config.TokenKey
 
 export function getToken() {
-  return Cookies.get(TokenKey)
+  return localStorage.getItem(TokenKey)
 }
 
-export function setToken(token, rememberMe) {
-  if (rememberMe) {
-    return Cookies.set(TokenKey, token, { expires: Config.tokenCookieExpires })
-  } else return Cookies.set(TokenKey, token)
+export function authorization() {
+  const token = getToken()
+  return token ? `Bearer ${token}` : ''
 }
 
+// 将响应与发出请求时的 Token 关联，避免旧请求影响刚登录的新会话。
+export function isCurrentSessionRequest(config) {
+  const token = getToken()
+  const headers = config && config.headers
+  const sent = headers && (typeof headers.get === 'function' ? headers.get('Authorization') : headers.Authorization || headers.authorization)
+  return !!token && sent === `Bearer ${token}`
+}
+
+export function setToken(token) {
+  localStorage.setItem(TokenKey, token)
+}
 export function removeToken() {
-  return Cookies.remove(TokenKey)
+  localStorage.removeItem(TokenKey)
+  localStorage.removeItem('rooe.auth.lastActiveAt')
+  localStorage.removeItem('rooe.auth.lastRenewableServerContactAt')
+  localStorage.removeItem('rooe.auth.absoluteExpiresAt')
+  localStorage.removeItem('rooe.auth.lastTouchAt')
 }

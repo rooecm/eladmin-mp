@@ -39,7 +39,7 @@ class ApiResultResponseAdviceTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
                 .defaultResponseCharacterEncoding(java.nio.charset.StandardCharsets.UTF_8)
-                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice())
+                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class)))
                 .build();
     }
 
@@ -63,6 +63,26 @@ class ApiResultResponseAdviceTest {
         assertEquals(false, body.has("status"));
         assertEquals("0", body.get("code").asText());
         assertEquals(true, body.get("data").isNull());
+    }
+
+    @Test
+    void wrapsDataWhenServletResponseOnlySetsHeaders() throws Exception {
+        var response = mockMvc.perform(get("/test/data-with-headers")).andReturn().getResponse();
+        JsonNode body = objectMapper.readTree(response.getContentAsByteArray());
+
+        assertEquals(200, response.getStatus());
+        assertEquals("no-store", response.getHeader("Cache-Control"));
+        assertEquals("0", body.path("code").asText());
+        assertEquals("admin", body.path("data").path("name").asText());
+        assertEquals(false, body.path("data").has("code"));
+    }
+
+    @Test
+    void keepsNoContentResponseEmpty() throws Exception {
+        var response = mockMvc.perform(get("/test/no-content")).andReturn().getResponse();
+
+        assertEquals(204, response.getStatus());
+        assertEquals(0, response.getContentAsByteArray().length);
     }
 
     @Test
@@ -105,7 +125,7 @@ class ApiResultResponseAdviceTest {
         assertError(get("/test/business/duplicate"), 409, "COMMON_1003");
         assertError(get("/test/business/large"), 400, "COMMON_1008");
         assertError(get("/test/business/token"), 401, "AUTH_1005");
-        assertError(get("/test/business/disabled"), 403, "AUTH_1002");
+        assertError(get("/test/business/disabled"), 401, "AUTH_1002");
         assertError(get("/test/business/missing"), 200, "COMMON_1002");
         assertError(get("/test/business/exists"), 200, "COMMON_1003");
         assertError(get("/test/business/unregistered"), 200, "CUSTOM_1001");
@@ -113,7 +133,7 @@ class ApiResultResponseAdviceTest {
 
     @Test
     void internalFailuresAreNotReportedAsBadCredentialsOrDataConflicts() throws Exception {
-        assertError(get("/test/business/auth-service"), 500, "SYS_1001");
+        assertError(get("/test/business/auth-service"), 503, "AUTH_UNAVAILABLE");
         assertError(get("/test/business/integrity"), 500, "SYS_1001");
         assertError(get("/test/business/unauthenticated"), 401, "AUTH_1005");
         assertError(get("/test/business/unknown-user"), 401, "AUTH_1001");
@@ -121,9 +141,9 @@ class ApiResultResponseAdviceTest {
 
     @Test
     void authenticationProviderWrappersPreserveKnownRejections() throws Exception {
-        assertError(get("/test/provider/disabled"), 403, "AUTH_1002");
+        assertError(get("/test/provider/disabled"), 401, "AUTH_1002");
         assertError(get("/test/provider/credentials"), 401, "AUTH_1001");
-        assertError(get("/test/provider/backend"), 500, "SYS_1001");
+        assertError(get("/test/provider/backend"), 503, "AUTH_UNAVAILABLE");
     }
 
     @Test
@@ -161,7 +181,7 @@ class ApiResultResponseAdviceTest {
                 .extendMessageConverters(converters);
         mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
                 .setMessageConverters(converters.toArray(org.springframework.http.converter.HttpMessageConverter[]::new))
-                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
+                .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
         var response = mockMvc.perform(get("/test/void")).andReturn().getResponse();
         var body = objectMapper.readTree(response.getContentAsByteArray());
         assertEquals("0", body.path("code").asText());
@@ -193,7 +213,8 @@ class ApiResultResponseAdviceTest {
                 case "limit" -> throw new BusinessException(CommonErrorCode.TOO_MANY_REQUESTS);
                 case "duplicate" -> throw new DuplicateKeyException("secret SQL and constraint name");
                 case "large" -> throw new org.springframework.web.multipart.MaxUploadSizeExceededException(1L);
-                case "token" -> throw new io.jsonwebtoken.MalformedJwtException("secret parser detail");
+                case "token" ->
+                        throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("secret parser detail");
                 case "disabled" ->
                         throw new org.springframework.security.authentication.DisabledException("secret detail");
                 case "auth-service" ->
@@ -260,6 +281,17 @@ class ApiResultResponseAdviceTest {
 
         @GetMapping("/test/void")
         void empty() {
+        }
+
+        @GetMapping("/test/data-with-headers")
+        Map<String, String> dataWithHeaders(HttpServletResponse response) {
+            response.setHeader("Cache-Control", "no-store");
+            return Map.of("name", "admin");
+        }
+
+        @GetMapping("/test/no-content")
+        @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+        void noContent() {
         }
 
         @GetMapping("/test/download")

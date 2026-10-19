@@ -65,7 +65,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptDO> implements 
     public List<DeptDTO> queryAll(DeptQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
         if (dataScope.isNone()
-                || (dataScope.isSelf() && dataScope.selfDeptId() == null)) {
+                || (dataScope.isSelf() && dataScope.getSelfDeptId() == null)) {
             return List.of();
         }
         LambdaQueryWrapper<DeptDO> queryWrapper = buildQueryWrapper(request, dataScope);
@@ -86,9 +86,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptDO> implements 
                 && (dataScope.isAll()
                 || Boolean.TRUE.equals(request.getPidIsNull()));
 
-        Set<Long> visibleDeptIds = new LinkedHashSet<>(dataScope.deptIds());
-        if (dataScope.selfDeptId() != null) {
-            visibleDeptIds.add(dataScope.selfDeptId());
+        Set<Long> visibleDeptIds = new LinkedHashSet<>(dataScope.getDeptIds());
+        if (dataScope.getSelfDeptId() != null) {
+            visibleDeptIds.add(dataScope.getSelfDeptId());
         }
         LambdaQueryWrapper<DeptDO> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.in(!dataScope.isAll(), DeptDO::getId, visibleDeptIds)

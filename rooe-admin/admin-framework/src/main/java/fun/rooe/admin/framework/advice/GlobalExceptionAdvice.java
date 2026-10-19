@@ -19,9 +19,11 @@ import fun.rooe.admin.error.AuthErrorCode;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.error.ErrorCode;
 import fun.rooe.admin.exception.BusinessException;
+import fun.rooe.admin.framework.security.AuthFailure;
+import fun.rooe.admin.framework.security.AuthTelemetry;
 import fun.rooe.admin.response.ApiResult;
-import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.context.MessageSourceResolvable;
@@ -49,16 +51,30 @@ import java.util.stream.Stream;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionAdvice {
+    private final AuthTelemetry telemetry;
+
+    @ExceptionHandler(AuthFailure.class)
+    public ResponseEntity<ApiResult<Void>> authFailure(AuthFailure e) {
+        telemetry.count("auth_request_rejected_total", "status", Integer.toString(e.getStatus()));
+        var builder = ResponseEntity.status(e.getStatus());
+        if (e.getStatus() == 401) {
+            builder.header("WWW-Authenticate", "Bearer");
+        }
+        return builder.body(ApiResult.failure(e.getErrorCode()));
+    }
+
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Void>> businessException(BusinessException e) {
         log.warn("Business failure", e);
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.status(e.getErrorCode() == CommonErrorCode.INVALID_ARGUMENT ? HttpStatus.BAD_REQUEST
+                        : e.getErrorCode() == CommonErrorCode.ACCESS_DENIED ? HttpStatus.FORBIDDEN : HttpStatus.OK)
                 .body(ApiResult.failure(e.getErrorCode().getCode(), e.getMessage()));
     }
 
-    @ExceptionHandler({AuthenticationException.class, JwtException.class})
+    @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResult<Void>> authenticationException(RuntimeException e) {
         if (e instanceof AuthenticationServiceException) {
             // The DAO provider can wrap known rejections thrown while loading user details.
@@ -66,11 +82,11 @@ public class GlobalExceptionAdvice {
                     && !(cause instanceof AuthenticationServiceException)) {
                 e = cause;
             } else {
-                return handleException(e);
+                return failure(HttpStatus.SERVICE_UNAVAILABLE, AuthErrorCode.UNAVAILABLE);
             }
         }
         if (e instanceof DisabledException) {
-            return failure(HttpStatus.FORBIDDEN, AuthErrorCode.ACCOUNT_DISABLED);
+            return failure(HttpStatus.UNAUTHORIZED, AuthErrorCode.ACCOUNT_DISABLED);
         }
         ErrorCode code = e instanceof BadCredentialsException || e instanceof UsernameNotFoundException
                 ? AuthErrorCode.BAD_CREDENTIALS : AuthErrorCode.SESSION_INVALID;
@@ -135,6 +151,12 @@ public class GlobalExceptionAdvice {
     }
 
     private ResponseEntity<ApiResult<Void>> failure(HttpStatus status, ErrorCode errorCode, String message) {
-        return ResponseEntity.status(status).body(ApiResult.failure(errorCode.getCode(), message));
+        var builder = ResponseEntity.status(status);
+        if (status == HttpStatus.UNAUTHORIZED) {
+            builder.header("WWW-Authenticate", "Bearer");
+        }
+        if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN || status == HttpStatus.SERVICE_UNAVAILABLE)
+            telemetry.count("auth_request_rejected_total", "status", Integer.toString(status.value()));
+        return builder.body(ApiResult.failure(errorCode.getCode(), message));
     }
 }

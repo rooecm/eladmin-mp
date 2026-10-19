@@ -2,7 +2,6 @@ package fun.rooe.admin.modules.system.service.impl;
 
 import fun.rooe.admin.enums.DataScopeEnum;
 import fun.rooe.admin.infrastructure.utils.RedisUtils;
-import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.MenuAssembler;
 import fun.rooe.admin.modules.system.converter.RoleAssembler;
@@ -38,7 +37,8 @@ class RoleServiceImplDataScopeTest {
                 mock(MenuMapper.class),
                 mock(UserMapper.class),
                 mock(RedisUtils.class),
-                mock(UserCacheManager.class),
+                mock(fun.rooe.admin.modules.security.service.AdminPrivilegeGuard.class),
+                mock(fun.rooe.admin.modules.security.service.AuthCacheInvalidator.class),
                 dataService,
                 mock(RoleAssembler.class),
                 mock(DeptAssembler.class),

@@ -49,7 +49,7 @@ public class LocalStorageController {
 
     @GetMapping
     @Operation(summary = "查询文件")
-    @PreAuthorize("@el.check('storage:list')")
+    @PreAuthorize("@perm.has('storage:list')")
     public PageResult<LocalStorageDO> queryFile(LocalStorageQueryCriteria criteria) {
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return localStorageService.queryAll(criteria,page);
@@ -57,19 +57,21 @@ public class LocalStorageController {
 
     @Operation(summary = "导出数据")
     @GetMapping(value = "/download")
-    @PreAuthorize("@el.check('storage:list')")
+    @PreAuthorize("@perm.has('storage:list')")
     public void exportFile(HttpServletResponse response, LocalStorageQueryCriteria criteria) throws IOException {
         localStorageService.download(localStorageService.queryAll(criteria), response);
     }
 
     @PostMapping
     @Operation(summary = "上传文件")
+    @PreAuthorize("@perm.has('storage:add')")
     public void createFile(@RequestParam String name, @RequestParam("file") MultipartFile file){
         localStorageService.create(name, file);
     }
 
     @Operation(summary = "上传图片")
     @PostMapping("/pictures")
+    @PreAuthorize("@perm.has('storage:add')")
     public LocalStorageDO uploadPicture(@RequestParam MultipartFile file) {
         // 判断文件是否为图片
         String suffix = FileUtil.getExtensionName(file.getOriginalFilename());
@@ -83,6 +85,7 @@ public class LocalStorageController {
     @PutMapping
     @Log("修改文件")
     @Operation(summary = "修改文件")
+    @PreAuthorize("@perm.has('storage:edit')")
     public void updateFile(@Validated @RequestBody LocalStorageDO resources) {
         localStorageService.update(resources);
     }
@@ -90,7 +93,7 @@ public class LocalStorageController {
     @Log("删除文件")
     @DeleteMapping
     @Operation(summary = "多选删除")
-    @PreAuthorize("@el.check('storage:del')")
+    @PreAuthorize("@perm.has('storage:del')")
     public void deleteFile(@RequestBody Long[] ids) {
         localStorageService.deleteAll(ids);
     }

@@ -40,12 +40,10 @@
         <mysql.version>9.2.0</mysql.version>
         <mica-ip2region.version>2.7.18.9</mica-ip2region.version>
         <fastexcel.version>1.3.0</fastexcel.version>
-        <easy-captcha.version>1.6.2</easy-captcha.version>
         <guava.version>33.4.0-jre</guava.version>
         <lombok.version>1.18.48</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <jjwt.version>0.11.5</jjwt.version>
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <aws-s3.version>2.30.13</aws-s3.version>
         <rooe-starter.version>1.0.0-SNAPSHOT</rooe-starter.version>
@@ -169,11 +167,6 @@
                 <version>${fastexcel.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.whvcse</groupId>
-                <artifactId>easy-captcha</artifactId>
-                <version>${easy-captcha.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
@@ -182,21 +175,6 @@
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
                 <version>${mapstruct.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-api</artifactId>
-                <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-impl</artifactId>
-                <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-jackson</artifactId>
-                <version>${jjwt.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.mail</groupId>

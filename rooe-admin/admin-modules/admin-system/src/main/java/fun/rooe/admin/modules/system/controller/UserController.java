@@ -35,12 +35,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
   private final UserCredentialService userCredentialService;
+  private final fun.rooe.admin.framework.config.security.config.AuthProperties authProperties;
     private final UserService userService;
     private final VerifyService verificationCodeService;
 
     @Operation(summary = "导出用户数据")
     @GetMapping("/download")
-    @PreAuthorize("@el.check('user:list')")
+    @PreAuthorize("@perm.has('user:list')")
     public void exportUser(HttpServletResponse response, @Valid UserQueryRequest request)
             throws IOException {
       userService.download(userService.queryList(request), response);
@@ -48,7 +49,7 @@ public class UserController {
 
     @Operation(summary = "查询用户")
     @GetMapping
-    @PreAuthorize("@el.check('user:list')")
+    @PreAuthorize("@perm.has('user:list')")
     public PageResult<UserDTO> queryUser(@Valid UserQueryRequest request) {
       return userService.queryAll(request);
     }
@@ -56,7 +57,7 @@ public class UserController {
     @Log("新增用户")
     @Operation(summary = "新增用户")
     @PostMapping
-    @PreAuthorize("@el.check('user:add')")
+    @PreAuthorize("@perm.has('user:add')")
     public void createUser(@Valid @RequestBody UserCreateRequest request) {
       userService.create(request);
     }
@@ -64,7 +65,7 @@ public class UserController {
     @Log("修改用户")
     @Operation(summary = "修改用户")
     @PutMapping
-    @PreAuthorize("@el.check('user:edit')")
+    @PreAuthorize("@perm.has('user:edit')")
     public void updateUser(@Valid @RequestBody UserUpdateRequest request) {
       userService.update(request);
     }
@@ -79,32 +80,16 @@ public class UserController {
     @Log("删除用户")
     @Operation(summary = "删除用户")
     @DeleteMapping
-    @PreAuthorize("@el.check('user:del')")
+    @PreAuthorize("@perm.has('user:del')")
     public void deleteUser(@Valid @RequestBody UserDeleteRequest request) {
       userService.delete(request);
     }
 
-    @Operation(summary = "修改密码")
-    @PostMapping("/updatePass")
-    public void updateUserPass(@Valid @RequestBody UserPasswordUpdateRequest request)
-            throws Exception {
-      String oldPass =
-              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getOldPass());
-      String newPass =
-              RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, request.getNewPass());
-      String username = SecurityUtils.getCurrentUsername();
-      if (!userCredentialService.matches(username, oldPass))
-          throw new BusinessException(UserErrorCode.PASSWORD_INCORRECT, "旧密码错误");
-      if (userCredentialService.matches(username, newPass))
-          throw new BusinessException(CommonErrorCode.INVALID_ARGUMENT, "新密码不能与旧密码相同");
-      userService.updatePass(username, newPass);
-    }
-
     @Operation(summary = "重置密码")
     @PutMapping("/resetPwd")
-    @PreAuthorize("@el.check('user:edit')")
+    @PreAuthorize("@perm.has('user:edit')")
     public void resetPwd(@Valid @RequestBody UserResetPasswordRequest request) {
-      userService.resetPwd(request, "123456");
+      userService.resetPwd(request, authProperties.getInitialPassword());
     }
 
     @Operation(summary = "修改头像")

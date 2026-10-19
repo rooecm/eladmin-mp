@@ -11,6 +11,26 @@ import java.time.LocalDateTime;
  */
 @TableName("sys_role")
 public class RoleDO implements Serializable {
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String roleCode;
+    private Boolean enabled = true;
+
+    public String getRoleCode() {
+        return roleCode;
+    }
+
+    public void setRoleCode(String value) {
+        this.roleCode = value;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean value) {
+        this.enabled = value;
+    }
+
     /**
      * Primary key.
      */

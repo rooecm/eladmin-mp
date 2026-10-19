@@ -14,6 +14,9 @@ import java.util.Set;
  */
 @Data
 public class RoleCreateRequest {
+    @NotNull
+    private Boolean enabled = true;
+
     @NotBlank
     @Size(max = 100)
     private String name;

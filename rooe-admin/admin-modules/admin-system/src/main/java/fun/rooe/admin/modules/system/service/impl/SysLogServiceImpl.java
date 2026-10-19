@@ -52,7 +52,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogDO> imple
     private final SysLogAssembler assembler;
     private final ObjectMapper objectMapper;
     // 定义敏感字段常量数组
-    private static final String[] SENSITIVE_KEYS = {"password"};
+    private static final String[] SENSITIVE_KEYS = {"password", "oldPass", "newPass", "oldPassword", "newPassword", "accessToken", "token"};
 
     @Override
     public PageResult<SysLogDTO> queryAll(SysLogQueryRequest request) {

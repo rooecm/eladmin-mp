@@ -42,14 +42,14 @@ public class DeptController {
 
     @Operation(summary = "查询部门")
     @GetMapping
-    @PreAuthorize("@el.check('user:list','dept:list')")
+    @PreAuthorize("@perm.has('user:list') or @perm.has('dept:list')")
     public List<DeptDTO> queryDept(@Valid DeptQueryRequest request) {
         return deptService.queryAll(request);
     }
 
     @Operation(summary = "查询部门:根据ID获取同级与上级数据")
     @PostMapping("/superior")
-    @PreAuthorize("@el.check('user:list','dept:list')")
+    @PreAuthorize("@perm.has('user:list') or @perm.has('dept:list')")
     public List<DeptDTO> getDeptSuperior(@Valid @RequestBody DeptSuperiorRequest request) {
         return deptService.getSuperior(request);
     }
@@ -57,7 +57,7 @@ public class DeptController {
     @Log("新增部门")
     @Operation(summary = "新增部门")
     @PostMapping
-    @PreAuthorize("@el.check('dept:add')")
+    @PreAuthorize("@perm.has('dept:add')")
     public void createDept(@Valid @RequestBody DeptCreateRequest request) {
         deptService.create(request);
     }
@@ -65,7 +65,7 @@ public class DeptController {
     @Log("修改部门")
     @Operation(summary = "修改部门")
     @PutMapping
-    @PreAuthorize("@el.check('dept:edit')")
+    @PreAuthorize("@perm.has('dept:edit')")
     public void updateDept(@Valid @RequestBody DeptUpdateRequest request) {
         deptService.update(request);
     }
@@ -73,7 +73,7 @@ public class DeptController {
     @Log("删除部门")
     @Operation(summary = "删除部门")
     @DeleteMapping
-    @PreAuthorize("@el.check('dept:del')")
+    @PreAuthorize("@perm.has('dept:del')")
     public void deleteDept(@Valid @RequestBody DeptDeleteRequest request) {
         deptService.delete(request);
     }

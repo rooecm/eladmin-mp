@@ -64,7 +64,9 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
   }
 
     private List<DictDetailDTO> assemble(List<DictDetailDO> details) {
-    if (details.isEmpty()) return new ArrayList<>();
+        if (details.isEmpty()) {
+            return new ArrayList<>();
+        }
         Set<Long> ids = details.stream().map(DictDetailDO::getDictId).collect(Collectors.toSet());
         Map<Long, DictDO> dicts =
             dictMapper.selectBatchIds(ids).stream()
@@ -102,8 +104,12 @@ public class DictDetailServiceImpl extends ServiceImpl<DictDetailMapper, DictDet
     }
 
     private void delCaches(DictDetailDO detail) {
-    if (detail == null) return;
+        if (detail == null) {
+            return;
+        }
         DictDO dict = dictMapper.selectById(detail.getDictId());
-    if (dict != null) redisUtils.del(CacheKey.DICT_NAME + dict.getName());
+        if (dict != null) {
+            redisUtils.del(CacheKey.DICT_NAME + dict.getName());
+        }
     }
 }

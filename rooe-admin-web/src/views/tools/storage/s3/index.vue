@@ -57,8 +57,8 @@
 <script>
 import s3Storage from '@/api/tools/s3Storage'
 import { mapGetters } from 'vuex'
-import { getToken } from '@/utils/auth'
-import CRUD, { presenter, header, crud } from '@crud/crud'
+import { authorization } from '@/utils/auth'
+import CRUD, { crud, header, presenter } from '@crud/crud'
 import rrOperation from '@crud/RR.operation'
 import crudOperation from '@crud/CRUD.operation'
 import pagination from '@crud/Pagination'
@@ -77,7 +77,7 @@ export default {
       },
       title: '文件', dialog: false,
       icon: 'el-icon-refresh',
-      url: '', headers: { 'Authorization': getToken() },
+      url: '', headers: { 'Authorization': authorization() },
       dialogImageUrl: '', dialogVisible: false, fileList: [], files: [], newWin: null
     }
   },

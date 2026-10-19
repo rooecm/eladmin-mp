@@ -5,9 +5,7 @@ import fun.rooe.admin.framework.advice.GlobalExceptionAdvice;
 import fun.rooe.admin.framework.aspect.LimitAspect;
 import fun.rooe.admin.framework.config.SpringContextConfig;
 import fun.rooe.admin.framework.config.security.config.SpringSecurityConfig;
-import fun.rooe.admin.framework.config.security.service.OnlineSessionService;
 import fun.rooe.admin.infrastructure.config.mybatis.MybatisPlusConfig;
-import fun.rooe.admin.modules.security.service.OnlineUserService;
 import fun.rooe.admin.modules.system.domain.entity.MenuDO;
 import fun.rooe.admin.modules.system.domain.entity.RoleDO;
 import fun.rooe.admin.modules.system.domain.entity.UserDO;
@@ -83,8 +81,7 @@ public class RooeAdminBootstrapApplicationTests {
         assertNotNull(applicationContext.getBean(SpringSecurityConfig.class));
         assertNotNull(applicationContext.getBean(GlobalExceptionAdvice.class));
         assertNotNull(applicationContext.getBean(LimitAspect.class));
-        assertSame(applicationContext.getBean(OnlineUserService.class),
-                applicationContext.getBean(OnlineSessionService.class));
+        assertNotNull(applicationContext.getBean(fun.rooe.admin.framework.security.service.SessionService.class));
     }
 
     @Test

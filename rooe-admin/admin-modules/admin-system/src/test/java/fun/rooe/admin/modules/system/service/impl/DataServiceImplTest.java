@@ -60,7 +60,7 @@ class DataServiceImplTest {
         UserDataScope scope = service.getDataScope(1L, 10L);
 
         assertTrue(scope.isAll());
-        assertTrue(scope.deptIds().isEmpty());
+        assertTrue(scope.getDeptIds().isEmpty());
     }
 
     @Test
@@ -70,7 +70,7 @@ class DataServiceImplTest {
         UserDataScope scope = service.getDataScope(1L, 10L);
 
         assertTrue(scope.isLimited());
-        assertEquals(List.of(10L), scope.deptIds());
+        assertEquals(List.of(10L), scope.getDeptIds());
     }
 
     @Test
@@ -91,7 +91,7 @@ class DataServiceImplTest {
 
         UserDataScope scope = service.getDataScope(1L, 10L);
 
-        assertEquals(List.of(10L, 20L), scope.deptIds());
+        assertEquals(List.of(10L, 20L), scope.getDeptIds());
     }
 
     @Test
@@ -112,7 +112,7 @@ class DataServiceImplTest {
 
         UserDataScope scope = service.getDataScope(1L, 99L);
 
-        assertEquals(List.of(10L), scope.deptIds());
+        assertEquals(List.of(10L), scope.getDeptIds());
     }
 
     @Test

@@ -23,7 +23,9 @@ class ErrorCodeRegistryTest {
                 EmailErrorCode.class, UserErrorCode.class)) {
             for (Object constant : type.getEnumConstants()) {
                 ErrorCode error = (ErrorCode) constant;
-                assertTrue(error.getCode().matches("[A-Z]+_[0-9]{4}"), error.getCode());
+                assertTrue(error.getCode().matches("[A-Z]+_[0-9]{4}")
+                                || type == AuthErrorCode.class && error.getCode().equals("AUTH_" + ((Enum<?>) constant).name()),
+                        error.getCode());
                 assertFalse(error.getMessage().isBlank(), error.getCode());
                 assertTrue(codes.add(error.getCode()), "Duplicate error code: " + error.getCode());
             }

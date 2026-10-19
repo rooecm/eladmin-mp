@@ -44,7 +44,7 @@ export default {
         ],
         newPass: [
           { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+          { min: 8, max: 72, message: '至少 8 个字符，UTF-8 长度不超过 72 字节', trigger: 'blur' }
         ],
         confirmPass: [
           { required: true, validator: confirmPass, trigger: 'blur' }
@@ -67,11 +67,7 @@ export default {
               type: 'success',
               duration: 1500
             })
-            setTimeout(() => {
-              store.dispatch('LogOut').then(() => {
-                location.reload() // 为了重新实例化vue-router对象 避免bug
-              })
-            }, 1500)
+            store.dispatch('ClearAuth').then(() => this.$router.replace('/login'))
           }).catch(err => {
             this.loading = false
             console.log(err.response.data.message)

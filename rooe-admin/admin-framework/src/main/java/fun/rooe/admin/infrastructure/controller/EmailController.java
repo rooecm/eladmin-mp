@@ -22,6 +22,7 @@ import fun.rooe.admin.infrastructure.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,7 @@ public class EmailController {
     private final EmailService emailService;
 
     @GetMapping
+    @PreAuthorize("@perm.has('email:list')")
     public EmailConfigDO queryEmailConfig() {
         return emailService.find();
     }
@@ -46,6 +48,7 @@ public class EmailController {
     @Log("配置邮件")
     @PutMapping
     @Operation(summary = "配置邮件")
+    @PreAuthorize("@perm.has('email:config')")
     public void updateEmailConfig(@Validated @RequestBody EmailConfigDO emailConfig) throws Exception {
         emailService.config(emailConfig, emailService.find());
     }
@@ -53,6 +56,7 @@ public class EmailController {
     @Log("发送邮件")
     @PostMapping
     @Operation(summary = "发送邮件")
+    @PreAuthorize("@perm.has('email:send')")
     public void sendEmail(@Validated @RequestBody EmailDTO emailDto){
         emailService.send(emailDto,emailService.find());
     }

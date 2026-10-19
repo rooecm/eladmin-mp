@@ -26,6 +26,7 @@ public interface RoleAssembler {
     @Mapping(target = "level", source = "level")
     @Mapping(target = "dataScope", source = "dataScope")
     @Mapping(target = "description", source = "description")
+    @Mapping(target = "enabled", source = "enabled")
     RoleDO toEntity(RoleCreateRequest request);
 
     @InheritConfiguration(name = "toEntity")

@@ -20,7 +20,7 @@ class UserDataScopeTest {
     void limitedScopeDeduplicatesDepartments() {
         UserDataScope scope = UserDataScope.limited(List.of(2L, 2L, 3L));
 
-        assertEquals(List.of(2L, 3L), scope.deptIds());
+        assertEquals(List.of(2L, 3L), scope.getDeptIds());
         assertTrue(scope.permits(2L));
         assertFalse(scope.permits(4L));
     }

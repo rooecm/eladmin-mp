@@ -2,7 +2,7 @@
 
 #### 项目简介
 
-一个基于 Spring Boot 3.5.16 、 Mybatis-Plus、 JWT、Spring Security、Redis、Vue的前后端分离的后台管理系统
+一个基于 Spring Boot 3.5.16、Mybatis-Plus、Spring Security、Redis 不透明会话和 Vue 的前后端分离后台管理系统
 
 **开发文档：**  [https://rooe-admin.vip](https://rooe-admin.vip)
 
@@ -11,10 +11,11 @@
 - [持久化模型分层改造指南](docs/persistence-model-refactoring-guide.md)：以 `Dept` 为参考，说明
   Request、DTO、Service、Assembler、Mapper 与数据库模型的拆分方式。
 - [统一响应与错误码设计规范](docs/spring-boot-api-response-error-code-best-practices.md)
+- [认证与安全 v7 实施交付说明](docs/rooe-admin-auth-v7-delivery.md)
 
 **体验地址：**  [https://rooe-admin.vip/demo](https://rooe-admin.vip/demo)
 
-**账号密码：** `admin / 123456`
+**本地初始化：** 通过 `AUTH_INITIAL_PASSWORD` 配置安全初始密码；历史演示密码账户会被迁移禁用，首次登录后必须改密。
 
 #### 项目源码
 
@@ -36,11 +37,12 @@
 - 自定义权限注解与匿名接口注解，可快速对接口拦截与放行
 - 对一些常用地前端组件封装：表格数据请求、数据字典等
 - 前后端统一异常拦截处理，统一输出异常，避免繁琐的判断
-- 支持在线用户管理与服务器性能监控，支持限制单用户登录
+- 支持会话空闲与绝对过期、认证版本撤销与管理操作越权防护
 - 支持运维管理，可方便地对远程服务器的应用进行部署与管理
 
 ####  系统功能
-- 用户管理：提供用户的相关配置，新增用户后，默认密码为123456
+
+- 用户管理：新增与重置密码使用环境配置的初始密码，并要求用户首次改密
 - 角色管理：对权限与菜单进行分配，可根据部门设置角色的数据权限
 - 菜单管理：已实现菜单动态路由，后端可配置化，支持多级菜单
 - 部门管理：可配置系统组织架构，树形表格展示
@@ -64,7 +66,7 @@
 
 - `admin-modules` 为功能模块聚合模块，统一管理 `admin-system` 与 `admin-logging`
 
-- `admin-modules/admin-system` 为系统业务模块，提供用户、角色、菜单、登录、在线用户、定时任务等业务能力，以普通 JAR 供启动模块使用
+- `admin-modules/admin-system` 为系统业务模块，提供用户、角色、菜单、登录、定时任务等业务能力，以普通 JAR 供启动模块使用
 
 - `rooe-admin-bootstrap` 为应用启动模块，包含启动类、环境配置、日志配置与应用组装依赖，是最终打包部署的模块
 
@@ -108,7 +110,9 @@
 
 框架与基础设施代码统一位于 `admin-framework` 模块，通过根包隔离职责。日志模块依赖该模块提供的框架注解与请求上下文能力；`rooe-admin-system` 依赖 `admin-framework` 和日志模块，`rooe-admin-bootstrap` 负责最终组装；业务模块不依赖 bootstrap。启动类保持在 `fun.rooe.admin` 包，组件扫描和 MyBatis 自动扫描可覆盖各包。
 
-用户实体、用户查询、权限与数据范围组装、登录控制器、用户缓存、在线用户管理及定时任务业务保留在 `admin-modules/admin-system`。`OnlineUserService` 实现框架定义的 `OnlineSessionService`，JWT 过滤器通过接口检查会话；`TokenProvider` 使用用户 ID 和用户名签发令牌，避免依赖业务用户实体。`ApiResult` 作为共享响应类型保留在公共模块。
+用户实体、用户查询、权限与数据范围组装、登录控制器、认证缓存及定时任务业务保留在 `admin-modules/admin-system`。框架通过
+`AuthIdentityService` 获取身份与权限，通过 `SessionService` 原子校验和续期 Redis 不透明会话；`TokenService` 只负责随机令牌和摘要。
+`ApiResult` 作为共享响应类型保留在公共模块。
 
 仓库根目录的 `pom.xml` 聚合 `rooe-starter` 与 `rooe-admin`，两者保留各自的父 POM。使用 JDK 17 或更高版本，在仓库根目录执行
 `mvn clean verify`；只构建应用及其依赖执行 `mvn -pl rooe-admin/admin-bootstrap -am clean package`。Maven 会同时构建所需

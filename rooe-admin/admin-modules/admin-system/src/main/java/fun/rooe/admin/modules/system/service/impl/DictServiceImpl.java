@@ -100,7 +100,9 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, DictDO> implements 
         List<Map<String, Object>> rows = new ArrayList<>();
         for (DictDTO dict : dicts) {
             List<DictDetailDO> details = dictDetailMapper.findByDictName(dict.getName());
-            if (details.isEmpty()) details = Collections.singletonList(null);
+            if (details.isEmpty()) {
+                details = Collections.singletonList(null);
+            }
             for (DictDetailDO detail : details) {
                 Map<String, Object> row = new LinkedHashMap<>();
                 row.put("字典名称", dict.getName());
@@ -118,6 +120,8 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, DictDO> implements 
     }
 
     private void delCaches(DictDO dict) {
-        if (dict != null) redisUtils.del(CacheKey.DICT_NAME + dict.getName());
+        if (dict != null) {
+            redisUtils.del(CacheKey.DICT_NAME + dict.getName());
+        }
     }
 }

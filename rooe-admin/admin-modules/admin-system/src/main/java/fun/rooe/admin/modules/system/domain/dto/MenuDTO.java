@@ -13,6 +13,7 @@ import java.util.List;
 @Data
 public class MenuDTO {
     private Long id;
+    private Boolean enabled;
     private Long pid;
     private Integer subCount;
     private Integer type;

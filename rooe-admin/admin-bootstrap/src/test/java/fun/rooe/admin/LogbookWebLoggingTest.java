@@ -95,7 +95,8 @@ class LogbookWebLoggingTest {
                             .header("Cookie", "session=cookie-secret")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"password\":\"body-secret\",\"nested\":{\"oldPass\":\"old-secret\","
-                                    + "\"newPass\":\"new-secret\"},\"name\":\"visible\"}"))
+                                    + "\"newPass\":\"new-secret\",\"oldPassword\":\"old-password-secret\","
+                                    + "\"newPassword\":\"new-password-secret\"},\"name\":\"visible\"}"))
                     .andReturn().getResponse();
 
             assertEquals(200, response.getStatus());
@@ -151,11 +152,11 @@ class LogbookWebLoggingTest {
     void exposesTraceHeaderThroughTheApplicationsCorsFilter() {
         withLogging((mvc, events) -> {
             var response = mvc.perform(get("/actuator/health")
-                            .header(HttpHeaders.ORIGIN, "https://example.com")
+                            .header(HttpHeaders.ORIGIN, "http://localhost:8013")
                             .header("traceId", "client-value"))
                     .andReturn().getResponse();
             assertEquals(200, response.getStatus());
-            assertEquals("traceId", response.getHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS));
+            assertTrue(response.getHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS).contains("traceId"));
             assertTrue(response.getHeader("traceId").matches("[0-9a-f]{32}"));
         });
     }
@@ -222,8 +223,9 @@ class LogbookWebLoggingTest {
                         .map(FilterRegistrationBean::getFilter).toArray(jakarta.servlet.Filter[]::new);
                 var mvc = MockMvcBuilders.standaloneSetup(new TestController())
                         .addFilters(filters)
-                        .addFilters(new ConfigurerAdapter(new FileProperties(), new ObjectMapper()).corsFilter())
-                        .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice()).build();
+                        .addFilters(new org.springframework.web.filter.CorsFilter(new ConfigurerAdapter(new FileProperties(), new ObjectMapper())
+                                .corsConfigurationSource(new fun.rooe.admin.framework.config.security.config.AuthProperties())))
+                        .setControllerAdvice(new ApiResultResponseAdvice(), new GlobalExceptionAdvice(org.mockito.Mockito.mock(fun.rooe.admin.framework.security.AuthTelemetry.class))).build();
                 assertion.verify(mvc, events);
             } finally {
                 logger.detachAppender(events);
@@ -243,6 +245,7 @@ class LogbookWebLoggingTest {
         @PostMapping("/api/logbook")
         ResponseEntity<Map<String, Object>> echo(@RequestBody Map<String, Object> body) {
             body.put("token", "response-secret");
+            body.put("accessToken", "access-token-secret");
             return ResponseEntity.ok().header("Set-Cookie", "session=response-cookie-secret").body(body);
         }
 

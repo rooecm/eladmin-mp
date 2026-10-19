@@ -4,15 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import fun.rooe.admin.constant.CacheKey;
 import fun.rooe.admin.error.CommonErrorCode;
 import fun.rooe.admin.exception.BusinessException;
 import fun.rooe.admin.framework.utils.SecurityUtils;
 import fun.rooe.admin.infrastructure.config.properties.FileProperties;
 import fun.rooe.admin.infrastructure.error.StorageErrorCode;
-import fun.rooe.admin.infrastructure.utils.RedisUtils;
 import fun.rooe.admin.model.UserDataScope;
-import fun.rooe.admin.modules.security.service.OnlineUserService;
+import fun.rooe.admin.modules.security.service.*;
+import fun.rooe.admin.framework.config.security.config.AuthProperties;
 import fun.rooe.admin.modules.security.service.UserCacheManager;
 import fun.rooe.admin.modules.system.converter.DeptAssembler;
 import fun.rooe.admin.modules.system.converter.JobAssembler;
@@ -43,7 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -62,9 +60,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     private final RoleService roleService;
     private final DataService dataService;
     private final FileProperties properties;
-    private final RedisUtils redisUtils;
     private final UserCacheManager userCacheManager;
-    private final OnlineUserService onlineUserService;
+    private final AdminPrivilegeGuard privilegeGuard;
+    private final AuthVersionService authVersions;
+    private final AuthCacheInvalidator authInvalidator;
+    private final AuthProperties authProperties;
     private final UserCredentialService userCredentialService;
     private final UserAssembler assembler;
     private final DeptAssembler deptAssembler;
@@ -74,7 +74,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public PageResult<UserDTO> queryAll(UserQueryRequest request) {
         UserDataScope dataScope = dataService.getCurrentDataScope();
-        if (dataScope.isNone()) return new PageResult<>(new ArrayList<>(), 0);
+        if (dataScope.isNone()) {
+            return new PageResult<>(new ArrayList<>(), 0);
+        }
         Page<UserDO> page = new Page<>(request.getPage(), request.getSize());
         userMapper.selectPage(page, wrapper(request, requestedDeptIds(request), dataScope));
         return new PageResult<>(assemble(page.getRecords()), page.getTotal());
@@ -116,14 +118,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                 .orderByDesc(UserDO::getId);
         if (!dataScope.isAll()) {
             wrapper.and(permission -> {
-                if (!dataScope.deptIds().isEmpty()) {
-                    permission.in(UserDO::getDeptId, dataScope.deptIds());
+                if (!dataScope.getDeptIds().isEmpty()) {
+                    permission.in(UserDO::getDeptId, dataScope.getDeptIds());
                 }
-                if (dataScope.selfUserId() != null) {
-                    if (!dataScope.deptIds().isEmpty()) {
+                if (dataScope.getSelfUserId() != null) {
+                    if (!dataScope.getDeptIds().isEmpty()) {
                         permission.or();
                     }
-                    permission.eq(UserDO::getId, dataScope.selfUserId());
+                    permission.eq(UserDO::getId, dataScope.getSelfUserId());
                 }
             });
         }
@@ -154,18 +156,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public UserDO findById(long id) {
-        String key = CacheKey.USER_ID + id;
-        UserDO user = redisUtils.get(key, UserDO.class);
-        if (user == null) {
-            user = getById(id);
-            redisUtils.set(key, user, 1, TimeUnit.DAYS);
-        }
-        return user;
+        return getById(id);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(UserCreateRequest request) {
+        // 在同一事务内先串行化管理写操作并校验角色授予范围，再保存用户及关联关系。
+        privilegeGuard.lockAdministration();
+        privilegeGuard.assignRoles(null, roleIds(request.getRoles()));
+        request.setUsername(LoginUserDetailsService.canonical(request.getUsername()));
         Long deptId = request.getDept().getId();
         Set<Long> roleIds = roleIds(request.getRoles());
         dataService.checkDeptAccess(deptId);
@@ -173,7 +173,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         roleService.checkDataScopes(roleIds, deptId);
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), null);
         UserDO user = assembler.toEntity(request);
-        user.setPassword(userCredentialService.encode("123456"));
+        user.setPassword(userCredentialService.encode(authProperties.getInitialPassword()));
+        // 新建账号只使用配置的初始密码，首次登录后必须自行改密。
+        user.setMustChangePassword(true);
         user.setIsAdmin(false);
         save(user);
         insertRelations(user.getId(), request.getJobs(), request.getRoles());
@@ -182,6 +184,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(UserUpdateRequest request) {
+        privilegeGuard.lockAdministration();
+        privilegeGuard.changeUser(request.getId(), !Boolean.TRUE.equals(request.getEnabled()));
+        privilegeGuard.assignRoles(request.getId(), roleIds(request.getRoles()));
+        request.setUsername(LoginUserDetailsService.canonical(request.getUsername()));
         UserDO user = getById(request.getId());
         checkUserAccess(user);
         checkLevel(roleMapper.findByUserId(user.getId()).stream()
@@ -195,19 +201,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         checkLevel(newRoles);
         roleService.checkDataScopes(newRoles, newDeptId);
         checkUnique(request.getUsername(), request.getEmail(), request.getPhone(), user.getId());
-        Set<Long> oldRoles =
-                roleMapper.findByUserId(user.getId()).stream()
-                        .map(RoleDO::getId)
-                        .collect(Collectors.toSet());
-        if (!oldRoles.equals(newRoles)) clearAuthorizationCaches(user.getId());
-        if (!Objects.equals(user.getDeptId(), request.getDept().getId()))
-            redisUtils.del(CacheKey.DATA_USER + user.getId());
-        if (!Boolean.TRUE.equals(request.getEnabled()))
-            onlineUserService.kickOutForUsername(request.getUsername());
+        // 禁用递增认证版本；普通角色调整通过提交后的缓存失效更新权限。
+        if (Boolean.TRUE.equals(user.getEnabled()) && !Boolean.TRUE.equals(request.getEnabled()))
+            authVersions.bumpAuthVersion(user.getId(), "disabled");
         assembler.updateEntity(request, user);
         updateById(user);
         delCaches(user.getId(), user.getUsername());
-        // Relation rows represent the complete request state, so replace them atomically.
+        // 请求包含完整关联状态，用户、岗位和角色关系在同一事务内整体替换。
         userJobMapper.delete(
                 Wrappers.<UserJobDO>lambdaQuery().eq(UserJobDO::getUserId, user.getId()));
         userRoleMapper.delete(
@@ -226,14 +226,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                         Wrappers.<UserDO>lambdaQuery().eq(UserDO::getPhone, request.getPhone()));
         if (duplicate != null && !user.getId().equals(duplicate.getId()))
             throw new BusinessException(CommonErrorCode.DATA_ALREADY_EXISTS, "手机号已存在");
-        assembler.updateCenter(request, user);
-        updateById(user);
+        userMapper.update(Wrappers.<UserDO>lambdaUpdate().eq(UserDO::getId, user.getId())
+                .set(UserDO::getNickName, request.getNickName())
+                .set(UserDO::getPhone, request.getPhone())
+                .set(UserDO::getGender, request.getGender()));
         delCaches(user.getId(), user.getUsername());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(UserDeleteRequest request) {
+        // 整批删除持有同一管理锁；任一用户触发保护规则，整批操作回滚。
+        privilegeGuard.lockAdministration();
         int currentLevel = roleService.getCurrentUserLevel();
         for (Long id : request.getIds()) {
             checkUserAccess(getById(id));
@@ -247,9 +251,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         for (Long id : request.getIds()) {
             UserDO user = getById(id);
-            if (user != null) delCaches(user.getId(), user.getUsername());
+            if (user != null) {
+                privilegeGuard.changeUser(id, true);
+                authVersions.bumpAuthVersion(id, "deleted");
+                authInvalidator.users(List.of(id));
+                userMapper.deleteById(id);
+            }
         }
-        userMapper.deleteBatchIds(request.getIds());
         userJobMapper.delete(
                 Wrappers.<UserJobDO>lambdaQuery().in(UserJobDO::getUserId, request.getIds()));
         userRoleMapper.delete(
@@ -335,7 +343,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public UserLoginDTO getLoginData(String userName) {
         UserDO user = findByUsername(userName);
-        if (user == null) return null;
+        if (user == null) {
+            return null;
+        }
         UserLoginDTO dto = assembler.toLoginDto(user);
         if (user.getDeptId() != null)
             dto.setDept(deptAssembler.toDto(deptMapper.selectById(user.getDeptId())));
@@ -346,17 +356,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePass(String username, String rawPassword) {
-        userMapper.update(Wrappers.<UserDO>lambdaUpdate()
-                .eq(UserDO::getUsername, username)
-                .set(UserDO::getPassword, userCredentialService.encode(rawPassword))
-                .set(UserDO::getPwdResetTime, LocalDateTime.now()));
-        flushCache(username);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public void resetPwd(UserResetPasswordRequest request, String rawPassword) {
+        // 重置密码、设置强制改密及递增版本在同一事务内完成，提交后再清理缓存。
+        privilegeGuard.lockAdministration();
         List<UserDO> users = userMapper.selectBatchIds(request.getIds());
         if (users.size() != request.getIds().size()) {
             throw new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND, "用户不存在");
@@ -369,12 +371,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         users.forEach(
                 user -> {
-                    flushCache(user.getUsername());
-                    onlineUserService.kickOutForUsername(user.getUsername());
+                    privilegeGuard.changeUser(user.getId(), false);
+                    authVersions.bumpAuthVersion(user.getId(), "password_reset");
+                    authInvalidator.users(List.of(user.getId()));
                 });
         userMapper.update(Wrappers.<UserDO>lambdaUpdate()
                 .in(UserDO::getId, request.getIds())
-                .set(UserDO::getPassword, userCredentialService.encode(rawPassword)));
+                .set(UserDO::getPassword, userCredentialService.encode(rawPassword))
+                .set(UserDO::getMustChangePassword, true));
     }
 
     @Override
@@ -400,10 +404,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if (file == null) {
             throw new BusinessException(StorageErrorCode.OPERATION_FAILED, "文件上传失败，请稍后重试");
         }
-        user.setAvatarPath(file.getPath());
-        user.setAvatarName(file.getName());
-        updateById(user);
-        if (StringUtils.isNotBlank(oldPath)) FileUtil.del(oldPath);
+        userMapper.update(Wrappers.<UserDO>lambdaUpdate().eq(UserDO::getId, user.getId())
+                .set(UserDO::getAvatarPath, file.getPath())
+                .set(UserDO::getAvatarName, file.getName()));
+        if (StringUtils.isNotBlank(oldPath)) {
+            FileUtil.del(oldPath);
+        }
         flushCache(user.getUsername());
         return Map.of("avatar", file.getName());
     }
@@ -439,16 +445,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         ExcelUtil.write(rows, response.getOutputStream());
     }
 
-    private void clearAuthorizationCaches(Long id) {
-        redisUtils.del(CacheKey.DATA_USER + id);
-        redisUtils.del(CacheKey.MENU_USER + id);
-        redisUtils.del(CacheKey.ROLE_AUTH + id);
-        redisUtils.del(CacheKey.ROLE_USER + id);
-    }
-
     private void delCaches(Long id, String username) {
-        redisUtils.del(CacheKey.USER_ID + id);
-        flushCache(username);
+        authInvalidator.users(List.of(id));
     }
 
     private void flushCache(String username) {

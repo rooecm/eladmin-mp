@@ -10,6 +10,11 @@
     <artifactId>admin-bootstrap</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- 应用模块组装 -->
         <dependency>
             <groupId>fun.rooe</groupId>

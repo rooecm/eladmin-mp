@@ -34,8 +34,6 @@ public interface UserService extends IService<UserDO> {
 
     void resetPwd(UserResetPasswordRequest request, String rawPassword);
 
-    void updatePass(String username, String rawPassword);
-
     Map<String, String> updateAvatar(MultipartFile file);
 
     void updateEmail(String username, String email);

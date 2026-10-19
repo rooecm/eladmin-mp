@@ -5,6 +5,12 @@ import Layout from '../layout/index'
 Vue.use(Router)
 
 export const constantRouterMap = [
+  {
+    path: '/change-password',
+    component: () => import('@/views/change-password'),
+    hidden: true,
+    meta: { title: '修改密码' }
+  },
   { path: '/login',
     meta: { title: '登录', noCache: true },
     component: (resolve) => require(['@/views/login'], resolve),
