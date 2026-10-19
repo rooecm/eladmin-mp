@@ -161,6 +161,11 @@ mvn -pl rooe-admin/admin-bootstrap -am test "-Dtest=SecurityHttpIntegrationTest,
 - 安全过滤链测试使用无权限注解的接口，验证未携带 Token、Token 格式错误时均返回401，已认证且无业务权限的用户可访问仅需登录的接口。
 - 15项定向回归全部通过，无失败、错误或跳过：安全过滤链10项、实际认证入口响应4项、Controller授权覆盖1项，Maven 输出 BUILD SUCCESS。
 
+## 清理匿名访问注解（2026-10-19）
+
+- 删除 `annotation.rest` 下6个匿名访问注解，以及不再使用的扫描工具 `AnonTagUtils` 和专用枚举 `RequestMethodEnum`。
+- 首页改为普通 `@GetMapping("/")`；公开路径继续由 `SecurityPaths.PUBLIC_PATHS` 统一配置，匿名访问范围保持一致。
+
 ## 运维核验状态
 
 | 项目 | 状态 |

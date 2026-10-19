@@ -17,10 +17,10 @@ package fun.rooe.admin;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
-import fun.rooe.admin.framework.annotation.rest.AnonymousGetMapping;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -47,7 +47,7 @@ public class RooeAdminApplication {
      * 访问首页提示
      * @return /
      */
-    @AnonymousGetMapping("/")
+    @GetMapping("/")
     public String index() {
         return "Backend service started successfully";
     }
